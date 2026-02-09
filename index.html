@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 2025 - Gerenciador de Campeonato</title>
+    <style>
+        :root {
+            --f1-red: #e10600;
+            --dark-bg: #15151e;
+            --cell-border: #38383f;
+            /* Larguras das colunas fixas */
+            --w-pos: 50px;
+            --w-piloto: 150px;
+            --w-equipe: 130px;
+            --w-pontos: 70px;
+            --w-vitorias: 70px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--dark-bg);
+            color: white;
+            margin: 20px;
+        }
+
+        h1, h2 { text-transform: uppercase; letter-spacing: 2px; border-bottom: 3px solid var(--f1-red); padding-bottom: 5px; }
+
+        .controls { margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; background: #2b2b2b; padding: 15px; border-radius: 8px; }
+
+        button {
+            background-color: var(--f1-red);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        button:hover { background-color: #b00500; }
+        .btn-export { background-color: #2e7d32; }
+        .btn-import { background-color: #1976d2; }
+
+        /* Container com scroll */
+        .table-container { 
+            overflow-x: auto; 
+            margin-bottom: 40px; 
+            background: white; 
+            border-radius: 4px;
+            max-width: 100%;
+            border: 1px solid #ccc;
+        }
+
+        table { border-collapse: separate; border-spacing: 0; width: 100%; color: black; font-size: 0.9em; }
+
+        th, td { border: 0.5px solid #ccc; padding: 8px; text-align: center; white-space: nowrap; }
+
+        /* Estilo para colunas fixas (Sticky) */
+        .sticky-col {
+            position: sticky;
+            background-color: #f9f9f9 !important;
+            z-index: 2;
+        }
+
+        /* Ajuste de profundidade para o cabeçalho fixo */
+        th.sticky-col { z-index: 4; background-color: #eee !important; }
+
+        /* Posicionamento de cada coluna fixa */
+        .col-pos { left: 0; min-width: var(--w-pos); width: var(--w-pos); }
+        .col-piloto { left: var(--w-pos); min-width: var(--w-piloto); width: var(--w-piloto); text-align: left; font-weight: bold; }
+        .col-equipe { left: calc(var(--w-pos) + var(--w-piloto)); min-width: var(--w-equipe); width: var(--w-equipe); font-style: italic; color: #555; }
+        .col-pontos { left: calc(var(--w-pos) + var(--w-piloto) + var(--w-equipe)); min-width: var(--w-pontos); width: var(--w-pontos); font-weight: bold; }
+        .col-vitorias { left: calc(var(--w-pos) + var(--w-piloto) + var(--w-equipe) + var(--w-pontos)); min-width: var(--w-vitorias); width: var(--w-vitorias); }
+
+        /* Cabeçalho superior (GPs) */
+        thead th { position: sticky; top: 0; z-index: 3; background-color: #eee; }
+
+        input[type="text"] {
+            width: 40px;
+            border: 1px solid transparent;
+            text-align: center;
+            padding: 4px;
+            background: transparent;
+        }
+        input[type="text"]:focus { border-color: var(--f1-red); background: white; outline: none; }
+
+        .sprint-col { background-color: #e3f2fd; }
+        .header-gp { min-width: 60px; }
+    </style>
+</head>
+<body>
+
+    <h1>🏁 F1 Championship Manager</h1>
+
+    <div class="controls">
+        <button onclick="addDriver()">+ Adicionar Piloto</button>
+        <button onclick="addRace('GP')">+ Adicionar GP</button>
+        <button onclick="addRace('Sprint')">+ Adicionar Sprint</button>
+        <button class="btn-export" onclick="exportData()">💾 Exportar Dados</button>
+        <button class="btn-import" onclick="document.getElementById('importFile').click()">📂 Importar Dados</button>
+        <input type="file" id="importFile" style="display:none" onchange="importData(event)">
+        <button style="background: #555" onclick="resetData()">Limpar Tudo</button>
+    </div>
+
+    <h2>Classificação de Pilotos</h2>
+    <div class="table-container">
+        <table id="pilotosTable">
+            <thead>
+                <tr id="headerRow">
+                    </tr>
+            </thead>
+            <tbody id="pilotosBody"></tbody>
+        </table>
+    </div>
+
+    <h2>Classificação de Construtores</h2>
+    <div class="table-container" style="max-width: 600px;">
+        <table id="construtoresTable">
+            <thead>
+                <tr>
+                    <th>Pos</th>
+                    <th>Equipe</th>
+                    <th>Pontos</th>
+                </tr>
+            </thead>
+            <tbody id="construtoresBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        let data = { drivers: [], races: [] };
+
+        const GP_POINTS = { 1:25, 2:18, 3:15, 4:12, 5:10, 6:8, 7:6, 8:4, 9:2, 10:1 };
+        const SPRINT_POINTS = { 1:8, 2:7, 3:6, 4:5, 5:4, 6:3, 7:2, 8:1 };
+
+        function init() {
+            const saved = localStorage.getItem('f1_manager_data');
+            if (saved) data = JSON.parse(saved);
+            render();
+        }
+
+        function saveData() { localStorage.setItem('f1_manager_data', JSON.stringify(data)); }
+
+        function addDriver() {
+            const name = prompt("Nome do Piloto:");
+            const team = prompt("Nome da Equipe:");
+            if (name && team) {
+                data.drivers.push({ id: Date.now(), name, team, results: {} });
+                saveAndRender();
+            }
+        }
+
+        function addRace(type) {
+            const name = prompt(`Nome do ${type} (Ex: AUS, JED):`);
+            if (name) {
+                data.races.push({ id: 'r' + Date.now(), name: name.toUpperCase(), type });
+                saveAndRender();
+            }
+        }
+
+        function updateResult(driverId, raceId, position) {
+            const driver = data.drivers.find(d => d.id == driverId);
+            if (position === "" || isNaN(position)) delete driver.results[raceId];
+            else driver.results[raceId] = parseInt(position);
+            saveAndRender();
+        }
+
+        function calculatePoints(driver) {
+            let total = 0; let wins = 0;
+            data.races.forEach(race => {
+                const pos = driver.results[race.id];
+                if (pos) {
+                    const pts = race.type === 'GP' ? GP_POINTS : SPRINT_POINTS;
+                    total += pts[pos] || 0;
+                    if (race.type === 'GP' && pos === 1) wins++;
+                }
+            });
+            return { total, wins };
+        }
+
+        function saveAndRender() { saveData(); render(); }
+
+        function render() {
+            data.drivers.forEach(d => {
+                const stats = calculatePoints(d);
+                d.totalPoints = stats.total; d.wins = stats.wins;
+            });
+            data.drivers.sort((a, b) => b.totalPoints - a.totalPoints || b.wins - a.wins);
+
+            // Renderizar Cabeçalho
+            const headerRow = document.getElementById('headerRow');
+            headerRow.innerHTML = `
+                <th class="sticky-col col-pos">Pos</th>
+                <th class="sticky-col col-piloto">Piloto</th>
+                <th class="sticky-col col-equipe">Equipe</th>
+                <th class="sticky-col col-pontos">Pts</th>
+                <th class="sticky-col col-vitorias">Vit</th>
+            `;
+            data.races.forEach(race => {
+                const th = document.createElement('th');
+                th.className = `header-gp ${race.type === 'Sprint' ? 'sprint-col' : ''}`;
+                th.innerText = race.name + (race.type === 'Sprint' ? ' (S)' : '');
+                th.onclick = () => { if(confirm('Excluir corrida?')) { data.races = data.races.filter(r => r.id !== race.id); saveAndRender(); }};
+                headerRow.appendChild(th);
+            });
+
+            // Renderizar Pilotos
+            const body = document.getElementById('pilotosBody');
+            body.innerHTML = '';
+            data.drivers.forEach((driver, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="sticky-col col-pos">${index + 1}º</td>
+                    <td class="sticky-col col-piloto" contenteditable="true" onblur="editDriverName(${driver.id}, this.innerText)">${driver.name}</td>
+                    <td class="sticky-col col-equipe" contenteditable="true" onblur="editDriverTeam(${driver.id}, this.innerText)">${driver.team}</td>
+                    <td class="sticky-col col-pontos">${driver.totalPoints}</td>
+                    <td class="sticky-col col-vitorias">${driver.wins}</td>
+                `;
+
+                data.races.forEach(race => {
+                    const td = document.createElement('td');
+                    if(race.type === 'Sprint') td.className = 'sprint-col';
+                    const val = driver.results[race.id] || '';
+                    td.innerHTML = `<input type="text" value="${val}" onchange="updateResult(${driver.id}, '${race.id}', this.value)">`;
+                    tr.appendChild(td);
+                });
+                body.appendChild(tr);
+            });
+            renderConstructors();
+        }
+
+        function renderConstructors() {
+            const teams = {};
+            data.drivers.forEach(d => {
+                if (!teams[d.team]) teams[d.team] = 0;
+                teams[d.team] += d.totalPoints;
+            });
+            const sortedTeams = Object.keys(teams).map(name => ({ name, points: teams[name] })).sort((a, b) => b.points - a.points);
+            const body = document.getElementById('construtoresBody');
+            body.innerHTML = '';
+            sortedTeams.forEach((team, index) => {
+                body.innerHTML += `<tr><td>${index + 1}º</td><td style="text-align:left; font-weight:bold;">${team.name}</td><td>${team.points}</td></tr>`;
+            });
+        }
+
+        function editDriverName(id, val) { data.drivers.find(d => d.id === id).name = val; saveData(); }
+        function editDriverTeam(id, val) { data.drivers.find(d => d.id === id).team = val; saveAndRender(); }
+
+        function exportData() {
+            const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = `f1_campeonato.json`; a.click();
+        }
+
+        function importData(event) {
+            const reader = new FileReader();
+            reader.onload = (e) => { data = JSON.parse(e.target.result); saveAndRender(); };
+            reader.readAsText(event.target.files[0]);
+        }
+
+        function resetData() { if(confirm("Apagar tudo?")) { data = { drivers: [], races: [] }; saveAndRender(); } }
+
+        init();
+    </script>
+</body>
+</html>
