@@ -159,19 +159,31 @@
             }
         }
 
+        // ALTERAÇÃO 1: Função atualizada para aceitar texto NC
         function updateResult(driverId, raceId, position) {
             const driver = data.drivers.find(d => d.id == driverId);
-            if (position === "" || isNaN(position)) delete driver.results[raceId];
-            else driver.results[raceId] = parseInt(position);
+            const val = position.toUpperCase().trim();
+
+            if (val === "") {
+                delete driver.results[raceId];
+            } else if (val === "NC") {
+                driver.results[raceId] = "NC";
+            } else if (!isNaN(val)) {
+                driver.results[raceId] = parseInt(val);
+            } else {
+                driver.results[raceId] = val; // Aceita outros textos se necessário
+            }
             saveAndRender();
         }
 
+        // ALTERAÇÃO 2: Garante que NC some 0 pontos
         function calculatePoints(driver) {
             let total = 0; let wins = 0;
             data.races.forEach(race => {
                 const pos = driver.results[race.id];
                 if (pos) {
                     const pts = race.type === 'GP' ? GP_POINTS : SPRINT_POINTS;
+                    // Se pos não for número (ex: NC), pts[pos] será undefined, então soma 0
                     total += pts[pos] || 0;
                     if (race.type === 'GP' && pos === 1) wins++;
                 }
@@ -222,7 +234,11 @@
                     const td = document.createElement('td');
                     if(race.type === 'Sprint') td.className = 'sprint-col';
                     const val = driver.results[race.id] || '';
-                    td.innerHTML = `<input type="text" value="${val}" onchange="updateResult(${driver.id}, '${race.id}', this.value)">`;
+                    
+                    // ALTERAÇÃO 3: Lógica para deixar o NC vermelho e em negrito
+                    const style = val === 'NC' ? 'color: red; font-weight: bold;' : 'color: black;';
+                    
+                    td.innerHTML = `<input type="text" style="${style}" value="${val}" onchange="updateResult(${driver.id}, '${race.id}', this.value)">`;
                     tr.appendChild(td);
                 });
                 body.appendChild(tr);
