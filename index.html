@@ -9,9 +9,8 @@
             --f1-red: #e10600;
             --dark-bg: #15151e;
             --cell-border: #38383f;
-            /* Larguras das colunas fixas */
-            --w-pos: 50px;
-            --w-piloto: 150px;
+            --w-pos: 60px;
+            --w-piloto: 160px;
             --w-equipe: 130px;
             --w-pontos: 70px;
             --w-vitorias: 70px;
@@ -42,7 +41,6 @@
         .btn-export { background-color: #2e7d32; }
         .btn-import { background-color: #1976d2; }
 
-        /* Container com scroll */
         .table-container { 
             overflow-x: auto; 
             margin-bottom: 40px; 
@@ -53,27 +51,17 @@
         }
 
         table { border-collapse: separate; border-spacing: 0; width: 100%; color: black; font-size: 0.9em; }
-
         th, td { border: 0.5px solid #ccc; padding: 8px; text-align: center; white-space: nowrap; }
 
-        /* Estilo para colunas fixas (Sticky) */
-        .sticky-col {
-            position: sticky;
-            background-color: #f9f9f9 !important;
-            z-index: 2;
-        }
-
-        /* Ajuste de profundidade para o cabeçalho fixo */
+        .sticky-col { position: sticky; background-color: #f9f9f9 !important; z-index: 2; }
         th.sticky-col { z-index: 4; background-color: #eee !important; }
 
-        /* Posicionamento de cada coluna fixa */
         .col-pos { left: 0; min-width: var(--w-pos); width: var(--w-pos); }
         .col-piloto { left: var(--w-pos); min-width: var(--w-piloto); width: var(--w-piloto); text-align: left; font-weight: bold; }
         .col-equipe { left: calc(var(--w-pos) + var(--w-piloto)); min-width: var(--w-equipe); width: var(--w-equipe); font-style: italic; color: #555; }
         .col-pontos { left: calc(var(--w-pos) + var(--w-piloto) + var(--w-equipe)); min-width: var(--w-pontos); width: var(--w-pontos); font-weight: bold; }
         .col-vitorias { left: calc(var(--w-pos) + var(--w-piloto) + var(--w-equipe) + var(--w-pontos)); min-width: var(--w-vitorias); width: var(--w-vitorias); }
 
-        /* Cabeçalho superior (GPs) */
         thead th { position: sticky; top: 0; z-index: 3; background-color: #eee; }
 
         input[type="text"] {
@@ -87,6 +75,16 @@
 
         .sprint-col { background-color: #e3f2fd; }
         .header-gp { min-width: 60px; }
+
+        /* Cores de Pódio */
+        .gold { background-color: #FFD700 !important; font-weight: bold; }
+        .silver { background-color: #C0C0C0 !important; font-weight: bold; }
+        .bronze { background-color: #CD7F32 !important; font-weight: bold; color: white !important; }
+
+        /* Indicadores de Movimento */
+        .up { color: #2e7d32; font-size: 0.8em; }
+        .down { color: #e10600; font-size: 0.8em; }
+        .stable { color: #999; font-size: 0.8em; }
     </style>
 </head>
 <body>
@@ -107,8 +105,7 @@
     <div class="table-container">
         <table id="pilotosTable">
             <thead>
-                <tr id="headerRow">
-                    </tr>
+                <tr id="headerRow"></tr>
             </thead>
             <tbody id="pilotosBody"></tbody>
         </table>
@@ -130,7 +127,6 @@
 
     <script>
         let data = { drivers: [], races: [] };
-
         const GP_POINTS = { 1:25, 2:18, 3:15, 4:12, 5:10, 6:8, 7:6, 8:4, 9:2, 10:1 };
         const SPRINT_POINTS = { 1:8, 2:7, 3:6, 4:5, 5:4, 6:3, 7:2, 8:1 };
 
@@ -159,48 +155,50 @@
             }
         }
 
-        // ALTERAÇÃO 1: Função atualizada para aceitar texto NC
         function updateResult(driverId, raceId, position) {
             const driver = data.drivers.find(d => d.id == driverId);
             const val = position.toUpperCase().trim();
-
-            if (val === "") {
-                delete driver.results[raceId];
-            } else if (val === "NC") {
-                driver.results[raceId] = "NC";
-            } else if (!isNaN(val)) {
-                driver.results[raceId] = parseInt(val);
-            } else {
-                driver.results[raceId] = val; // Aceita outros textos se necessário
-            }
+            if (val === "") delete driver.results[raceId];
+            else if (val === "NC") driver.results[raceId] = "NC";
+            else if (!isNaN(val)) driver.results[raceId] = parseInt(val);
+            else driver.results[raceId] = val;
             saveAndRender();
         }
 
-        // ALTERAÇÃO 2: Garante que NC some 0 pontos
-        function calculatePoints(driver) {
+        function calculatePoints(driver, upToRaceIndex = data.races.length) {
             let total = 0; let wins = 0;
-            data.races.forEach(race => {
+            for (let i = 0; i < upToRaceIndex; i++) {
+                const race = data.races[i];
                 const pos = driver.results[race.id];
                 if (pos) {
                     const pts = race.type === 'GP' ? GP_POINTS : SPRINT_POINTS;
-                    // Se pos não for número (ex: NC), pts[pos] será undefined, então soma 0
                     total += pts[pos] || 0;
                     if (race.type === 'GP' && pos === 1) wins++;
                 }
-            });
+            }
             return { total, wins };
         }
 
         function saveAndRender() { saveData(); render(); }
 
         function render() {
+            // Ranking Atual
             data.drivers.forEach(d => {
                 const stats = calculatePoints(d);
                 d.totalPoints = stats.total; d.wins = stats.wins;
             });
+            
+            // Gerar Ranking Anterior (para setas de subiu/desceu)
+            let prevRanking = [];
+            if (data.races.length > 0) {
+                prevRanking = [...data.drivers].map(d => {
+                    const stats = calculatePoints(d, data.races.length - 1);
+                    return { id: d.id, pts: stats.total, wins: stats.wins };
+                }).sort((a, b) => b.pts - a.pts || b.wins - a.wins);
+            }
+
             data.drivers.sort((a, b) => b.totalPoints - a.totalPoints || b.wins - a.wins);
 
-            // Renderizar Cabeçalho
             const headerRow = document.getElementById('headerRow');
             headerRow.innerHTML = `
                 <th class="sticky-col col-pos">Pos</th>
@@ -217,13 +215,20 @@
                 headerRow.appendChild(th);
             });
 
-            // Renderizar Pilotos
             const body = document.getElementById('pilotosBody');
             body.innerHTML = '';
             data.drivers.forEach((driver, index) => {
+                // Cálculo da seta de posição
+                let trend = '<span class="stable">●</span>';
+                if (prevRanking.length > 0) {
+                    const oldPos = prevRanking.findIndex(p => p.id === driver.id);
+                    if (oldPos > index) trend = '<span class="up">▲</span>';
+                    else if (oldPos < index) trend = '<span class="down">▼</span>';
+                }
+
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td class="sticky-col col-pos">${index + 1}º</td>
+                    <td class="sticky-col col-pos">${trend} ${index + 1}º</td>
                     <td class="sticky-col col-piloto" contenteditable="true" onblur="editDriverName(${driver.id}, this.innerText)">${driver.name}</td>
                     <td class="sticky-col col-equipe" contenteditable="true" onblur="editDriverTeam(${driver.id}, this.innerText)">${driver.team}</td>
                     <td class="sticky-col col-pontos">${driver.totalPoints}</td>
@@ -235,8 +240,17 @@
                     if(race.type === 'Sprint') td.className = 'sprint-col';
                     const val = driver.results[race.id] || '';
                     
-                    // ALTERAÇÃO 3: Lógica para deixar o NC vermelho e em negrito
-                    const style = val === 'NC' ? 'color: red; font-weight: bold;' : 'color: black;';
+                    // Lógica de Cores (NC em vermelho, Pódio em cores metálicas)
+                    let style = 'color: black;';
+                    if (val === 'NC') {
+                        style = 'color: red; font-weight: bold;';
+                    } else if (val === 1) {
+                        td.classList.add('gold');
+                    } else if (val === 2) {
+                        td.classList.add('silver');
+                    } else if (val === 3) {
+                        td.classList.add('bronze');
+                    }
                     
                     td.innerHTML = `<input type="text" style="${style}" value="${val}" onchange="updateResult(${driver.id}, '${race.id}', this.value)">`;
                     tr.appendChild(td);
@@ -262,20 +276,16 @@
 
         function editDriverName(id, val) { data.drivers.find(d => d.id === id).name = val; saveData(); }
         function editDriverTeam(id, val) { data.drivers.find(d => d.id === id).team = val; saveAndRender(); }
-
         function exportData() {
             const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url; a.download = `f1_campeonato.json`; a.click();
+            a.href = URL.createObjectURL(blob); a.download = `f1_campeonato.json`; a.click();
         }
-
         function importData(event) {
             const reader = new FileReader();
             reader.onload = (e) => { data = JSON.parse(e.target.result); saveAndRender(); };
             reader.readAsText(event.target.files[0]);
         }
-
         function resetData() { if(confirm("Apagar tudo?")) { data = { drivers: [], races: [] }; saveAndRender(); } }
 
         init();
