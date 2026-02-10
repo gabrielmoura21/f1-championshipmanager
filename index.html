@@ -49,10 +49,16 @@
             border-radius: 4px;
             max-width: 100%;
             border: 1px solid #ccc;
+            width: fit-content; 
         }
 
-        table { border-collapse: separate; border-spacing: 0; width: 100%; color: black; font-size: 0.9em; }
+        table { border-collapse: separate; border-spacing: 0; width: auto; color: black; font-size: 0.9em; }
         th, td { border: 0.5px solid #ccc; padding: 10px 8px; text-align: center; white-space: nowrap; height: 45px; }
+
+        /* Ajuste específico para a tabela de construtores ficar esteticamente melhor */
+        #construtoresTable { width: 100%; table-layout: fixed; }
+        #construtoresTable th:nth-child(1), #construtoresTable td:nth-child(1) { width: 60px; }
+        #construtoresTable th:nth-child(3), #construtoresTable td:nth-child(3) { width: 100px; }
 
         .sticky-col { 
             position: sticky; 
@@ -69,11 +75,10 @@
             width: var(--w-piloto); 
             text-align: left; 
             font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 8px;
             border-right: 2px solid #ddd !important;
         }
+        .pilot-cell-wrapper { display: flex; align-items: center; gap: 8px; }
+
         .col-equipe { left: calc(var(--w-pos) + var(--w-piloto)); min-width: var(--w-equipe); width: var(--w-equipe); font-style: italic; color: #555; }
         .col-pontos { left: calc(var(--w-pos) + var(--w-piloto) + var(--w-equipe)); min-width: var(--w-pontos); width: var(--w-pontos); font-weight: bold; }
         .col-vitorias { left: calc(var(--w-pos) + var(--w-piloto) + var(--w-equipe) + var(--w-pontos)); min-width: var(--w-vitorias); width: var(--w-vitorias); }
@@ -132,7 +137,7 @@
         <button class="btn-export" onclick="exportData()">💾 Exportar Dados</button>
         <button class="btn-import" onclick="document.getElementById('importFile').click()">📂 Importar Dados</button>
         <input type="file" id="importFile" style="display:none" onchange="importData(event)">
-        <button style="background: #555" onclick="resetData()">Limpar Tudo</button>
+        <button style="background: #555" onclick="resetData()">🗑️Limpar Tudo</button>
     </div>
 
     <h2>Classificação de Pilotos</h2>
@@ -151,7 +156,7 @@
     <div style="display: flex; gap: 20px; flex-wrap: wrap;">
         <div style="flex: 1; min-width: 300px;">
             <h2>Construtores</h2>
-            <div class="table-container">
+            <div class="table-container" style="width: 100%;">
                 <table id="construtoresTable">
                     <thead>
                         <tr><th>Pos</th><th>Equipe</th><th>Pontos</th></tr>
@@ -208,7 +213,7 @@
             const driver = data.drivers.find(d => d.id == driverId);
             const val = position.toUpperCase().trim();
             if (val === "") delete driver.results[raceId];
-            else if (val === "NC") driver.results[raceId] = "NC";
+            else if (["NC", "DSQ", "NP"].includes(val)) driver.results[raceId] = val;
             else if (!isNaN(val)) driver.results[raceId] = parseInt(val);
             else driver.results[raceId] = val;
             saveAndRender();
@@ -276,8 +281,10 @@
                 tr.innerHTML = `
                     <td class="sticky-col col-pos">${trend} ${index + 1}º</td>
                     <td class="sticky-col col-piloto">
-                        <input type="color" value="${driver.color || '#e10600'}" onchange="updateColor(${driver.id}, this.value)">
-                        <span contenteditable="true" onblur="editDriverName(${driver.id}, this.innerText)">${driver.name}</span>
+                        <div class="pilot-cell-wrapper">
+                            <input type="color" value="${driver.color || '#e10600'}" onchange="updateColor(${driver.id}, this.value)">
+                            <span contenteditable="true" onblur="editDriverName(${driver.id}, this.innerText)">${driver.name}</span>
+                        </div>
                     </td>
                     <td class="sticky-col col-equipe" contenteditable="true" onblur="editDriverTeam(${driver.id}, this.innerText)">${driver.team}</td>
                     <td class="sticky-col col-pontos">${driver.totalPoints}</td>
@@ -289,7 +296,7 @@
                     if(race.type === 'Sprint') td.className = 'sprint-col';
                     const val = driver.results[race.id] || '';
                     let style = 'color: black;';
-                    if (val === 'NC') style = 'color: red; font-weight: bold;';
+                    if (['NC', 'DSQ', 'NP'].includes(val)) style = 'color: red; font-weight: bold;';
                     else if (val === 1) td.classList.add('gold');
                     else if (val === 2) td.classList.add('silver');
                     else if (val === 3) td.classList.add('bronze');
@@ -324,9 +331,18 @@
                         const res1 = p1.results[race.id];
                         const res2 = p2.results[race.id];
                         
-                        if (res1 && res2 && !isNaN(res1) && !isNaN(res2)) {
-                            if (res1 < res2) score1++;
-                            else if (res2 < res1) score2++;
+                        const getVal = (v) => {
+                            if (v === undefined || v === null || v === "") return null;
+                            if (["NC", "DSQ", "NP"].includes(v)) return 99;
+                            return isNaN(v) ? null : parseInt(v);
+                        };
+
+                        const v1 = getVal(res1);
+                        const v2 = getVal(res2);
+
+                        if (v1 !== null && v2 !== null && v1 !== v2) {
+                            if (v1 < v2) score1++;
+                            else score2++;
                         }
                     });
 
@@ -359,7 +375,7 @@
                     borderColor: driver.color || '#e10600',
                     backgroundColor: driver.color || '#e10600',
                     tension: 0.15,
-                    hidden: index >= 5 // Apenas os 5 melhores ficam visíveis por padrão
+                    hidden: index >= 5 
                 };
             });
             if (myChart) myChart.destroy();
