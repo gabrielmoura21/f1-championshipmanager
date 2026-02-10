@@ -279,7 +279,7 @@
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td class="sticky-col col-pos">${trend} ${index + 1}º</td>
+                    <td class="sticky-col col-pos" onclick="deleteDriver(${driver.id})" style="cursor:pointer" title="Clique para excluir piloto">${trend} ${index + 1}º</td>
                     <td class="sticky-col col-piloto">
                         <div class="pilot-cell-wrapper">
                             <input type="color" value="${driver.color || '#e10600'}" onchange="updateColor(${driver.id}, this.value)">
@@ -408,6 +408,14 @@
         function editDriverName(id, val) { data.drivers.find(d => d.id === id).name = val; saveData(); updateChart(); }
         function editDriverTeam(id, val) { data.drivers.find(d => d.id === id).team = val; saveAndRender(); }
         
+        function deleteDriver(id) {
+            const driver = data.drivers.find(d => d.id === id);
+            if(confirm(`Deseja excluir permanentemente o piloto ${driver.name}?`)) {
+                data.drivers = data.drivers.filter(d => d.id !== id);
+                saveAndRender();
+            }
+        }
+
         function exportData() {
             const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
             const a = document.createElement('a');
