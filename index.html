@@ -14,7 +14,7 @@
             --cell-border: #38383f;
             --w-pos: 60px;
             --w-piloto: 180px;
-            --w-equipe: 130px;
+            --w-equipe: 160px;
             --w-pontos: 70px;
             --w-vitorias: 70px;
         }
@@ -80,7 +80,17 @@
         }
         .pilot-cell-wrapper { display: flex; align-items: center; gap: 8px; }
 
-        .col-equipe { left: calc(var(--w-pos) + var(--w-piloto)); min-width: var(--w-equipe); width: var(--w-equipe); font-style: italic; color: #555; }
+        .col-equipe { 
+            left: calc(var(--w-pos) + var(--w-piloto)); 
+            min-width: var(--w-equipe); 
+            width: var(--w-equipe); 
+            font-style: italic; 
+            color: #555; 
+            text-align: left;
+        }
+        .team-content { display: flex; align-items: center; gap: 8px; }
+        .team-logo { width: 22px; height: 22px; object-fit: contain; flex-shrink: 0; }
+
         .col-pontos { left: calc(var(--w-pos) + var(--w-piloto) + var(--w-equipe)); min-width: var(--w-pontos); width: var(--w-pontos); font-weight: bold; }
         .col-vitorias { left: calc(var(--w-pos) + var(--w-piloto) + var(--w-equipe) + var(--w-pontos)); min-width: var(--w-vitorias); width: var(--w-vitorias); }
 
@@ -186,6 +196,32 @@
         let isEditEnabled = false;
         const GP_POINTS = { 1:25, 2:18, 3:15, 4:12, 5:10, 6:8, 7:6, 8:4, 9:2, 10:1 };
         const SPRINT_POINTS = { 1:8, 2:7, 3:6, 4:5, 5:4, 6:3, 7:2, 8:1 };
+
+        function getTeamLogoHtml(teamName) {
+            const name = teamName.toLowerCase().trim();
+            const logoMap = {
+                "ferrari": "https://media.formula1.com/content/dam/fom-website/teams/2024/ferrari-logo.png",
+                "mercedes": "https://media.formula1.com/content/dam/fom-website/teams/2024/mercedes-logo.png",
+                "red bull": "https://media.formula1.com/content/dam/fom-website/teams/2024/red-bull-racing-logo.png",
+                "mclaren": "https://media.formula1.com/content/dam/fom-website/teams/2024/mclaren-logo.png",
+                "alpine": "https://media.formula1.com/content/dam/fom-website/teams/2024/alpine-logo.png",
+                "aston martin": "https://media.formula1.com/content/dam/fom-website/teams/2024/aston-martin-logo.png",
+                "williams": "https://media.formula1.com/content/dam/fom-website/teams/2024/williams-logo.png",
+                "haas": "https://media.formula1.com/content/dam/fom-website/teams/2024/haas-f1-team-logo.png",
+                "sauber": "https://media.formula1.com/content/dam/fom-website/teams/2024/kick-sauber-logo.png",
+                "kick": "https://media.formula1.com/content/dam/fom-website/teams/2024/kick-sauber-logo.png",
+                "racing bulls": "https://media.formula1.com/content/dam/fom-website/teams/2024/rb-logo.png",
+                "rb": "https://media.formula1.com/content/dam/fom-website/teams/2024/rb-logo.png",
+                "vcarb": "https://media.formula1.com/content/dam/fom-website/teams/2024/rb-logo.png"
+            };
+
+            for (let key in logoMap) {
+                if (name.includes(key)) {
+                    return `<img src="${logoMap[key]}" class="team-logo" alt="">`;
+                }
+            }
+            return ""; 
+        }
 
         function init() {
             const saved = localStorage.getItem('f1_manager_data');
@@ -307,7 +343,12 @@
                             <span contenteditable="${isEditEnabled}" onblur="editDriverName(${driver.id}, this.innerText)">${driver.name}</span>
                         </div>
                     </td>
-                    <td class="sticky-col col-equipe" contenteditable="${isEditEnabled}" onblur="editDriverTeam(${driver.id}, this.innerText)">${driver.team}</td>
+                    <td class="sticky-col col-equipe">
+                        <div class="team-content">
+                            ${getTeamLogoHtml(driver.team)}
+                            <span contenteditable="${isEditEnabled}" onblur="editDriverTeam(${driver.id}, this.innerText)">${driver.team}</span>
+                        </div>
+                    </td>
                     <td class="sticky-col col-pontos">${driver.totalPoints}</td>
                     <td class="sticky-col col-vitorias">${driver.wins}</td>
                 `;
@@ -371,13 +412,25 @@
         }
 
         function updateColor(id, color) { if (!isEditEnabled) return; data.drivers.find(d => d.id === id).color = color; saveAndRender(); }
+        
         function renderConstructors() {
             const teams = {};
             data.drivers.forEach(d => { if (!teams[d.team]) teams[d.team] = 0; teams[d.team] += d.totalPoints; });
             const sortedTeams = Object.keys(teams).map(name => ({ name, points: teams[name] })).sort((a, b) => b.points - a.points);
             const body = document.getElementById('construtoresBody');
             body.innerHTML = '';
-            sortedTeams.forEach((team, index) => { body.innerHTML += `<tr><td>${index + 1}º</td><td style="text-align:left; font-weight:bold;">${team.name}</td><td>${team.points}</td></tr>`; });
+            sortedTeams.forEach((team, index) => { 
+                body.innerHTML += `<tr>
+                    <td>${index + 1}º</td>
+                    <td style="text-align:left; font-weight:bold;">
+                        <div class="team-content">
+                            ${getTeamLogoHtml(team.name)}
+                            <span>${team.name}</span>
+                        </div>
+                    </td>
+                    <td>${team.points}</td>
+                </tr>`; 
+            });
         }
 
         function editDriverName(id, val) { if (!isEditEnabled) return; data.drivers.find(d => d.id === id).name = val; saveData(); updateChart(); }
