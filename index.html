@@ -57,7 +57,6 @@
         table { border-collapse: separate; border-spacing: 0; width: auto; color: black; font-size: 0.9em; }
         th, td { border: 0.5px solid #ccc; padding: 10px 8px; text-align: center; white-space: nowrap; height: 45px; }
 
-        /* Ajuste específico para a tabela de construtores ficar esteticamente melhor */
         #construtoresTable { width: 100%; table-layout: fixed; }
         #construtoresTable th:nth-child(1), #construtoresTable td:nth-child(1) { width: 60px; }
         #construtoresTable th:nth-child(3), #construtoresTable td:nth-child(3) { width: 100px; }
@@ -97,8 +96,10 @@
             background: transparent;
         }
         input[type="text"]:focus { border-color: var(--f1-red); background: white; outline: none; }
+        input[type="text"]:disabled { color: inherit; opacity: 1; cursor: default; }
         
         input[type="color"] { border: none; width: 22px; height: 22px; cursor: pointer; background: none; padding: 0; flex-shrink: 0; }
+        input[type="color"]:disabled { cursor: default; }
 
         .sprint-col { background-color: #e3f2fd !important; }
         .header-gp { min-width: 60px; }
@@ -126,13 +127,18 @@
             margin-bottom: 10px;
             border-radius: 4px;
         }
+        
+        #editToggle { background-color: #444; margin-bottom: 10px; }
+        #editToggle.active { background-color: #f1c40f; color: #000; }
     </style>
 </head>
 <body>
 
     <h1><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/F1.svg/1280px-F1.svg.png" alt="F1 Logo" style="height: 30px; margin-right: 15px; vertical-align: middle;"> F1 Championship Manager</h1>
 
-    <div class="controls">
+    <button id="editToggle" onclick="toggleEdit()">🔓 Modo Edição: Desativado</button>
+
+    <div class="controls" id="adminControls" style="display: none;">
         <button onclick="addDriver()">+ Adicionar Piloto</button>
         <button onclick="addRace('GP')">+ Adicionar GP</button>
         <button onclick="addRace('Sprint')">+ Adicionar Sprint</button>
@@ -177,6 +183,7 @@
     <script>
         let data = { drivers: [], races: [] };
         let myChart = null;
+        let isEditEnabled = false;
         const GP_POINTS = { 1:25, 2:18, 3:15, 4:12, 5:10, 6:8, 7:6, 8:4, 9:2, 10:1 };
         const SPRINT_POINTS = { 1:8, 2:7, 3:6, 4:5, 5:4, 6:3, 7:2, 8:1 };
 
@@ -186,24 +193,30 @@
             render();
         }
 
+        function toggleEdit() {
+            isEditEnabled = !isEditEnabled;
+            const btn = document.getElementById('editToggle');
+            const controls = document.getElementById('adminControls');
+            btn.innerText = isEditEnabled ? "🔒 Modo Edição: Ativado" : "🔓 Modo Edição: Desativado";
+            btn.classList.toggle('active', isEditEnabled);
+            controls.style.display = isEditEnabled ? 'flex' : 'none';
+            render();
+        }
+
         function saveData() { localStorage.setItem('f1_manager_data', JSON.stringify(data)); }
 
         function addDriver() {
+            if (!isEditEnabled) return;
             const name = prompt("Nome do Piloto:");
             const team = prompt("Nome da Equipe:");
             if (name && team) {
-                data.drivers.push({ 
-                    id: Date.now(), 
-                    name, 
-                    team, 
-                    color: '#e10600', 
-                    results: {} 
-                });
+                data.drivers.push({ id: Date.now(), name, team, color: '#e10600', results: {} });
                 saveAndRender();
             }
         }
 
         function addRace(type) {
+            if (!isEditEnabled) return;
             const name = prompt(`Nome do ${type} (Ex: AUS, JED):`);
             if (name) {
                 data.races.push({ id: 'r' + Date.now(), name: name.toUpperCase(), type });
@@ -212,6 +225,7 @@
         }
 
         function updateResult(driverId, raceId, position) {
+            if (!isEditEnabled) return;
             const driver = data.drivers.find(d => d.id == driverId);
             const val = position.toUpperCase().trim();
             if (val === "") delete driver.results[raceId];
@@ -265,7 +279,10 @@
                 const th = document.createElement('th');
                 th.className = `header-gp ${race.type === 'Sprint' ? 'sprint-col' : ''}`;
                 th.innerText = race.name + (race.type === 'Sprint' ? ' (S)' : '');
-                th.onclick = () => { if(confirm('Excluir corrida?')) { data.races = data.races.filter(r => r.id !== race.id); saveAndRender(); }};
+                if (isEditEnabled) {
+                    th.style.cursor = "pointer";
+                    th.onclick = () => { if(confirm('Excluir corrida?')) { data.races = data.races.filter(r => r.id !== race.id); saveAndRender(); }};
+                }
                 headerRow.appendChild(th);
             });
 
@@ -280,15 +297,17 @@
                 }
 
                 const tr = document.createElement('tr');
+                const deleteAction = isEditEnabled ? `onclick="deleteDriver(${driver.id})" style="cursor:pointer" title="Excluir"` : "";
+                
                 tr.innerHTML = `
-                    <td class="sticky-col col-pos" onclick="deleteDriver(${driver.id})" style="cursor:pointer" title="Clique para excluir piloto">${trend} ${index + 1}º</td>
+                    <td class="sticky-col col-pos" ${deleteAction}>${trend} ${index + 1}º</td>
                     <td class="sticky-col col-piloto">
                         <div class="pilot-cell-wrapper">
-                            <input type="color" value="${driver.color || '#e10600'}" onchange="updateColor(${driver.id}, this.value)">
-                            <span contenteditable="true" onblur="editDriverName(${driver.id}, this.innerText)">${driver.name}</span>
+                            <input type="color" value="${driver.color || '#e10600'}" onchange="updateColor(${driver.id}, this.value)" ${!isEditEnabled ? 'disabled' : ''}>
+                            <span contenteditable="${isEditEnabled}" onblur="editDriverName(${driver.id}, this.innerText)">${driver.name}</span>
                         </div>
                     </td>
-                    <td class="sticky-col col-equipe" contenteditable="true" onblur="editDriverTeam(${driver.id}, this.innerText)">${driver.team}</td>
+                    <td class="sticky-col col-equipe" contenteditable="${isEditEnabled}" onblur="editDriverTeam(${driver.id}, this.innerText)">${driver.team}</td>
                     <td class="sticky-col col-pontos">${driver.totalPoints}</td>
                     <td class="sticky-col col-vitorias">${driver.wins}</td>
                 `;
@@ -302,7 +321,7 @@
                     else if (val === 1) td.classList.add('gold');
                     else if (val === 2) td.classList.add('silver');
                     else if (val === 3) td.classList.add('bronze');
-                    td.innerHTML = `<input type="text" style="${style}" value="${val}" onchange="updateResult(${driver.id}, '${race.id}', this.value)">`;
+                    td.innerHTML = `<input type="text" style="${style}" value="${val}" onchange="updateResult(${driver.id}, '${race.id}', this.value)" ${!isEditEnabled ? 'disabled' : ''}>`;
                     tr.appendChild(td);
                 });
                 body.appendChild(tr);
@@ -316,43 +335,18 @@
             const container = document.getElementById('h2hContainer');
             container.innerHTML = '';
             const teams = {};
-            
-            data.drivers.forEach(d => {
-                if (!teams[d.team]) teams[d.team] = [];
-                teams[d.team].push(d);
-            });
-
+            data.drivers.forEach(d => { if (!teams[d.team]) teams[d.team] = []; teams[d.team].push(d); });
             for (let team in teams) {
                 if (teams[team].length > 1) {
-                    const p1 = teams[team][0];
-                    const p2 = teams[team][1];
-                    let score1 = 0;
-                    let score2 = 0;
-
+                    const p1 = teams[team][0]; const p2 = teams[team][1];
+                    let score1 = 0; let score2 = 0;
                     data.races.forEach(race => {
-                        const res1 = p1.results[race.id];
-                        const res2 = p2.results[race.id];
-                        
-                        const getVal = (v) => {
-                            if (v === undefined || v === null || v === "") return null;
-                            if (["NC", "DSQ", "NP"].includes(v)) return 99;
-                            return isNaN(v) ? null : parseInt(v);
-                        };
-
-                        const v1 = getVal(res1);
-                        const v2 = getVal(res2);
-
-                        if (v1 !== null && v2 !== null && v1 !== v2) {
-                            if (v1 < v2) score1++;
-                            else score2++;
-                        }
+                        const res1 = p1.results[race.id]; const res2 = p2.results[race.id];
+                        const getVal = (v) => { if (v === undefined || v === null || v === "") return null; if (["NC", "DSQ", "NP"].includes(v)) return 99; return isNaN(v) ? null : parseInt(v); };
+                        const v1 = getVal(res1); const v2 = getVal(res2);
+                        if (v1 !== null && v2 !== null && v1 !== v2) { if (v1 < v2) score1++; else score2++; }
                     });
-
-                    container.innerHTML += `
-                        <div class="h2h-card">
-                            <small>${team}</small><br>
-                            <strong>${p1.name}</strong> ${score1} x ${score2} <strong>${p2.name}</strong>
-                        </div>`;
+                    container.innerHTML += `<div class="h2h-card"><small>${team}</small><br><strong>${p1.name}</strong> ${score1} x ${score2} <strong>${p2.name}</strong></div>`;
                 }
             }
         }
@@ -361,8 +355,7 @@
             const ctx = document.getElementById('performanceChart').getContext('2d');
             const labels = ['Início', ...data.races.map(r => r.name)];
             const datasets = data.drivers.map((driver, index) => {
-                let currentTotal = 0;
-                const pointsEvolution = [0];
+                let currentTotal = 0; const pointsEvolution = [0];
                 data.races.forEach(race => {
                     const pos = driver.results[race.id];
                     if (pos && !isNaN(pos)) {
@@ -371,64 +364,29 @@
                     }
                     pointsEvolution.push(currentTotal);
                 });
-                return {
-                    label: driver.name,
-                    data: pointsEvolution,
-                    borderColor: driver.color || '#e10600',
-                    backgroundColor: driver.color || '#e10600',
-                    tension: 0.15,
-                    hidden: index >= 5 
-                };
+                return { label: driver.name, data: pointsEvolution, borderColor: driver.color || '#e10600', backgroundColor: driver.color || '#e10600', tension: 0.15, hidden: index >= 5 };
             });
             if (myChart) myChart.destroy();
-            myChart = new Chart(ctx, {
-                type: 'line',
-                data: { labels, datasets },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
-            });
+            myChart = new Chart(ctx, { type: 'line', data: { labels, datasets }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } } });
         }
 
-        function updateColor(id, color) {
-            data.drivers.find(d => d.id === id).color = color;
-            saveAndRender();
-        }
-
+        function updateColor(id, color) { if (!isEditEnabled) return; data.drivers.find(d => d.id === id).color = color; saveAndRender(); }
         function renderConstructors() {
             const teams = {};
-            data.drivers.forEach(d => {
-                if (!teams[d.team]) teams[d.team] = 0;
-                teams[d.team] += d.totalPoints;
-            });
+            data.drivers.forEach(d => { if (!teams[d.team]) teams[d.team] = 0; teams[d.team] += d.totalPoints; });
             const sortedTeams = Object.keys(teams).map(name => ({ name, points: teams[name] })).sort((a, b) => b.points - a.points);
             const body = document.getElementById('construtoresBody');
             body.innerHTML = '';
-            sortedTeams.forEach((team, index) => {
-                body.innerHTML += `<tr><td>${index + 1}º</td><td style="text-align:left; font-weight:bold;">${team.name}</td><td>${team.points}</td></tr>`;
-            });
+            sortedTeams.forEach((team, index) => { body.innerHTML += `<tr><td>${index + 1}º</td><td style="text-align:left; font-weight:bold;">${team.name}</td><td>${team.points}</td></tr>`; });
         }
 
-        function editDriverName(id, val) { data.drivers.find(d => d.id === id).name = val; saveData(); updateChart(); }
-        function editDriverTeam(id, val) { data.drivers.find(d => d.id === id).team = val; saveAndRender(); }
-        
-        function deleteDriver(id) {
-            const driver = data.drivers.find(d => d.id === id);
-            if(confirm(`Deseja excluir permanentemente o piloto ${driver.name}?`)) {
-                data.drivers = data.drivers.filter(d => d.id !== id);
-                saveAndRender();
-            }
-        }
+        function editDriverName(id, val) { if (!isEditEnabled) return; data.drivers.find(d => d.id === id).name = val; saveData(); updateChart(); }
+        function editDriverTeam(id, val) { if (!isEditEnabled) return; data.drivers.find(d => d.id === id).team = val; saveAndRender(); }
+        function deleteDriver(id) { if (!isEditEnabled) return; const driver = data.drivers.find(d => d.id === id); if(confirm(`Excluir piloto ${driver.name}?`)) { data.drivers = data.drivers.filter(d => d.id !== id); saveAndRender(); } }
 
-        function exportData() {
-            const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob); a.download = `f1_campeonato.json`; a.click();
-        }
-        function importData(event) {
-            const reader = new FileReader();
-            reader.onload = (e) => { data = JSON.parse(e.target.result); saveAndRender(); };
-            reader.readAsText(event.target.files[0]);
-        }
-        function resetData() { if(confirm("Apagar tudo?")) { data = { drivers: [], races: [] }; saveAndRender(); } }
+        function exportData() { const blob = new Blob([JSON.stringify(data)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `f1_campeonato.json`; a.click(); }
+        function importData(event) { const reader = new FileReader(); reader.onload = (e) => { data = JSON.parse(e.target.result); saveAndRender(); }; reader.readAsText(event.target.files[0]); }
+        function resetData() { if (!isEditEnabled) return; if(confirm("Apagar tudo?")) { data = { drivers: [], races: [] }; saveAndRender(); } }
 
         init();
     </script>
