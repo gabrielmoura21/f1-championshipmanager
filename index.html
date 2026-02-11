@@ -151,6 +151,7 @@
     <div class="controls" id="adminControls" style="display: none;">
         <button onclick="addDriver()">🏎️ Adicionar Piloto</button>
         <button onclick="loadF1Grid()" style="background-color: #000;">🏎️ Carregar Grid F1</button>
+        <button onclick="loadGameCalendar()" style="background-color: #333;">📅 Carregar Calendário F1 25</button>
         <button onclick="addRace('GP')">🏆Adicionar GP</button>
         <button onclick="addRace('Sprint')">🥇Adicionar Sprint</button>
         <button class="btn-export" onclick="exportData()">💾 Exportar Dados</button>
@@ -254,6 +255,42 @@
             saveAndRender();
         }
 
+        function loadGameCalendar() {
+            if (!confirm("Isso irá ADICIONAR o calendário oficial F1 25 às corridas existentes. Continuar?")) return;
+            
+            let count = 0;
+            const add = (name, type) => {
+                data.races.push({ id: 'r' + Date.now() + (count++), name: name.toUpperCase(), type });
+            };
+
+            add("AUS", "GP");
+            add("CHN", "Sprint"); add("CHN", "GP");
+            add("JPN", "GP");
+            add("BAH", "GP");
+            add("SAU", "GP");
+            add("MIA", "Sprint"); add("MIA", "GP");
+            add("EMI", "GP");
+            add("MON", "GP");
+            add("ESP", "GP");
+            add("CAN", "GP");
+            add("AUT", "GP"); add("AUT(R)", "GP");
+            add("GBR", "GP"); add("SIL(R)", "GP");
+            add("BEL", "Sprint"); add("BEL", "GP");
+            add("HUN", "GP");
+            add("HOL", "GP"); add("ZAN(R)", "GP");
+            add("ITA", "GP");
+            add("AZE", "GP");
+            add("SIN", "GP");
+            add("USA", "Sprint"); add("USA", "GP");
+            add("MEX", "GP");
+            add("BRA", "Sprint"); add("BRA", "GP");
+            add("LAS", "GP");
+            add("QAT", "Sprint"); add("QAT", "GP");
+            add("ABU", "GP");
+
+            saveAndRender();
+        }
+
         function init() {
             const saved = localStorage.getItem('f1_manager_data');
             if (saved) data = JSON.parse(saved);
@@ -324,7 +361,6 @@
                 d.totalPoints = stats.total; d.wins = stats.wins;
             });
             
-            // Lógica Corrigida para o Indicador de Posição
             let lastCompletedRaceIndex = -1;
             for (let i = data.races.length - 1; i >= 0; i--) {
                 const raceHasResults = data.drivers.some(d => d.results[data.races[i].id] !== undefined);
@@ -435,10 +471,22 @@
 
         function updateChart() {
             const ctx = document.getElementById('performanceChart').getContext('2d');
-            const labels = ['Início', ...data.races.map(r => r.name)];
+            
+            let lastRaceIdx = -1;
+            for (let i = 0; i < data.races.length; i++) {
+                const hasResult = data.drivers.some(d => d.results[data.races[i].id] !== undefined && d.results[data.races[i].id] !== "");
+                if (hasResult) lastRaceIdx = i;
+            }
+
+            const activeRaces = data.races.slice(0, lastRaceIdx + 1);
+            
+            const labels = ['Início', ...activeRaces.map(r => r.name)];
+
             const datasets = data.drivers.map((driver, index) => {
-                let currentTotal = 0; const pointsEvolution = [0];
-                data.races.forEach(race => {
+                let currentTotal = 0; 
+                const pointsEvolution = [0]; 
+                
+                activeRaces.forEach(race => {
                     const pos = driver.results[race.id];
                     if (pos && !isNaN(pos)) {
                         const ptsTable = race.type === 'GP' ? GP_POINTS : SPRINT_POINTS;
@@ -446,8 +494,10 @@
                     }
                     pointsEvolution.push(currentTotal);
                 });
+                
                 return { label: driver.name, data: pointsEvolution, borderColor: driver.color || '#e10600', backgroundColor: driver.color || '#e10600', tension: 0.15, hidden: index >= 5 };
             });
+
             if (myChart) myChart.destroy();
             myChart = new Chart(ctx, { type: 'line', data: { labels, datasets }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } } });
         }
