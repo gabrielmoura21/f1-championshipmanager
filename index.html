@@ -224,11 +224,10 @@
             return ""; 
         }
 
-                function loadF1Grid() {
+        function loadF1Grid() {
             if (!confirm("Isso irá adicionar os 20 pilotos atuais. Continuar?")) return;
-            
             const grid = [
-                { name: "Max Verstappen", team: "Red Bull Racing", color: "#0600EF" }, // Azul Marinho Escuro Clássico
+                { name: "Max Verstappen", team: "Red Bull Racing", color: "#0600EF" },
                 { name: "Sergio Perez", team: "Red Bull Racing", color: "#0600EF" },
                 { name: "Lewis Hamilton", team: "Ferrari", color: "#ED1131" },
                 { name: "Charles Leclerc", team: "Ferrari", color: "#ED1131" },
@@ -238,24 +237,22 @@
                 { name: "Kimi Antonelli", team: "Mercedes", color: "#00D7B6" },
                 { name: "Fernando Alonso", team: "Aston Martin", color: "#229971" },
                 { name: "Lance Stroll", team: "Aston Martin", color: "#229971" },
-                { name: "Pierre Gasly", team: "Alpine", color: "#2173B8" }, // Azul Alpine (mais claro/metálico)
+                { name: "Pierre Gasly", team: "Alpine", color: "#2173B8" },
                 { name: "Jack Doohan", team: "Alpine", color: "#2173B8" },
-                { name: "Yuki Tsunoda", team: "Racing Bulls", color: "#6692FF" }, // Azul Elétrico Brilhante
+                { name: "Yuki Tsunoda", team: "Racing Bulls", color: "#6692FF" },
                 { name: "Liam Lawson", team: "Racing Bulls", color: "#6692FF" },
                 { name: "Nico Hulkenberg", team: "Kick Sauber", color: "#01C00E" },
                 { name: "Gabriel Bortoleto", team: "Kick Sauber", color: "#01C00E" },
-                { name: "Alex Albon", team: "Williams", color: "#041E42" }, // Azul Escuro Williams (Midnight)
+                { name: "Alex Albon", team: "Williams", color: "#041E42" },
                 { name: "Carlos Sainz", team: "Williams", color: "#041E42" },
                 { name: "Esteban Ocon", team: "Haas", color: "#9C9FA2" },
                 { name: "Oliver Bearman", team: "Haas", color: "#9C9FA2" }
             ];
-
             grid.forEach(p => {
                 data.drivers.push({ id: Date.now() + Math.random(), name: p.name, team: p.team, color: p.color, results: {} });
             });
             saveAndRender();
         }
-
 
         function init() {
             const saved = localStorage.getItem('f1_manager_data');
@@ -327,10 +324,20 @@
                 d.totalPoints = stats.total; d.wins = stats.wins;
             });
             
+            // Lógica Corrigida para o Indicador de Posição
+            let lastCompletedRaceIndex = -1;
+            for (let i = data.races.length - 1; i >= 0; i--) {
+                const raceHasResults = data.drivers.some(d => d.results[data.races[i].id] !== undefined);
+                if (raceHasResults) {
+                    lastCompletedRaceIndex = i;
+                    break;
+                }
+            }
+
             let prevRanking = [];
-            if (data.races.length > 0) {
+            if (lastCompletedRaceIndex > 0) {
                 prevRanking = [...data.drivers].map(d => {
-                    const stats = calculatePoints(d, data.races.length - 1);
+                    const stats = calculatePoints(d, lastCompletedRaceIndex);
                     return { id: d.id, pts: stats.total, wins: stats.wins };
                 }).sort((a, b) => b.pts - a.pts || b.wins - a.wins);
             }
