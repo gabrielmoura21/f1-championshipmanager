@@ -150,6 +150,7 @@
 
     <div class="controls" id="adminControls" style="display: none;">
         <button onclick="addDriver()">🏎️ Adicionar Piloto</button>
+        <button onclick="loadF1Grid()" style="background-color: #000;">🏎️ Carregar Grid F1</button>
         <button onclick="addRace('GP')">🏆Adicionar GP</button>
         <button onclick="addRace('Sprint')">🥇Adicionar Sprint</button>
         <button class="btn-export" onclick="exportData()">💾 Exportar Dados</button>
@@ -222,6 +223,39 @@
             }
             return ""; 
         }
+
+                function loadF1Grid() {
+            if (!confirm("Isso irá adicionar os 20 pilotos atuais. Continuar?")) return;
+            
+            const grid = [
+                { name: "Max Verstappen", team: "Red Bull Racing", color: "#0600EF" }, // Azul Marinho Escuro Clássico
+                { name: "Sergio Perez", team: "Red Bull Racing", color: "#0600EF" },
+                { name: "Lewis Hamilton", team: "Ferrari", color: "#ED1131" },
+                { name: "Charles Leclerc", team: "Ferrari", color: "#ED1131" },
+                { name: "Lando Norris", team: "McLaren", color: "#F47600" },
+                { name: "Oscar Piastri", team: "McLaren", color: "#F47600" },
+                { name: "George Russell", team: "Mercedes", color: "#00D7B6" },
+                { name: "Kimi Antonelli", team: "Mercedes", color: "#00D7B6" },
+                { name: "Fernando Alonso", team: "Aston Martin", color: "#229971" },
+                { name: "Lance Stroll", team: "Aston Martin", color: "#229971" },
+                { name: "Pierre Gasly", team: "Alpine", color: "#2173B8" }, // Azul Alpine (mais claro/metálico)
+                { name: "Jack Doohan", team: "Alpine", color: "#2173B8" },
+                { name: "Yuki Tsunoda", team: "Racing Bulls", color: "#6692FF" }, // Azul Elétrico Brilhante
+                { name: "Liam Lawson", team: "Racing Bulls", color: "#6692FF" },
+                { name: "Nico Hulkenberg", team: "Kick Sauber", color: "#01C00E" },
+                { name: "Gabriel Bortoleto", team: "Kick Sauber", color: "#01C00E" },
+                { name: "Alex Albon", team: "Williams", color: "#041E42" }, // Azul Escuro Williams (Midnight)
+                { name: "Carlos Sainz", team: "Williams", color: "#041E42" },
+                { name: "Esteban Ocon", team: "Haas", color: "#9C9FA2" },
+                { name: "Oliver Bearman", team: "Haas", color: "#9C9FA2" }
+            ];
+
+            grid.forEach(p => {
+                data.drivers.push({ id: Date.now() + Math.random(), name: p.name, team: p.team, color: p.color, results: {} });
+            });
+            saveAndRender();
+        }
+
 
         function init() {
             const saved = localStorage.getItem('f1_manager_data');
@@ -423,23 +457,45 @@
                 body.innerHTML += `<tr>
                     <td>${index + 1}º</td>
                     <td style="text-align:left; font-weight:bold;">
-                        <div class="team-content">
-                            ${getTeamLogoHtml(team.name)}
-                            <span>${team.name}</span>
-                        </div>
+                        <div class="team-content">${getTeamLogoHtml(team.name)}<span>${team.name}</span></div>
                     </td>
                     <td>${team.points}</td>
                 </tr>`; 
             });
         }
 
-        function editDriverName(id, val) { if (!isEditEnabled) return; data.drivers.find(d => d.id === id).name = val; saveData(); updateChart(); }
-        function editDriverTeam(id, val) { if (!isEditEnabled) return; data.drivers.find(d => d.id === id).team = val; saveAndRender(); }
-        function deleteDriver(id) { if (!isEditEnabled) return; const driver = data.drivers.find(d => d.id === id); if(confirm(`Excluir piloto ${driver.name}?`)) { data.drivers = data.drivers.filter(d => d.id !== id); saveAndRender(); } }
+        function exportData() {
+            const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'f1_2025_data.json';
+            a.click();
+        }
 
-        function exportData() { const blob = new Blob([JSON.stringify(data)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `f1_campeonato.json`; a.click(); }
-        function importData(event) { const reader = new FileReader(); reader.onload = (e) => { data = JSON.parse(e.target.result); saveAndRender(); }; reader.readAsText(event.target.files[0]); }
-        function resetData() { if (!isEditEnabled) return; if(confirm("Apagar tudo?")) { data = { drivers: [], races: [] }; saveAndRender(); } }
+        function importData(event) {
+            const reader = new FileReader();
+            reader.onload = (e) => { data = JSON.parse(e.target.result); render(); };
+            reader.readAsText(event.target.files[0]);
+        }
+
+        function resetData() { if (confirm("Limpar tudo?")) { data = { drivers: [], races: [] }; saveAndRender(); }}
+
+        function editDriverName(id, name) {
+            data.drivers.find(d => d.id === id).name = name;
+            saveAndRender();
+        }
+
+        function editDriverTeam(id, team) {
+            data.drivers.find(d => d.id === id).team = team;
+            saveAndRender();
+        }
+
+        function deleteDriver(id) {
+            if (confirm("Excluir piloto?")) {
+                data.drivers = data.drivers.filter(d => d.id !== id);
+                saveAndRender();
+            }
+        }
 
         init();
     </script>
