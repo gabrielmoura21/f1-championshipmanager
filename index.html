@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -543,8 +542,21 @@
                 if (teams[t].length > 1) {
                     let s1 = 0, s2 = 0; const p1 = teams[t][0], p2 = teams[t][1];
                     data.races.forEach(r => {
-                        const v1 = p1.results[r.id], v2 = p2.results[r.id];
-                        if (v1 && v2 && !isNaN(v1) && !isNaN(v2) && v1 !== v2) { if (v1 < v2) s1++; else s2++; }
+                        let v1 = p1.results[r.id], v2 = p2.results[r.id];
+                        
+                        // Converter NC, NP, DSQ para valores altos para lógica de comparação
+                        const getVal = (v) => {
+                            if (v === undefined || v === "") return null;
+                            if (["NC", "NP", "DSQ"].includes(v)) return 999;
+                            return parseInt(v);
+                        };
+
+                        const val1 = getVal(v1);
+                        const val2 = getVal(v2);
+
+                        if (val1 !== null && val2 !== null && val1 !== val2) { 
+                            if (val1 < val2) s1++; else s2++; 
+                        }
                     });
                     container.innerHTML += `<div class="h2h-card"><small style="color:var(--f1-red)">${t}</small><br><strong>${p1.name}</strong> ${s1} x ${s2} <strong>${p2.name}</strong></div>`;
                 }
@@ -579,10 +591,4 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
 
