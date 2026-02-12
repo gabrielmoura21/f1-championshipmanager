@@ -341,7 +341,10 @@
         <button style="background: #555" onclick="resetData()">🗑️Limpar Tudo</button>
     </div>
 
-    <h2>Classificação de Pilotos</h2>
+    <h2 style="display: flex; justify-content: space-between; align-items: flex-end;">
+        <span>Classificação de Pilotos</span>
+        <span id="racesLeft" style="font-size: 14px; color: #aaa; font-weight: normal; font-family: 'Titillium Web', sans-serif;"></span>
+    </h2>
     <div class="table-container">
         <table id="pilotosTable">
             <thead><tr id="headerRow"></tr></thead>
@@ -627,6 +630,11 @@
             for (let i = data.races.length - 1; i >= 0; i--) {
                 if (data.drivers.some(d => d.results[data.races[i].id] !== undefined)) { lastCompletedRaceIndex = i; break; }
             }
+
+            // Atualização do contador de corridas faltantes
+            const remainingCount = Math.max(0, data.races.length - (lastCompletedRaceIndex + 1));
+            const racesLeftEl = document.getElementById('racesLeft');
+            if (racesLeftEl) racesLeftEl.innerText = `Faltam: ${remainingCount} corridas`;
             
             let prevRanking = [];
             if (lastCompletedRaceIndex > 0) {
