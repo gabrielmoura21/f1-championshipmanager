@@ -287,6 +287,7 @@
         }
 
         .h2h-card {
+            font-family: 'Oswald', sans-serif;
             background: var(--glass-bg);
             border-left: 4px solid var(--f1-red);
             padding: 12px;
@@ -737,7 +738,7 @@
                         const val1 = getVal(v1); const val2 = getVal(v2);
                         if (val1 !== null && val2 !== null && val1 !== val2) { if (val1 < val2) s1++; else s2++; }
                     });
-                    container.innerHTML += `<div class="h2h-card"><small style="color:var(--f1-red)">${t}</small><br><strong>${p1.name.split(' ').pop().toUpperCase()}</strong> ${s1} x ${s2} <strong>${p2.name.split(' ').pop().toUpperCase()}</strong></div>`;
+                    container.innerHTML += `<div class="h2h-card"><small style="color:var(--f1-red)">${t}</small><br>${formatDriverDisplayName(p1.name)} ${s1} x ${s2} ${formatDriverDisplayName(p2.name)}</div>`;
                 }
             }
         }
