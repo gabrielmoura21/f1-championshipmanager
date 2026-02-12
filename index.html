@@ -570,11 +570,34 @@
             for (let i = data.races.length - 1; i >= 0; i--) {
                 if (data.drivers.some(d => d.results[data.races[i].id] !== undefined)) { lastCompletedRaceIndex = i; break; }
             }
+            
+            // Função auxiliar de desempate baseada em melhores posições
+            const tieBreak = (a, b) => {
+                if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
+                if (b.wins !== a.wins) return b.wins - a.wins;
+                
+                // Comparação de melhores posições (1º, 2º, 3º...)
+                for (let p = 1; p <= 20; p++) {
+                    const countA = data.races.filter(r => a.results[r.id] === p).length;
+                    const countB = data.races.filter(r => b.results[r.id] === p).length;
+                    if (countA !== countB) return countB - countA;
+                }
+                
+                // Se persistir o empate, priorizar quem tem qualquer posição numérica sobre status (NC/DSQ/NP)
+                const completedA = data.races.filter(r => typeof a.results[r.id] === 'number').length;
+                const completedB = data.races.filter(r => typeof b.results[r.id] === 'number').length;
+                return completedB - completedA;
+            };
+
             let prevRanking = [];
             if (lastCompletedRaceIndex > 0) {
-                prevRanking = [...data.drivers].map(d => { const stats = calculatePoints(d, lastCompletedRaceIndex); return { id: d.id, pts: stats.total, wins: stats.wins }; }).sort((a, b) => b.pts - a.pts || b.wins - a.wins);
+                prevRanking = [...data.drivers].map(d => { 
+                    const stats = calculatePoints(d, lastCompletedRaceIndex); 
+                    return { ...d, totalPoints: stats.total, wins: stats.wins }; 
+                }).sort(tieBreak);
             }
-            data.drivers.sort((a, b) => b.totalPoints - a.totalPoints || b.wins - a.wins);
+            
+            data.drivers.sort(tieBreak);
             updateMathChances();
 
             const headerRow = document.getElementById('headerRow');
