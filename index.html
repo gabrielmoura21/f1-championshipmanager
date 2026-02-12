@@ -213,6 +213,7 @@
             text-align: left;
         }
 
+        /* Correção da célula de PTS para evitar desalinhamento e transparência */
         .col-pontos { 
             font-family: 'Oswald', sans-serif;
             left: calc(var(--w-pos) + var(--w-piloto) + var(--w-equipe));
@@ -221,6 +222,18 @@
             max-width: var(--w-pontos) !important;
             font-weight: 700; 
             color: inherit;
+            padding: 0 !important;
+            background-color: var(--sticky-bg) !important;
+        }
+
+        .pts-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            width: 100%;
+            line-height: 1.1;
         }
 
         .col-vitorias { 
@@ -375,7 +388,6 @@
         const GP_POINTS = { 1:25, 2:18, 3:15, 4:12, 5:10, 6:8, 7:6, 8:4, 9:2, 10:1 };
         const SPRINT_POINTS = { 1:8, 2:7, 3:6, 4:5, 5:4, 6:3, 7:2, 8:1 };
 
-        // Função para formatar o nome do piloto: Sobrenome em Negrito e CAIXA ALTA
         function formatDriverDisplayName(fullName) {
             const parts = fullName.trim().split(' ');
             if (parts.length <= 1) return fullName;
@@ -497,18 +509,15 @@
             if (!isEditEnabled) return;
             const driver = data.drivers.find(d => d.id == driverId);
             const val = position.toUpperCase().trim();
-
             if (val !== "" && !["NC", "DSQ", "NP"].includes(val) && !isNaN(val)) {
                 const posInt = parseInt(val);
                 const isDuplicate = data.drivers.some(d => d.id !== driverId && d.results[raceId] === posInt);
-                
                 if (isDuplicate) {
                     alert(`Erro: A posição ${posInt}º já foi preenchida nesta corrida!`);
                     render();
                     return;
                 }
             }
-
             if (val === "") delete driver.results[raceId];
             else if (["NC", "DSQ", "NP"].includes(val)) driver.results[raceId] = val;
             else if (!isNaN(val)) driver.results[raceId] = parseInt(val);
@@ -536,16 +545,12 @@
             let remainingPts = 0;
             data.races.forEach(race => {
                 const isCompleted = data.drivers.some(d => d.results[race.id] !== undefined);
-                if (!isCompleted) {
-                    remainingPts += (race.type === 'GP' ? 25 : 8);
-                }
+                if (!isCompleted) { remainingPts += (race.type === 'GP' ? 25 : 8); }
             });
-
             const leader = data.drivers[0];
             let contenders = data.drivers.filter(d => (d.totalPoints + remainingPts) >= leader.totalPoints);
             document.getElementById('remainingPoints').innerText = remainingPts;
             document.getElementById('mathContenders').innerText = contenders.length;
-
             const statusEl = document.getElementById('titleStatus');
             if (remainingPts === 0) {
                 statusEl.innerText = `🏆 CAMPEÃO: ${leader.name}`;
@@ -571,22 +576,15 @@
                 if (data.drivers.some(d => d.results[data.races[i].id] !== undefined)) { lastCompletedRaceIndex = i; break; }
             }
             
-            // Função auxiliar de desempate baseada em melhores posições
             const tieBreak = (a, b) => {
                 if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
                 if (b.wins !== a.wins) return b.wins - a.wins;
-                
-                // Comparação de melhores posições (1º, 2º, 3º...)
                 for (let p = 1; p <= 20; p++) {
                     const countA = data.races.filter(r => a.results[r.id] === p).length;
                     const countB = data.races.filter(r => b.results[r.id] === p).length;
                     if (countA !== countB) return countB - countA;
                 }
-                
-                // Se persistir o empate, priorizar quem tem qualquer posição numérica sobre status (NC/DSQ/NP)
-                const completedA = data.races.filter(r => typeof a.results[r.id] === 'number').length;
-                const completedB = data.races.filter(r => typeof b.results[r.id] === 'number').length;
-                return completedB - completedA;
+                return 0;
             };
 
             let prevRanking = [];
@@ -618,19 +616,44 @@
                     const oldPos = prevRanking.findIndex(p => p.id === driver.id);
                     if (oldPos > index) trend = '<span class="up">▲</span>'; else if (oldPos < index) trend = '<span class="down">▼</span>';
                 }
+
+                // Cálculo da diferença de pontos em relação ao piloto da frente
+                let diffHtml = "";
+                if (index > 0) {
+                    const ahead = data.drivers[index - 1];
+                    const currentGap = ahead.totalPoints - driver.totalPoints;
+                    let diffClass = "stable";
+
+                    if (lastCompletedRaceIndex > 0) {
+                        const prevDriver = prevRanking.find(p => p.id === driver.id);
+                        const prevAhead = prevRanking.find(p => p.id === ahead.id);
+                        if (prevDriver && prevAhead) {
+                            const prevGap = prevAhead.totalPoints - prevDriver.totalPoints;
+                            if (currentGap > prevGap) diffClass = "down"; // Aumentou (Vermelho)
+                            else if (currentGap < prevGap) diffClass = "up"; // Diminuiu (Verde)
+                        }
+                    }
+                    diffHtml = `<span class="${diffClass}" style="font-size: 0.65em; font-weight: 400;">-${currentGap}</span>`;
+                }
+
                 const tr = document.createElement('tr');
                 const teamColor = driver.color || '#e10600';
                 
                 tr.innerHTML = `
                     <td class="sticky-col col-pos">${trend} ${index + 1}º</td>
-                    <td class="sticky-col col-piloto" style="background-color: var(--sticky-bg) !important; border-left: 4px solid ${teamColor} !important;">
+                    <td class="sticky-col col-piloto" style="border-left: 4px solid ${teamColor} !important;">
                         <div class="glow-layer" style="background: linear-gradient(90deg, ${teamColor}33 0%, transparent 100%);"></div>
                         <div class="pilot-cell-wrapper">
                             <span contenteditable="${isEditEnabled}" onblur="editDriverName(${driver.id}, this.innerText)">${formatDriverDisplayName(driver.name)}</span>
                         </div>
                     </td>
                     <td class="sticky-col col-equipe"><div class="team-content">${getTeamLogoHtml(driver.team)}<span contenteditable="${isEditEnabled}" onblur="editDriverTeam(${driver.id}, this.innerText)">${driver.team}</span></div></td>
-                    <td class="sticky-col col-pontos">${driver.totalPoints}</td>
+                    <td class="sticky-col col-pontos">
+                        <div class="pts-container">
+                            <span>${driver.totalPoints}</span>
+                            ${diffHtml}
+                        </div>
+                    </td>
                     <td class="sticky-col col-vitorias">${driver.wins}</td>
                 `;
                 data.races.forEach(race => {
@@ -656,7 +679,6 @@
             for (let i = 0; i < data.races.length; i++) { if (data.drivers.some(d => d.results[data.races[i].id])) lastRaceIdx = i; }
             const activeRaces = data.races.slice(0, lastRaceIdx + 1);
             const labels = ['Start', ...activeRaces.map(r => r.name)];
-            
             const datasets = data.drivers.map((driver, index) => {
                 let currentTotal = 0; const pointsEvolution = [0]; 
                 activeRaces.forEach(race => {
@@ -679,9 +701,7 @@
                 type: 'line', 
                 data: { labels, datasets }, 
                 options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    animation: false,
+                    responsive: true, maintainAspectRatio: false, animation: false,
                     scales: { 
                         y: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#aaa' } }, 
                         x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#aaa' } } 
