@@ -65,7 +65,6 @@
             padding-bottom: 5px; 
         }
 
-        /* Estilização Nova da Calculadora de Título */
         .calculator-panel-compact {
             background: rgba(0, 0, 0, 0.3);
             border: 1px solid var(--glass-border);
@@ -213,7 +212,6 @@
             text-align: left;
         }
 
-        /* Correção da célula de PTS para evitar desalinhamento e transparência */
         .col-pontos { 
             font-family: 'Oswald', sans-serif;
             left: calc(var(--w-pos) + var(--w-piloto) + var(--w-equipe));
@@ -385,6 +383,18 @@
         let data = { drivers: [], races: [] };
         let myChart = null;
         let isEditEnabled = false;
+        
+        // Element cache para estabilidade
+        const dom = {
+            headerRow: document.getElementById('headerRow'),
+            pilotosBody: document.getElementById('pilotosBody'),
+            construtoresBody: document.getElementById('construtoresBody'),
+            h2hContainer: document.getElementById('h2hContainer'),
+            remainingPoints: document.getElementById('remainingPoints'),
+            mathContenders: document.getElementById('mathContenders'),
+            titleStatus: document.getElementById('titleStatus')
+        };
+
         const GP_POINTS = { 1:25, 2:18, 3:15, 4:12, 5:10, 6:8, 7:6, 8:4, 9:2, 10:1 };
         const SPRINT_POINTS = { 1:8, 2:7, 3:6, 4:5, 5:4, 6:3, 7:2, 8:1 };
 
@@ -407,15 +417,17 @@
                 scale: 3, 
                 useCORS: true,
                 logging: false,
-                ignoreElements: (el) => el.tagName === "BUTTON" || el.id === "adminControls" || el.tagName === "INPUT" && el.type !== "text"
+                ignoreElements: (el) => el.tagName === "BUTTON" || el.id === "adminControls" || (el.tagName === "INPUT" && el.type !== "text")
             };
-            html2canvas(area, options).then(canvas => {
+            try {
+                const canvas = await html2canvas(area, options);
                 const link = document.createElement('a');
                 link.download = `F1_Championship_Update_${new Date().toLocaleDateString()}.png`;
                 link.href = canvas.toDataURL("image/png", 1.0);
                 link.click();
+            } finally {
                 btn.innerText = originalText;
-            });
+            }
         }
 
         function toggleTheme() {
@@ -424,24 +436,27 @@
             render();
         }
 
+        const logoMap = {
+            "ferrari": "https://i.imgur.com/5l6wnVb.png",
+            "mercedes": "https://i.imgur.com/vtZKCc5.png",
+            "red bull": "https://i.imgur.com/Q5idNac.png",
+            "mclaren": "https://i.imgur.com/Ub26b0i.png",
+            "alpine": "https://i.imgur.com/DveLvT7.png",
+            "aston martin": "https://i.imgur.com/VMHSp48.png",
+            "williams": "https://i.imgur.com/U7oMWX4.png",
+            "haas": "https://i.imgur.com/dx7z7Kg.png",
+            "sauber": "https://i.imgur.com/MYyEAOA.png",
+            "kick": "https://i.imgur.com/MYyEAOA.png",
+            "racing bulls": "https://i.imgur.com/dcJutpD.png",
+            "rb": "https://i.imgur.com/dcJutpD.png",
+            "vcarb": "https://i.imgur.com/dcJutpD.png"
+        };
+
         function getTeamLogoHtml(teamName) {
             const name = teamName.toLowerCase().trim();
-            const logoMap = {
-                "ferrari": "https://i.imgur.com/5l6wnVb.png",
-                "mercedes": "https://i.imgur.com/vtZKCc5.png",
-                "red bull": "https://i.imgur.com/Q5idNac.png",
-                "mclaren": "https://i.imgur.com/Ub26b0i.png",
-                "alpine": "https://i.imgur.com/DveLvT7.png",
-                "aston martin": "https://i.imgur.com/VMHSp48.png",
-                "williams": "https://i.imgur.com/U7oMWX4.png",
-                "haas": "https://i.imgur.com/dx7z7Kg.png",
-                "sauber": "https://i.imgur.com/MYyEAOA.png",
-                "kick": "https://i.imgur.com/MYyEAOA.png",
-                "racing bulls": "https://i.imgur.com/dcJutpD.png",
-                "rb": "https://i.imgur.com/dcJutpD.png",
-                "vcarb": "https://i.imgur.com/dcJutpD.png"
-            };
-            for (let key in logoMap) { if (name.includes(key)) return `<img src="${logoMap[key]}" class="team-logo" alt="">`; }
+            for (let key in logoMap) { 
+                if (name.includes(key)) return `<img src="${logoMap[key]}" class="team-logo" alt="">`; 
+            }
             return "";
         }
 
@@ -469,14 +484,16 @@
                 { name: "Esteban Ocon", team: "Haas", color: "#B6BABD" },
                 { name: "Oliver Bearman", team: "Haas", color: "#B6BABD" }
             ];
-            grid.forEach(p => { data.drivers.push({ id: Date.now() + Math.random(), name: p.name, team: p.team, color: p.color, results: {} }); });
+            grid.forEach(p => { 
+                data.drivers.push({ id: Date.now() + Math.random(), name: p.name, team: p.team, color: p.color, results: {} }); 
+            });
             saveAndRender();
         }
 
         function loadGameCalendar() {
             if (!confirm("Isso irá ADICIONAR o calendário oficial F1 25 às corridas existentes. Continuar?")) return;
             let count = 0;
-            const add = (name, type) => { data.races.push({ id: 'r' + Date.now() + (count++), name: name.toUpperCase(), type }); };
+            const add = (name, type) => { data.races.push({ id: 'r' + (Date.now() + (count++)), name: name.toUpperCase(), type }); };
             add("🇦🇺 AUS", "GP"); add("🇨🇳 CHN", "Sprint"); add("🇨🇳 CHN", "GP"); add("🇯🇵 JPN", "GP"); add("🇧🇭 BAH", "GP"); add("🇸🇦 SAU", "GP");
             add("🇺🇸 MIA", "Sprint"); add("🇺🇸 MIA", "GP"); add("🇮🇹 EMI", "GP"); add("🇲🇨 MON", "GP"); add("🇪🇸 ESP", "GP"); add("🇨🇦 CAN", "GP");
             add("🇦🇹 AUT", "GP"); add("🇦🇹 AUT(R)", "GP"); add("🇬🇧 GBR", "GP"); add("🇬🇧 SIL(R)", "GP"); add("🇧🇪 BEL", "Sprint"); add("🇧🇪 BEL", "GP");
@@ -509,6 +526,7 @@
             if (!isEditEnabled) return;
             const driver = data.drivers.find(d => d.id == driverId);
             const val = position.toUpperCase().trim();
+            
             if (val !== "" && !["NC", "DSQ", "NP"].includes(val) && !isNaN(val)) {
                 const posInt = parseInt(val);
                 const isDuplicate = data.drivers.some(d => d.id !== driverId && d.results[raceId] === posInt);
@@ -518,10 +536,12 @@
                     return;
                 }
             }
+            
             if (val === "") delete driver.results[raceId];
             else if (["NC", "DSQ", "NP"].includes(val)) driver.results[raceId] = val;
             else if (!isNaN(val)) driver.results[raceId] = parseInt(val);
             else driver.results[raceId] = val;
+            
             saveAndRender();
         }
 
@@ -549,75 +569,87 @@
             });
             const leader = data.drivers[0];
             let contenders = data.drivers.filter(d => (d.totalPoints + remainingPts) >= leader.totalPoints);
-            document.getElementById('remainingPoints').innerText = remainingPts;
-            document.getElementById('mathContenders').innerText = contenders.length;
-            const statusEl = document.getElementById('titleStatus');
+            dom.remainingPoints.innerText = remainingPts;
+            dom.mathContenders.innerText = contenders.length;
+            
             if (remainingPts === 0) {
-                statusEl.innerText = `🏆 CAMPEÃO: ${leader.name}`;
-                statusEl.style.color = "#f1c40f";
+                dom.titleStatus.innerText = `🏆 CAMPEÃO: ${leader.name}`;
+                dom.titleStatus.style.color = "#f1c40f";
             } else if (contenders.length === 1) {
-                statusEl.innerText = `🏆 CAMPEÃO ANTECIPADO: ${leader.name}`;
-                statusEl.style.color = "#f1c40f";
+                dom.titleStatus.innerText = `🏆 CAMPEÃO ANTECIPADO: ${leader.name}`;
+                dom.titleStatus.style.color = "#f1c40f";
             } else if (contenders.length <= 4) {
-                statusEl.innerText = `DISPUTA: ${contenders.map(c => c.name.split(' ').pop().toUpperCase()).join(', ')}`;
-                statusEl.style.color = "white";
+                dom.titleStatus.innerText = `DISPUTA: ${contenders.map(c => c.name.split(' ').pop().toUpperCase()).join(', ')}`;
+                dom.titleStatus.style.color = "white";
             } else {
-                statusEl.innerText = "TÍTULO EM ABERTO";
-                statusEl.style.color = "white";
+                dom.titleStatus.innerText = "TÍTULO EM ABERTO";
+                dom.titleStatus.style.color = "white";
             }
         }
 
         function saveAndRender() { saveData(); render(); }
 
+        const tieBreak = (a, b) => {
+            if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
+            if (b.wins !== a.wins) return b.wins - a.wins;
+            for (let p = 1; p <= 20; p++) {
+                const countA = a.posCounts[p] || 0;
+                const countB = b.posCounts[p] || 0;
+                if (countA !== countB) return countB - countA;
+            }
+            return 0;
+        };
+
         function render() {
-            data.drivers.forEach(d => { const stats = calculatePoints(d); d.totalPoints = stats.total; d.wins = stats.wins; });
+            // Pre-cálculo de estatísticas para performance
+            data.drivers.forEach(d => { 
+                const stats = calculatePoints(d); 
+                d.totalPoints = stats.total; 
+                d.wins = stats.wins;
+                d.posCounts = {};
+                data.races.forEach(r => {
+                    const p = d.results[r.id];
+                    if(p && !isNaN(p)) d.posCounts[p] = (d.posCounts[p] || 0) + 1;
+                });
+            });
+
             let lastCompletedRaceIndex = -1;
             for (let i = data.races.length - 1; i >= 0; i--) {
                 if (data.drivers.some(d => d.results[data.races[i].id] !== undefined)) { lastCompletedRaceIndex = i; break; }
             }
             
-            const tieBreak = (a, b) => {
-                if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
-                if (b.wins !== a.wins) return b.wins - a.wins;
-                for (let p = 1; p <= 20; p++) {
-                    const countA = data.races.filter(r => a.results[r.id] === p).length;
-                    const countB = data.races.filter(r => b.results[r.id] === p).length;
-                    if (countA !== countB) return countB - countA;
-                }
-                return 0;
-            };
-
             let prevRanking = [];
             if (lastCompletedRaceIndex > 0) {
                 prevRanking = [...data.drivers].map(d => { 
                     const stats = calculatePoints(d, lastCompletedRaceIndex); 
-                    return { ...d, totalPoints: stats.total, wins: stats.wins }; 
+                    const pCounts = {};
+                    for(let i=0; i<lastCompletedRaceIndex; i++) {
+                        const p = d.results[data.races[i].id];
+                        if(p && !isNaN(p)) pCounts[p] = (pCounts[p] || 0) + 1;
+                    }
+                    return { ...d, totalPoints: stats.total, wins: stats.wins, posCounts: pCounts }; 
                 }).sort(tieBreak);
             }
             
             data.drivers.sort(tieBreak);
             updateMathChances();
 
-            const headerRow = document.getElementById('headerRow');
-            headerRow.innerHTML = `<th class="sticky-col col-pos">Pos</th><th class="sticky-col col-piloto">Piloto</th><th class="sticky-col col-equipe">Equipe</th><th class="sticky-col col-pontos">Pts</th><th class="sticky-col col-vitorias">Vit</th>`;
+            // Render Header
+            let headerHtml = `<th class="sticky-col col-pos">Pos</th><th class="sticky-col col-piloto">Piloto</th><th class="sticky-col col-equipe">Equipe</th><th class="sticky-col col-pontos">Pts</th><th class="sticky-col col-vitorias">Vit</th>`;
             data.races.forEach(race => {
-                const th = document.createElement('th');
-                th.className = `header-gp ${race.type === 'Sprint' ? 'sprint-col' : ''}`;
-                th.innerText = race.name + (race.type === 'Sprint' ? ' (S)' : '');
-                if (isEditEnabled) th.onclick = () => { if(confirm('Excluir corrida?')) { data.races = data.races.filter(r => r.id !== race.id); saveAndRender(); }};
-                headerRow.appendChild(th);
+                const sprintClass = race.type === 'Sprint' ? ' sprint-col' : '';
+                headerHtml += `<th class="header-gp${sprintClass}" ${isEditEnabled ? `onclick="deleteRace('${race.id}')"` : ''}>${race.name}${race.type === 'Sprint' ? ' (S)' : ''}</th>`;
             });
-            const body = document.getElementById('pilotosBody');
-            body.innerHTML = '';
-            
-            data.drivers.forEach((driver, index) => {
+            dom.headerRow.innerHTML = headerHtml;
+
+            // Render Body
+            const bodyRows = data.drivers.map((driver, index) => {
                 let trend = '<span class="stable">●</span>';
                 if (prevRanking.length > 0) {
                     const oldPos = prevRanking.findIndex(p => p.id === driver.id);
                     if (oldPos > index) trend = '<span class="up">▲</span>'; else if (oldPos < index) trend = '<span class="down">▼</span>';
                 }
 
-                // Cálculo da diferença de pontos em relação ao piloto da frente
                 let diffHtml = "";
                 if (index > 0) {
                     const ahead = data.drivers[index - 1];
@@ -629,17 +661,25 @@
                         const prevAhead = prevRanking.find(p => p.id === ahead.id);
                         if (prevDriver && prevAhead) {
                             const prevGap = prevAhead.totalPoints - prevDriver.totalPoints;
-                            if (currentGap > prevGap) diffClass = "down"; // Aumentou (Vermelho)
-                            else if (currentGap < prevGap) diffClass = "up"; // Diminuiu (Verde)
+                            if (currentGap > prevGap) diffClass = "down";
+                            else if (currentGap < prevGap) diffClass = "up";
                         }
                     }
                     diffHtml = `<span class="${diffClass}" style="font-size: 0.65em; font-weight: 400;">-${currentGap}</span>`;
                 }
 
-                const tr = document.createElement('tr');
                 const teamColor = driver.color || '#e10600';
-                
-                tr.innerHTML = `
+                let raceCells = data.races.map(race => {
+                    const val = driver.results[race.id];
+                    let cellClass = race.type === 'Sprint' ? 'sprint-col' : '';
+                    if (val === 1) cellClass += ' gold'; 
+                    else if (val === 2) cellClass += ' silver'; 
+                    else if (val === 3) cellClass += ' bronze';
+                    const inputClass = (["NC", "DSQ", "NP"].includes(val)) ? 'class="status-special"' : '';
+                    return `<td class="${cellClass}"><input type="text" ${inputClass} value="${val || ''}" onchange="updateResult(${driver.id}, '${race.id}', this.value)" ${!isEditEnabled ? 'disabled' : ''}></td>`;
+                }).join('');
+
+                return `<tr>
                     <td class="sticky-col col-pos">${trend} ${index + 1}º</td>
                     <td class="sticky-col col-piloto" style="border-left: 4px solid ${teamColor} !important;">
                         <div class="glow-layer" style="background: linear-gradient(90deg, ${teamColor}33 0%, transparent 100%);"></div>
@@ -648,42 +688,42 @@
                         </div>
                     </td>
                     <td class="sticky-col col-equipe"><div class="team-content">${getTeamLogoHtml(driver.team)}<span contenteditable="${isEditEnabled}" onblur="editDriverTeam(${driver.id}, this.innerText)">${driver.team}</span></div></td>
-                    <td class="sticky-col col-pontos">
-                        <div class="pts-container">
-                            <span>${driver.totalPoints}</span>
-                            ${diffHtml}
-                        </div>
-                    </td>
+                    <td class="sticky-col col-pontos"><div class="pts-container"><span>${driver.totalPoints}</span>${diffHtml}</div></td>
                     <td class="sticky-col col-vitorias">${driver.wins}</td>
-                `;
-                data.races.forEach(race => {
-                    const td = document.createElement('td'); 
-                    if(race.type === 'Sprint') td.classList.add('sprint-col');
-                    const val = driver.results[race.id];
-                    if (val === 1) td.className += ' gold'; 
-                    else if (val === 2) td.className += ' silver'; 
-                    else if (val === 3) td.className += ' bronze';
-                    let displayVal = val || '';
-                    let inputClass = (["NC", "DSQ", "NP"].includes(displayVal)) ? 'class="status-special"' : '';
-                    td.innerHTML = `<input type="text" ${inputClass} value="${displayVal}" onchange="updateResult(${driver.id}, '${race.id}', this.value)" ${!isEditEnabled ? 'disabled' : ''}>`;
-                    tr.appendChild(td);
-                });
-                body.appendChild(tr);
+                    ${raceCells}
+                </tr>`;
             });
-            renderConstructors(); renderH2H(); updateChart();
+            dom.pilotosBody.innerHTML = bodyRows.join('');
+            
+            renderConstructors(); 
+            renderH2H(); 
+            updateChart();
+        }
+
+        function deleteRace(id) {
+            if(confirm('Excluir corrida?')) {
+                data.races = data.races.filter(r => r.id !== id);
+                saveAndRender();
+            }
         }
 
         function updateChart() {
             const ctx = document.getElementById('performanceChart').getContext('2d');
             let lastRaceIdx = -1;
-            for (let i = 0; i < data.races.length; i++) { if (data.drivers.some(d => d.results[data.races[i].id])) lastRaceIdx = i; }
+            for (let i = 0; i < data.races.length; i++) { 
+                if (data.drivers.some(d => d.results[data.races[i].id])) lastRaceIdx = i; 
+            }
             const activeRaces = data.races.slice(0, lastRaceIdx + 1);
             const labels = ['Start', ...activeRaces.map(r => r.name)];
+            
             const datasets = data.drivers.map((driver, index) => {
-                let currentTotal = 0; const pointsEvolution = [0]; 
+                let currentTotal = 0; 
+                const pointsEvolution = [0]; 
                 activeRaces.forEach(race => {
                     const pos = driver.results[race.id];
-                    if (pos && !isNaN(pos)) { currentTotal += (race.type === 'GP' ? GP_POINTS : SPRINT_POINTS)[pos] || 0; }
+                    if (pos && !isNaN(pos)) { 
+                        currentTotal += (race.type === 'GP' ? GP_POINTS : SPRINT_POINTS)[pos] || 0; 
+                    }
                     pointsEvolution.push(currentTotal);
                 });
                 return { 
@@ -696,80 +736,153 @@
                     hidden: index >= 5 
                 };
             });
-            if (myChart) myChart.destroy();
-            myChart = new Chart(ctx, { 
-                type: 'line', 
-                data: { labels, datasets }, 
-                options: { 
-                    responsive: true, maintainAspectRatio: false, animation: false,
-                    scales: { 
-                        y: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#aaa' } }, 
-                        x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#aaa' } } 
-                    }, 
-                    plugins: { 
-                        legend: { 
-                            onClick: (e, legendItem, legend) => {
-                                const index = legendItem.datasetIndex;
-                                const ci = legend.chart;
-                                const driverId = ci.data.datasets[index].driverId;
-                                if (isEditEnabled) {
-                                    const colorPicker = document.createElement('input');
-                                    colorPicker.type = 'color';
-                                    colorPicker.value = ci.data.datasets[index].borderColor;
-                                    colorPicker.onchange = (ev) => { updateColor(driverId, ev.target.value); };
-                                    colorPicker.click();
-                                } else {
-                                    ci.setDatasetVisibility(index, !ci.isDatasetVisible(index));
-                                    ci.update();
-                                }
-                            },
-                            labels: { color: '#fff', usePointStyle: true, font: { family: 'Titillium Web' } } 
+
+            if (myChart) {
+                myChart.data.labels = labels;
+                myChart.data.datasets = datasets;
+                myChart.update('none'); // Update sem animação para performance
+            } else {
+                myChart = new Chart(ctx, { 
+                    type: 'line', 
+                    data: { labels, datasets }, 
+                    options: { 
+                        responsive: true, maintainAspectRatio: false, animation: false,
+                        scales: { 
+                            y: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#aaa' } }, 
+                            x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#aaa' } } 
+                        }, 
+                        plugins: { 
+                            legend: { 
+                                onClick: (e, legendItem, legend) => {
+                                    const index = legendItem.datasetIndex;
+                                    const ci = legend.chart;
+                                    const driverId = ci.data.datasets[index].driverId;
+                                    if (isEditEnabled) {
+                                        const colorPicker = document.createElement('input');
+                                        colorPicker.type = 'color';
+                                        colorPicker.value = ci.data.datasets[index].borderColor;
+                                        colorPicker.onchange = (ev) => { updateColor(driverId, ev.target.value); };
+                                        colorPicker.click();
+                                    } else {
+                                        ci.setDatasetVisibility(index, !ci.isDatasetVisible(index));
+                                        ci.update();
+                                    }
+                                },
+                                labels: { color: '#fff', usePointStyle: true, font: { family: 'Titillium Web' } } 
+                            } 
                         } 
                     } 
-                } 
-            });
+                });
+            }
         }
 
         function renderConstructors() {
             const teams = {};
-            data.drivers.forEach(d => { if (!teams[d.team]) teams[d.team] = 0; teams[d.team] += d.totalPoints; });
-            const sorted = Object.keys(teams).map(name => ({ name, points: teams[name] })).sort((a, b) => b.points - a.points);
-            const body = document.getElementById('construtoresBody');
-            body.innerHTML = '';
-            sorted.forEach((t, i) => { body.innerHTML += `<tr><td>${i+1}º</td><td style="text-align:left; font-weight:bold;"><div class="team-content">${getTeamLogoHtml(t.name)}<span>${t.name}</span></div></td><td>${t.points}</td></tr>`; });
+            data.drivers.forEach(d => { 
+                if (!teams[d.team]) teams[d.team] = 0; 
+                teams[d.team] += d.totalPoints; 
+            });
+            const sorted = Object.keys(teams)
+                .map(name => ({ name, points: teams[name] }))
+                .sort((a, b) => b.points - a.points);
+            
+            dom.construtoresBody.innerHTML = sorted.map((t, i) => `
+                <tr>
+                    <td>${i+1}º</td>
+                    <td style="text-align:left; font-weight:bold;">
+                        <div class="team-content">${getTeamLogoHtml(t.name)}<span>${t.name}</span></div>
+                    </td>
+                    <td>${t.points}</td>
+                </tr>`).join('');
         }
 
         function renderH2H() {
-            const container = document.getElementById('h2hContainer');
-            container.innerHTML = '';
-            const teams = {}; data.drivers.forEach(d => { if (!teams[d.team]) teams[d.team] = []; teams[d.team].push(d); });
+            const teams = {}; 
+            data.drivers.forEach(d => { 
+                if (!teams[d.team]) teams[d.team] = []; 
+                teams[d.team].push(d); 
+            });
+            
+            const h2hHtml = [];
             for (let t in teams) {
                 if (teams[t].length > 1) {
                     let s1 = 0, s2 = 0;
                     const p1 = teams[t][0], p2 = teams[t][1];
                     data.races.forEach(r => {
-                        let v1 = p1.results[r.id], v2 = p2.results[r.id];
+                        const v1 = p1.results[r.id], v2 = p2.results[r.id];
                         const getVal = (v) => {
                             if (v === undefined || v === "") return null;
                             if (["NC", "NP", "DSQ"].includes(v)) return 999;
                             return parseInt(v);
                         };
                         const val1 = getVal(v1); const val2 = getVal(v2);
-                        if (val1 !== null && val2 !== null && val1 !== val2) { if (val1 < val2) s1++; else s2++; }
+                        if (val1 !== null && val2 !== null && val1 !== val2) { 
+                            if (val1 < val2) s1++; else s2++; 
+                        }
                     });
-                    container.innerHTML += `<div class="h2h-card"><small style="color:var(--f1-red)">${t}</small><br><strong>${p1.name.split(' ').pop().toUpperCase()}</strong> ${s1} x ${s2} <strong>${p2.name.split(' ').pop().toUpperCase()}</strong></div>`;
+                    h2hHtml.push(`<div class="h2h-card">
+                        <small style="color:var(--f1-red)">${t}</small><br>
+                        <strong>${p1.name.split(' ').pop().toUpperCase()}</strong> ${s1} x ${s2} <strong>${p2.name.split(' ').pop().toUpperCase()}</strong>
+                    </div>`);
                 }
             }
+            dom.h2hContainer.innerHTML = h2hHtml.join('');
         }
 
-        function updateColor(id, color) { const driver = data.drivers.find(d => d.id === id); if(driver) { driver.color = color; saveAndRender(); } }
-        function addDriver() { const n = prompt("Nome:"), t = prompt("Equipe:"); if (n && t) { data.drivers.push({ id: Date.now(), name: n, team: t, color: '#e10600', results: {} }); saveAndRender(); }}
-        function editDriverName(id, n) { data.drivers.find(d => d.id === id).name = n; saveAndRender(); }
-        function editDriverTeam(id, t) { data.drivers.find(d => d.id === id).team = t; saveAndRender(); }
-        function addRace(type) { const n = prompt(`Nome do ${type}:`); if (n) { const flag = prompt(`Qual bandeira/emoji deseja adicionar para ${n.toUpperCase()}?`); const fullName = (flag ? flag + " " : "") + n.toUpperCase(); data.races.push({ id: 'r' + Date.now(), name: fullName, type }); saveAndRender(); } }
-        function exportData() { const blob = new Blob([JSON.stringify(data)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'f1_data.json'; a.click(); }
-        function importData(e) { const r = new FileReader(); r.onload = (ev) => { data = JSON.parse(ev.target.result); render(); }; r.readAsText(e.target.files[0]); }
-        function resetData() { if (confirm("Limpar tudo?")) { data = { drivers: [], races: [] }; saveAndRender(); }}
+        function updateColor(id, color) { 
+            const driver = data.drivers.find(d => d.id === id); 
+            if(driver) { driver.color = color; saveAndRender(); } 
+        }
+        function addDriver() { 
+            const n = prompt("Nome:"), t = prompt("Equipe:"); 
+            if (n && t) { 
+                data.drivers.push({ id: Date.now(), name: n, team: t, color: '#e10600', results: {} }); 
+                saveAndRender(); 
+            }
+        }
+        function editDriverName(id, n) { 
+            const d = data.drivers.find(d => d.id === id);
+            if(d) d.name = n; 
+            saveAndRender(); 
+        }
+        function editDriverTeam(id, t) { 
+            const d = data.drivers.find(d => d.id === id);
+            if(d) d.team = t; 
+            saveAndRender(); 
+        }
+        function addRace(type) { 
+            const n = prompt(`Nome do ${type}:`); 
+            if (n) { 
+                const flag = prompt(`Qual bandeira/emoji deseja adicionar para ${n.toUpperCase()}?`); 
+                const fullName = (flag ? flag + " " : "") + n.toUpperCase(); 
+                data.races.push({ id: 'r' + Date.now(), name: fullName, type }); 
+                saveAndRender(); 
+            } 
+        }
+        function exportData() { 
+            const blob = new Blob([JSON.stringify(data)], { type: 'application/json' }); 
+            const a = document.createElement('a'); 
+            a.href = URL.createObjectURL(blob); 
+            a.download = 'f1_data.json'; 
+            a.click(); 
+        }
+        function importData(e) { 
+            const r = new FileReader(); 
+            r.onload = (ev) => { 
+                try {
+                    data = JSON.parse(ev.target.result); 
+                    render(); 
+                } catch(err) { alert("Erro ao importar arquivo."); }
+            }; 
+            r.readAsText(e.target.files[0]); 
+        }
+        function resetData() { 
+            if (confirm("Limpar tudo?")) { 
+                data = { drivers: [], races: [] }; 
+                saveAndRender(); 
+            }
+        }
+        
         init();
     </script>
 </body>
