@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700&display=swap" rel="stylesheet">
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
             --f1-red: #e10600;
@@ -50,7 +51,6 @@
         body.light-tables .col-equipe { color: #555 !important; }
         body.light-tables thead th { background: #eee !important; color: black !important; }
 
-        /* Estilos de Pódio e Sprint */
         .gold { background: rgba(255, 215, 0, 0.4) !important; font-weight: bold; }
         .silver { background: rgba(192, 192, 192, 0.4) !important; font-weight: bold; }
         .bronze { background: rgba(205, 127, 50, 0.4) !important; font-weight: bold; }
@@ -104,6 +104,7 @@
         button:hover { background-color: #ff1e1e; transform: translateY(-1px); }
         .btn-export { background-color: #2e7d32; }
         .btn-import { background-color: #1976d2; }
+        .btn-capture { background-color: #6a1b9a; }
         
         #editToggle { background-color: #333; border: 1px solid #555; min-width: 200px; }
         #editToggle.active { background-color: #f1c40f; color: #000; border-color: #000; }
@@ -239,7 +240,7 @@
         }
     </style>
 </head>
-<body>
+<body id="mainCaptureArea">
 
     <h1><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/F1.svg/1280px-F1.svg.png" alt="F1 Logo" style="height: 25px; margin-right: 15px; vertical-align: middle;"> F1 Championship Manager</h1>
 
@@ -257,6 +258,7 @@
         <button class="btn-export" onclick="exportData()">💾 Exportar Dados</button>
         <button onclick="document.getElementById('importFile').click()">📂 Importar Dados</button>
         <input type="file" id="importFile" style="display:none" onchange="importData(event)">
+        <button class="btn-capture" onclick="captureHQ()">📸 EXPORTAR POSTER (HQ)</button>
         <button style="background: #555" onclick="resetData()">🗑️Limpar Tudo</button>
     </div>
 
@@ -313,6 +315,32 @@
         let isEditEnabled = false;
         const GP_POINTS = { 1:25, 2:18, 3:15, 4:12, 5:10, 6:8, 7:6, 8:4, 9:2, 10:1 };
         const SPRINT_POINTS = { 1:8, 2:7, 3:6, 4:5, 5:4, 6:3, 7:2, 8:1 };
+
+        async function captureHQ() {
+            const btn = document.querySelector('.btn-capture');
+            const originalText = btn.innerText;
+            btn.innerText = "⚡ PROCESSANDO...";
+            
+            // Pequeno delay para garantir que a renderização esteja estável
+            await new Promise(r => setTimeout(r, 500));
+            
+            const area = document.getElementById('mainCaptureArea');
+            const options = {
+                backgroundColor: "#0b0b10",
+                scale: 3, // Qualidade Extrema (3x a resolução da tela)
+                useCORS: true,
+                logging: false,
+                ignoreElements: (el) => el.tagName === "BUTTON" || el.id === "adminControls" || el.tagName === "INPUT" && el.type !== "text"
+            };
+
+            html2canvas(area, options).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `F1_Championship_Update_${new Date().toLocaleDateString()}.png`;
+                link.href = canvas.toDataURL("image/png", 1.0);
+                link.click();
+                btn.innerText = originalText;
+            });
+        }
 
         function toggleTheme() {
             document.body.classList.toggle('light-tables');
@@ -555,6 +583,7 @@
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false, 
+                    animation: false,
                     scales: { 
                         y: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#aaa' } }, 
                         x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#aaa' } } 
@@ -565,26 +594,18 @@
                                 const index = legendItem.datasetIndex;
                                 const ci = legend.chart;
                                 const driverId = ci.data.datasets[index].driverId;
-
                                 if (isEditEnabled) {
                                     const colorPicker = document.createElement('input');
                                     colorPicker.type = 'color';
                                     colorPicker.value = ci.data.datasets[index].borderColor;
-                                    colorPicker.onchange = (ev) => {
-                                        updateColor(driverId, ev.target.value);
-                                    };
+                                    colorPicker.onchange = (ev) => { updateColor(driverId, ev.target.value); };
                                     colorPicker.click();
                                 } else {
                                     ci.setDatasetVisibility(index, !ci.isDatasetVisible(index));
                                     ci.update();
                                 }
                             },
-                            labels: { 
-                                color: '#fff', 
-                                usePointStyle: true,
-                                pointStyle: 'rectRounded',
-                                font: { family: 'Titillium Web' } 
-                            } 
+                            labels: { color: '#fff', usePointStyle: true, pointStyle: 'rectRounded', font: { family: 'Titillium Web' } } 
                         } 
                     } 
                 } 
@@ -606,46 +627,24 @@
                     let s1 = 0, s2 = 0; const p1 = teams[t][0], p2 = teams[t][1];
                     data.races.forEach(r => {
                         let v1 = p1.results[r.id], v2 = p2.results[r.id];
-                        
                         const getVal = (v) => {
                             if (v === undefined || v === "") return null;
                             if (["NC", "NP", "DSQ"].includes(v)) return 999;
                             return parseInt(v);
                         };
-
-                        const val1 = getVal(v1);
-                        const val2 = getVal(v2);
-
-                        if (val1 !== null && val2 !== null && val1 !== val2) { 
-                            if (val1 < val2) s1++; else s2++; 
-                        }
+                        const val1 = getVal(v1); const val2 = getVal(v2);
+                        if (val1 !== null && val2 !== null && val1 !== val2) { if (val1 < val2) s1++; else s2++; }
                     });
                     container.innerHTML += `<div class="h2h-card"><small style="color:var(--f1-red)">${t}</small><br><strong>${p1.name}</strong> ${s1} x ${s2} <strong>${p2.name}</strong></div>`;
                 }
             }
         }
 
-        function updateColor(id, color) { 
-            const driver = data.drivers.find(d => d.id === id);
-            if(driver) {
-                driver.color = color; 
-                saveAndRender(); 
-            }
-        }
+        function updateColor(id, color) { const driver = data.drivers.find(d => d.id === id); if(driver) { driver.color = color; saveAndRender(); } }
         function addDriver() { const n = prompt("Nome:"), t = prompt("Equipe:"); if (n && t) { data.drivers.push({ id: Date.now(), name: n, team: t, color: '#e10600', results: {} }); saveAndRender(); }}
         function editDriverName(id, n) { data.drivers.find(d => d.id === id).name = n; saveAndRender(); }
         function editDriverTeam(id, t) { data.drivers.find(d => d.id === id).team = t; saveAndRender(); }
-        
-        function addRace(type) { 
-            const n = prompt(`Nome do ${type}:`); 
-            if (n) { 
-                const flag = prompt(`Qual bandeira/emoji deseja adicionar para ${n.toUpperCase()}?`);
-                const fullName = (flag ? flag + " " : "") + n.toUpperCase();
-                data.races.push({ id: 'r' + Date.now(), name: fullName, type }); 
-                saveAndRender(); 
-            }
-        }
-        
+        function addRace(type) { const n = prompt(`Nome do ${type}:`); if (n) { const flag = prompt(`Qual bandeira/emoji deseja adicionar para ${n.toUpperCase()}?`); const fullName = (flag ? flag + " " : "") + n.toUpperCase(); data.races.push({ id: 'r' + Date.now(), name: fullName, type }); saveAndRender(); } }
         function exportData() { const blob = new Blob([JSON.stringify(data)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'f1_data.json'; a.click(); }
         function importData(e) { const r = new FileReader(); r.onload = (ev) => { data = JSON.parse(ev.target.result); render(); }; r.readAsText(e.target.files[0]); }
         function resetData() { if (confirm("Limpar tudo?")) { data = { drivers: [], races: [] }; saveAndRender(); }}
