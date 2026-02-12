@@ -59,6 +59,19 @@
 
         h1, h2 { text-transform: uppercase; letter-spacing: 2px; border-bottom: 3px solid var(--f1-red); padding-bottom: 5px; }
 
+        .calculator-panel-compact {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 0.85em;
+        }
+
+        .calc-row { display: flex; justify-content: space-between; margin-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 5px; }
+        .calc-row:last-child { border: none; margin-bottom: 0; padding-bottom: 0; }
+        .calc-val { font-weight: bold; color: var(--f1-red); }
+
         .controls { 
             margin-bottom: 20px; 
             display: flex; 
@@ -242,7 +255,7 @@
         <button onclick="addRace('GP')">🏆Adicionar GP</button>
         <button onclick="addRace('Sprint')">🥇Adicionar Sprint</button>
         <button class="btn-export" onclick="exportData()">💾 Exportar Dados</button>
-        <button class="btn-import" onclick="document.getElementById('importFile').click()">📂 Importar Dados</button>
+        <button onclick="document.getElementById('importFile').click()">📂 Importar Dados</button>
         <input type="file" id="importFile" style="display:none" onchange="importData(event)">
         <button style="background: #555" onclick="resetData()">🗑️Limpar Tudo</button>
     </div>
@@ -275,6 +288,21 @@
                     </thead>
                     <tbody id="construtoresBody"></tbody>
                 </table>
+            </div>
+
+            <h2>Chances de Título</h2>
+            <div class="calculator-panel-compact">
+                <div class="calc-row">
+                    <span>Pontos em jogo:</span>
+                    <span id="remainingPoints" class="calc-val">0</span>
+                </div>
+                <div class="calc-row">
+                    <span>Disputa matemática:</span>
+                    <span id="mathContenders" class="calc-val">0</span>
+                </div>
+                <div class="calc-row" style="flex-direction: column; align-items: flex-start;">
+                    <span id="titleStatus" style="font-weight: bold; margin-top: 5px;">Aguardando dados...</span>
+                </div>
             </div>
         </div>
     </div>
@@ -392,6 +420,39 @@
             return { total, wins };
         }
 
+        function updateMathChances() {
+            if (data.drivers.length === 0 || data.races.length === 0) return;
+
+            let remainingPts = 0;
+            data.races.forEach(race => {
+                const isCompleted = data.drivers.some(d => d.results[race.id] !== undefined);
+                if (!isCompleted) {
+                    remainingPts += (race.type === 'GP' ? 25 : 8);
+                }
+            });
+
+            const leader = data.drivers[0];
+            let contenders = data.drivers.filter(d => (d.totalPoints + remainingPts) >= leader.totalPoints);
+            
+            document.getElementById('remainingPoints').innerText = remainingPts;
+            document.getElementById('mathContenders').innerText = contenders.length;
+
+            const statusEl = document.getElementById('titleStatus');
+            if (remainingPts === 0) {
+                statusEl.innerText = `🏆 CAMPEÃO: ${leader.name}`;
+                statusEl.style.color = "#f1c40f";
+            } else if (contenders.length === 1) {
+                statusEl.innerText = `🏆 CAMPEÃO ANTECIPADO: ${leader.name}`;
+                statusEl.style.color = "#f1c40f";
+            } else if (contenders.length <= 4) {
+                statusEl.innerText = `DISPUTA: ${contenders.map(c => c.name.split(' ').pop()).join(', ')}`;
+                statusEl.style.color = "white";
+            } else {
+                statusEl.innerText = "TÍTULO EM ABERTO";
+                statusEl.style.color = "white";
+            }
+        }
+
         function saveAndRender() { saveData(); render(); }
 
         function render() {
@@ -405,6 +466,8 @@
                 prevRanking = [...data.drivers].map(d => { const stats = calculatePoints(d, lastCompletedRaceIndex); return { id: d.id, pts: stats.total, wins: stats.wins }; }).sort((a, b) => b.pts - a.pts || b.wins - a.wins);
             }
             data.drivers.sort((a, b) => b.totalPoints - a.totalPoints || b.wins - a.wins);
+
+            updateMathChances();
 
             const headerRow = document.getElementById('headerRow');
             headerRow.innerHTML = `<th class="sticky-col col-pos">Pos</th><th class="sticky-col col-piloto">Piloto</th><th class="sticky-col col-equipe">Equipe</th><th class="sticky-col col-pontos">Pts</th><th class="sticky-col col-vitorias">Vit</th>`;
@@ -544,7 +607,6 @@
                     data.races.forEach(r => {
                         let v1 = p1.results[r.id], v2 = p2.results[r.id];
                         
-                        // Converter NC, NP, DSQ para valores altos para lógica de comparação
                         const getVal = (v) => {
                             if (v === undefined || v === "") return null;
                             if (["NC", "NP", "DSQ"].includes(v)) return 999;
@@ -591,4 +653,3 @@
     </script>
 </body>
 </html>
-
