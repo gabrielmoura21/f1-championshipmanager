@@ -287,7 +287,6 @@
         }
 
         .h2h-card {
-            font-family: 'Oswald', sans-serif;
             background: var(--glass-bg);
             border-left: 4px solid var(--f1-red);
             padding: 12px;
@@ -416,19 +415,19 @@
         function getTeamLogoHtml(teamName) {
             const name = teamName.toLowerCase().trim();
             const logoMap = {
-                "ferrari": "https://media.formula1.com/content/dam/fom-website/teams/2024/ferrari-logo.png",
-                "mercedes": "https://media.formula1.com/content/dam/fom-website/teams/2024/mercedes-logo.png",
-                "red bull": "https://media.formula1.com/content/dam/fom-website/teams/2024/red-bull-racing-logo.png",
-                "mclaren": "https://media.formula1.com/content/dam/fom-website/teams/2024/mclaren-logo.png",
-                "alpine": "https://media.formula1.com/content/dam/fom-website/teams/2024/alpine-logo.png",
-                "aston martin": "https://media.formula1.com/content/dam/fom-website/teams/2024/aston-martin-logo.png",
-                "williams": "https://media.formula1.com/content/dam/fom-website/teams/2024/williams-logo.png",
-                "haas": "https://media.formula1.com/content/dam/fom-website/teams/2024/haas-f1-team-logo.png",
-                "sauber": "https://media.formula1.com/content/dam/fom-website/teams/2024/kick-sauber-logo.png",
-                "kick": "https://media.formula1.com/content/dam/fom-website/teams/2024/kick-sauber-logo.png",
-                "racing bulls": "https://media.formula1.com/content/dam/fom-website/teams/2024/rb-logo.png",
-                "rb": "https://media.formula1.com/content/dam/fom-website/teams/2024/rb-logo.png",
-                "vcarb": "https://media.formula1.com/content/dam/fom-website/teams/2024/rb-logo.png"
+                "ferrari": "https://i.imgur.com/5l6wnVb.png",
+                "mercedes": "https://i.imgur.com/vtZKCc5.png",
+                "red bull": "https://i.imgur.com/Q5idNac.png",
+                "mclaren": "https://i.imgur.com/Ub26b0i.png",
+                "alpine": "https://i.imgur.com/DveLvT7.png",
+                "aston martin": "https://i.imgur.com/VMHSp48.png",
+                "williams": "https://i.imgur.com/U7oMWX4.png",
+                "haas": "https://i.imgur.com/dx7z7Kg.png",
+                "sauber": "https://i.imgur.com/MYyEAOA.png",
+                "kick": "https://i.imgur.com/MYyEAOA.png",
+                "racing bulls": "https://i.imgur.com/dcJutpD.png",
+                "rb": "https://i.imgur.com/dcJutpD.png",
+                "vcarb": "https://i.imgur.com/dcJutpD.png"
             };
             for (let key in logoMap) { if (name.includes(key)) return `<img src="${logoMap[key]}" class="team-logo" alt="">`; }
             return "";
@@ -738,7 +737,7 @@
                         const val1 = getVal(v1); const val2 = getVal(v2);
                         if (val1 !== null && val2 !== null && val1 !== val2) { if (val1 < val2) s1++; else s2++; }
                     });
-                    container.innerHTML += `<div class="h2h-card"><small style="color:var(--f1-red)">${t}</small><br>${formatDriverDisplayName(p1.name)} ${s1} x ${s2} ${formatDriverDisplayName(p2.name)}</div>`;
+                    container.innerHTML += `<div class="h2h-card"><small style="color:var(--f1-red)">${t}</small><br><strong>${p1.name.split(' ').pop().toUpperCase()}</strong> ${s1} x ${s2} <strong>${p2.name.split(' ').pop().toUpperCase()}</strong></div>`;
                 }
             }
         }
