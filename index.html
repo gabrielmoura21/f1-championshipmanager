@@ -57,6 +57,16 @@
         .sprint-col { background: rgba(0, 123, 255, 0.15); }
         body.light-tables .sprint-col { background: rgba(0, 123, 255, 0.1) !important; }
 
+        /* Estilo para o Campeão Matemático */
+        .math-champion-row td { 
+            background-color: #2a2505 !important; 
+            border-top: 1px solid #f1c40f !important;
+            border-bottom: 1px solid #f1c40f !important;
+        }
+        .math-champion-row .sticky-col { background-color: #2a2505 !important; }
+        body.light-tables .math-champion-row td { background-color: #fff9c4 !important; }
+        body.light-tables .math-champion-row .sticky-col { background-color: #fff9c4 !important; }
+
         h1, h2 { 
             font-family: 'Oswald', sans-serif;
             text-transform: uppercase; 
@@ -634,6 +644,14 @@
             data.drivers.sort(tieBreak);
             updateMathChances();
 
+            // Lógica para detectar campeão matemático
+            let remainingPtsTotal = 0;
+            data.races.forEach(race => {
+                const isCompleted = data.drivers.some(d => d.results[race.id] !== undefined);
+                if (!isCompleted) remainingPtsTotal += (race.type === 'GP' ? 25 : 8);
+            });
+            const mathChampionId = (data.drivers.length > 0 && (!data.drivers[1] || data.drivers[0].totalPoints > (data.drivers[1].totalPoints + remainingPtsTotal))) ? data.drivers[0].id : null;
+
             // Render Header
             let headerHtml = `<th class="sticky-col col-pos">Pos</th><th class="sticky-col col-piloto">Piloto</th><th class="sticky-col col-equipe">Equipe</th><th class="sticky-col col-pontos">Pts</th><th class="sticky-col col-vitorias">Vit</th>`;
             data.races.forEach(race => {
@@ -679,7 +697,9 @@
                     return `<td class="${cellClass}"><input type="text" ${inputClass} value="${val || ''}" onchange="updateResult(${driver.id}, '${race.id}', this.value)" ${!isEditEnabled ? 'disabled' : ''}></td>`;
                 }).join('');
 
-                return `<tr>
+                const rowClass = (driver.id === mathChampionId) ? 'class="math-champion-row"' : '';
+
+                return `<tr ${rowClass}>
                     <td class="sticky-col col-pos">${trend} ${index + 1}º</td>
                     <td class="sticky-col col-piloto" style="border-left: 4px solid ${teamColor} !important;">
                         <div class="glow-layer" style="background: linear-gradient(90deg, ${teamColor}33 0%, transparent 100%);"></div>
