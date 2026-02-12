@@ -6,7 +6,7 @@
     <title>F1 2025 - Gerenciador de Campeonato</title>
     <link rel="icon" type="image/png" href="https://img.icons8.com/?size=100&id=SmycgNNUprJa&format=png&color=000000">
     
-    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Titillium+Web:wght@300;400;600;700&display=swap" rel="stylesheet">
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -57,7 +57,13 @@
         .sprint-col { background: rgba(0, 123, 255, 0.15); }
         body.light-tables .sprint-col { background: rgba(0, 123, 255, 0.1) !important; }
 
-        h1, h2 { text-transform: uppercase; letter-spacing: 2px; border-bottom: 3px solid var(--f1-red); padding-bottom: 5px; }
+        h1, h2 { 
+            font-family: 'Oswald', sans-serif;
+            text-transform: uppercase; 
+            letter-spacing: 2px; 
+            border-bottom: 3px solid var(--f1-red); 
+            padding-bottom: 5px; 
+        }
 
         /* Estilização Nova da Calculadora de Título */
         .calculator-panel-compact {
@@ -89,8 +95,9 @@
         }
 
         .calc-val {
+            font-family: 'Oswald', sans-serif;
             font-size: 1.4rem;
-            font-weight: 800;
+            font-weight: 700;
             color: white;
         }
 
@@ -103,6 +110,7 @@
         }
 
         #titleStatus {
+            font-family: 'Oswald', sans-serif;
             font-size: 1.1rem;
             font-weight: 700;
             text-transform: uppercase;
@@ -122,6 +130,7 @@
         }
 
         button {
+            font-family: 'Oswald', sans-serif;
             background-color: var(--f1-red);
             color: white;
             border: none;
@@ -183,12 +192,13 @@
         .col-pos { left: 0; width: var(--w-pos) !important; min-width: var(--w-pos) !important; max-width: var(--w-pos) !important; }
         
         .col-piloto { 
+            font-family: 'Oswald', sans-serif;
             left: var(--w-pos);
             width: var(--w-piloto) !important; 
             min-width: var(--w-piloto) !important; 
             max-width: var(--w-piloto) !important;
             text-align: left; 
-            font-weight: 600;
+            font-weight: 400;
             border-right: 2px solid rgba(255,255,255,0.2) !important;
             overflow: hidden;
         }
@@ -204,15 +214,17 @@
         }
 
         .col-pontos { 
+            font-family: 'Oswald', sans-serif;
             left: calc(var(--w-pos) + var(--w-piloto) + var(--w-equipe));
             width: var(--w-pontos) !important; 
             min-width: var(--w-pontos) !important; 
             max-width: var(--w-pontos) !important;
-            font-weight: bold; 
+            font-weight: 700; 
             color: inherit;
         }
 
         .col-vitorias { 
+            font-family: 'Oswald', sans-serif;
             left: calc(var(--w-pos) + var(--w-piloto) + var(--w-equipe) + var(--w-pontos));
             width: var(--w-vitorias) !important; 
             min-width: var(--w-vitorias) !important; 
@@ -234,7 +246,16 @@
         .team-content { display: flex; align-items: center; gap: 8px; }
         .team-logo { width: 22px; height: 22px; object-fit: contain; filter: drop-shadow(0 0 2px rgba(255,255,255,0.2)); }
 
-        thead th { position: sticky; top: 0; z-index: 5; background: rgba(40, 40, 50, 0.9); text-transform: uppercase; font-size: 0.75em; letter-spacing: 1px; }
+        thead th { 
+            font-family: 'Oswald', sans-serif;
+            position: sticky; 
+            top: 0; 
+            z-index: 5; 
+            background: rgba(40, 40, 50, 0.9); 
+            text-transform: uppercase; 
+            font-size: 0.75em; 
+            letter-spacing: 1px; 
+        }
 
         .header-gp { width: 65px !important; min-width: 65px !important; max-width: 65px !important; }
 
@@ -354,6 +375,15 @@
         const GP_POINTS = { 1:25, 2:18, 3:15, 4:12, 5:10, 6:8, 7:6, 8:4, 9:2, 10:1 };
         const SPRINT_POINTS = { 1:8, 2:7, 3:6, 4:5, 5:4, 6:3, 7:2, 8:1 };
 
+        // Função para formatar o nome do piloto: Sobrenome em Negrito e CAIXA ALTA
+        function formatDriverDisplayName(fullName) {
+            const parts = fullName.trim().split(' ');
+            if (parts.length <= 1) return fullName;
+            const firstName = parts.slice(0, -1).join(' ');
+            const lastName = parts[parts.length - 1].toUpperCase();
+            return `${firstName} <strong>${lastName}</strong>`;
+        }
+
         async function captureHQ() {
             const btn = document.querySelector('.btn-capture');
             const originalText = btn.innerText;
@@ -468,14 +498,13 @@
             const driver = data.drivers.find(d => d.id == driverId);
             const val = position.toUpperCase().trim();
 
-            // Validação para evitar posições duplicadas na mesma corrida
             if (val !== "" && !["NC", "DSQ", "NP"].includes(val) && !isNaN(val)) {
                 const posInt = parseInt(val);
                 const isDuplicate = data.drivers.some(d => d.id !== driverId && d.results[raceId] === posInt);
                 
                 if (isDuplicate) {
                     alert(`Erro: A posição ${posInt}º já foi preenchida nesta corrida!`);
-                    render(); // Força o re-render para limpar o input visualmente
+                    render();
                     return;
                 }
             }
@@ -525,7 +554,7 @@
                 statusEl.innerText = `🏆 CAMPEÃO ANTECIPADO: ${leader.name}`;
                 statusEl.style.color = "#f1c40f";
             } else if (contenders.length <= 4) {
-                statusEl.innerText = `DISPUTA: ${contenders.map(c => c.name.split(' ').pop()).join(', ')}`;
+                statusEl.innerText = `DISPUTA: ${contenders.map(c => c.name.split(' ').pop().toUpperCase()).join(', ')}`;
                 statusEl.style.color = "white";
             } else {
                 statusEl.innerText = "TÍTULO EM ABERTO";
@@ -574,7 +603,7 @@
                     <td class="sticky-col col-piloto" style="background-color: var(--sticky-bg) !important; border-left: 4px solid ${teamColor} !important;">
                         <div class="glow-layer" style="background: linear-gradient(90deg, ${teamColor}33 0%, transparent 100%);"></div>
                         <div class="pilot-cell-wrapper">
-                            <span contenteditable="${isEditEnabled}" onblur="editDriverName(${driver.id}, this.innerText)">${driver.name}</span>
+                            <span contenteditable="${isEditEnabled}" onblur="editDriverName(${driver.id}, this.innerText)">${formatDriverDisplayName(driver.name)}</span>
                         </div>
                     </td>
                     <td class="sticky-col col-equipe"><div class="team-content">${getTeamLogoHtml(driver.team)}<span contenteditable="${isEditEnabled}" onblur="editDriverTeam(${driver.id}, this.innerText)">${driver.team}</span></div></td>
@@ -685,7 +714,7 @@
                         const val1 = getVal(v1); const val2 = getVal(v2);
                         if (val1 !== null && val2 !== null && val1 !== val2) { if (val1 < val2) s1++; else s2++; }
                     });
-                    container.innerHTML += `<div class="h2h-card"><small style="color:var(--f1-red)">${t}</small><br><strong>${p1.name}</strong> ${s1} x ${s2} <strong>${p2.name}</strong></div>`;
+                    container.innerHTML += `<div class="h2h-card"><small style="color:var(--f1-red)">${t}</small><br><strong>${p1.name.split(' ').pop().toUpperCase()}</strong> ${s1} x ${s2} <strong>${p2.name.split(' ').pop().toUpperCase()}</strong></div>`;
                 }
             }
         }
