@@ -36,6 +36,10 @@
             min-height: 100vh;
         }
 
+        /* Estilos para animação de troca de posição */
+        ::view-transition-group(*) { animation-duration: 0.6s; animation-timing-function: ease-in-out; }
+        ::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+
         body.light-tables { --sticky-bg: #f2f2f2; }
         body.light-tables .table-container {
             background: white !important;
@@ -397,7 +401,6 @@
         let myChart = null;
         let isEditEnabled = false;
         
-        // Element cache para estabilidade
         const dom = {
             headerRow: document.getElementById('headerRow'),
             pilotosBody: document.getElementById('pilotosBody'),
@@ -446,7 +449,7 @@
         function toggleTheme() {
             document.body.classList.toggle('light-tables');
             localStorage.setItem('f1_table_theme', document.body.classList.contains('light-tables') ? 'light' : 'dark');
-            render();
+            saveAndRender();
         }
 
         const logoMap = {
@@ -465,7 +468,6 @@
             "vcarb": "https://i.imgur.com/dcJutpD.png"
         };
 
-        // Mapeamento de Cores Padrão das Equipes
         const teamColorMap = {
             "red bull": "#3671C6",
             "ferrari": "#E8002D",
@@ -547,10 +549,20 @@
             btn.innerText = isEditEnabled ? "🔓 Modo Edição: Ativado" : "🔒 Modo Edição: Desativado";
             btn.classList.toggle('active', isEditEnabled);
             controls.style.display = isEditEnabled ? 'flex' : 'none';
-            render();
+            saveAndRender();
         }
 
         function saveData() { localStorage.setItem('f1_manager_data', JSON.stringify(data)); }
+
+        // Modificação para transição suave de posições
+        function saveAndRender() { 
+            saveData(); 
+            if (!document.startViewTransition) {
+                render();
+            } else {
+                document.startViewTransition(() => render());
+            }
+        }
 
         function updateResult(driverId, raceId, position) {
             if (!isEditEnabled) return;
@@ -617,8 +629,6 @@
             }
         }
 
-        function saveAndRender() { saveData(); render(); }
-
         const tieBreak = (a, b) => {
             if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
             if (b.wins !== a.wins) return b.wins - a.wins;
@@ -631,7 +641,6 @@
         };
 
         function render() {
-            // Pre-cálculo de estatísticas para performance
             data.drivers.forEach(d => { 
                 const stats = calculatePoints(d); 
                 d.totalPoints = stats.total; 
@@ -648,7 +657,6 @@
                 if (data.drivers.some(d => d.results[data.races[i].id] !== undefined)) { lastCompletedRaceIndex = i; break; }
             }
 
-            // Atualização do contador de corridas faltantes
             const remainingCount = Math.max(0, data.races.length - (lastCompletedRaceIndex + 1));
             const racesLeftEl = document.getElementById('racesLeft');
             if (racesLeftEl) racesLeftEl.innerText = `Faltam: ${remainingCount} corridas`;
@@ -669,7 +677,6 @@
             data.drivers.sort(tieBreak);
             updateMathChances();
 
-            // Lógica para detectar campeão matemático
             let remainingPtsTotal = 0;
             data.races.forEach(race => {
                 const isCompleted = data.drivers.some(d => d.results[race.id] !== undefined);
@@ -677,7 +684,6 @@
             });
             const mathChampionId = (data.drivers.length > 0 && (!data.drivers[1] || data.drivers[0].totalPoints > (data.drivers[1].totalPoints + remainingPtsTotal))) ? data.drivers[0].id : null;
 
-            // Render Header
             let headerHtml = `<th class="sticky-col col-pos">Pos</th><th class="sticky-col col-piloto">Piloto</th><th class="sticky-col col-equipe">Equipe</th><th class="sticky-col col-pontos">Pts</th><th class="sticky-col col-vitorias">Vit</th>`;
             data.races.forEach(race => {
                 const sprintClass = race.type === 'Sprint' ? ' sprint-col' : '';
@@ -685,7 +691,6 @@
             });
             dom.headerRow.innerHTML = headerHtml;
 
-            // Render Body
             const bodyRows = data.drivers.map((driver, index) => {
                 let trend = '<span class="stable">●</span>';
                 if (prevRanking.length > 0) {
@@ -722,12 +727,13 @@
                     return `<td class="${cellClass}"><input type="text" ${inputClass} value="${val || ''}" onchange="updateResult(${driver.id}, '${race.id}', this.value)" ${!isEditEnabled ? 'disabled' : ''}></td>`;
                 }).join('');
 
-                const rowClass = (driver.id === mathChampionId) ? 'class="math-champion-row"' : '';
-                
-                // Adicionado: Evento de clique para deletar piloto
+                const rowClass = (driver.id === mathChampionId) ? 'math-champion-row' : '';
                 const deleteAttr = isEditEnabled ? `onclick="deleteDriver(${driver.id})" style="cursor:pointer;" title="Excluir Piloto"` : '';
+                
+                // VT-Name para identificação da linha na animação
+                const vtName = `driver-${driver.id.toString().replace(/[^a-zA-Z0-9]/g, '')}`;
 
-                return `<tr ${rowClass}>
+                return `<tr class="${rowClass}" style="view-transition-name: ${vtName}">
                     <td class="sticky-col col-pos" ${deleteAttr}>${trend} ${index + 1}º</td>
                     <td class="sticky-col col-piloto" style="border-left: 4px solid ${teamColor} !important;">
                         <div class="glow-layer" style="background: linear-gradient(90deg, ${teamColor}33 0%, transparent 100%);"></div>
@@ -755,7 +761,6 @@
             }
         }
         
-        // Nova função adicionada
         function deleteDriver(id) {
             const driver = data.drivers.find(d => d.id === id);
             if(driver && confirm(`Tem certeza que deseja excluir o piloto ${driver.name}?`)) {
@@ -797,7 +802,7 @@
             if (myChart) {
                 myChart.data.labels = labels;
                 myChart.data.datasets = datasets;
-                myChart.update('none'); // Update sem animação para performance
+                myChart.update('none');
             } else {
                 myChart = new Chart(ctx, { 
                     type: 'line', 
@@ -894,17 +899,14 @@
         function addDriver() { 
             const n = prompt("Nome:"), t = prompt("Equipe:"); 
             if (n && t) { 
-                // Lógica de Cor Padrão
                 const teamNameLower = t.toLowerCase().trim();
-                let color = '#e10600'; // Cor padrão F1 caso não encontre
-                
+                let color = '#e10600'; 
                 for (let key in teamColorMap) {
                     if (teamNameLower.includes(key)) {
                         color = teamColorMap[key];
                         break;
                     }
                 }
-
                 data.drivers.push({ id: Date.now(), name: n, team: t, color: color, results: {} }); 
                 saveAndRender(); 
             }
@@ -941,7 +943,7 @@
             r.onload = (ev) => { 
                 try {
                     data = JSON.parse(ev.target.result); 
-                    render(); 
+                    saveAndRender(); 
                 } catch(err) { alert("Erro ao importar arquivo."); }
             }; 
             r.readAsText(e.target.files[0]); 
