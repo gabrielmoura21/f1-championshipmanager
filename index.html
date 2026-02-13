@@ -690,7 +690,15 @@
             let headerHtml = `<th class="sticky-col col-pos">Pos</th><th class="sticky-col col-piloto">Piloto</th><th class="sticky-col col-equipe">Equipe</th><th class="sticky-col col-pontos">Pts</th><th class="sticky-col col-vitorias">Vit</th>`;
             data.races.forEach(race => {
                 const sprintClass = race.type === 'Sprint' ? ' sprint-col' : '';
-                headerHtml += `<th class="header-gp${sprintClass}" ${isEditEnabled ? `onclick="deleteRace('${race.id}')"` : ''}>${race.name}${race.type === 'Sprint' ? ' (S)' : ''}</th>`;
+                
+                // Identifica emoji e coloca acima do texto se houver espaço
+                const nameParts = race.name.trim().split(' ');
+                let displayRaceName = race.name;
+                if(nameParts.length > 1) {
+                    displayRaceName = `<div style="line-height:1.1;">${nameParts[0]}<br><span style="font-size:0.85em;">${nameParts.slice(1).join(' ')}</span></div>`;
+                }
+
+                headerHtml += `<th class="header-gp${sprintClass}" ${isEditEnabled ? `onclick="deleteRace('${race.id}')"` : ''}>${displayRaceName}${race.type === 'Sprint' ? ' (S)' : ''}</th>`;
             });
             dom.headerRow.innerHTML = headerHtml;
 
@@ -928,11 +936,9 @@
             saveAndRender(); 
         }
         function addRace(type) { 
-            const n = prompt(`Nome do ${type}:`); 
+            const n = prompt(`Nome do ${type} (Ex: 🇧🇷 BRA):`); 
             if (n) { 
-                const flag = prompt(`Qual bandeira/emoji deseja adicionar para ${n.toUpperCase()}?`); 
-                const fullName = (flag ? flag + " " : "") + n.toUpperCase(); 
-                data.races.push({ id: 'r' + Date.now(), name: fullName, type }); 
+                data.races.push({ id: 'r' + Date.now(), name: n.toUpperCase(), type }); 
                 saveAndRender(); 
             } 
         }
