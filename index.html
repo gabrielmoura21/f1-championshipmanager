@@ -34,13 +34,13 @@
             color: white;
             margin: 20px;
             min-height: 100vh;
+            color-scheme: dark;
         }
 
-        /* Estilos para animação de troca de posição */
-        ::view-transition-group(*) { animation-duration: 0.6s; animation-timing-function: ease-in-out; }
-        ::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
-
-        body.light-tables { --sticky-bg: #f2f2f2; }
+        body.light-tables { 
+            --sticky-bg: #f2f2f2; 
+            color-scheme: light;
+        }
         body.light-tables .table-container {
             background: white !important;
             backdrop-filter: none;
@@ -61,7 +61,6 @@
         .sprint-col { background: rgba(0, 123, 255, 0.15); }
         body.light-tables .sprint-col { background: rgba(0, 123, 255, 0.1) !important; }
 
-        /* Estilo para o Campeão Matemático */
         .math-champion-row td { 
             background-color: #2a2505 !important; 
             border-top: 1px solid #f1c40f !important;
@@ -312,7 +311,6 @@
             height: 450px;
         }
 
-        /* ESTILOS H2H PADRONIZADOS COM AS TABELAS */
         .h2h-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
         .h2h-card {
             background: var(--glass-bg);
@@ -566,11 +564,7 @@
 
         function saveAndRender() { 
             saveData(); 
-            if (!document.startViewTransition) {
-                render();
-            } else {
-                document.startViewTransition(() => render());
-            }
+            render();
         }
 
         function updateResult(driverId, raceId, position) {
@@ -739,9 +733,7 @@
                 const rowClass = (driver.id === mathChampionId) ? 'math-champion-row' : '';
                 const deleteAttr = isEditEnabled ? `onclick="deleteDriver(${driver.id})" style="cursor:pointer;" title="Excluir Piloto"` : '';
                 
-                const vtName = `driver-${driver.id.toString().replace(/[^a-zA-Z0-9]/g, '')}`;
-
-                return `<tr class="${rowClass}" style="view-transition-name: ${vtName}">
+                return `<tr class="${rowClass}">
                     <td class="sticky-col col-pos" ${deleteAttr}>${trend} ${index + 1}º</td>
                     <td class="sticky-col col-piloto" style="border-left: 4px solid ${teamColor} !important;">
                         <div class="glow-layer" style="background: linear-gradient(90deg, ${teamColor}33 0%, transparent 100%);"></div>
@@ -879,7 +871,7 @@
                     let s1 = 0, s2 = 0;
                     const p1 = teams[t][0], p2 = teams[t][1];
                     data.races.forEach(r => {
-                        if (r.type === 'Sprint') return; // Excluir Sprints da contagem profissional
+                        if (r.type === 'Sprint') return;
                         const v1 = p1.results[r.id], v2 = p2.results[r.id];
                         const getVal = (v) => {
                             if (v === undefined || v === "") return null;
