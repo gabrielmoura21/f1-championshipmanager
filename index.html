@@ -278,11 +278,11 @@
             z-index: 5; 
             background: rgba(40, 40, 50, 0.9); 
             text-transform: uppercase; 
-            font-size: 0.75em; 
+            font-size: 0.82em; 
             letter-spacing: 1px; 
         }
 
-        .header-gp { width: 65px !important; min-width: 65px !important; max-width: 65px !important; }
+        .header-gp { width: 68px !important; min-width: 68px !important; max-width: 68px !important; }
 
         input[type="text"] {
             width: 100%;
@@ -691,11 +691,10 @@
             data.races.forEach(race => {
                 const sprintClass = race.type === 'Sprint' ? ' sprint-col' : '';
                 
-                // Identifica emoji e coloca acima do texto se houver espaço
                 const nameParts = race.name.trim().split(' ');
                 let displayRaceName = race.name;
                 if(nameParts.length > 1) {
-                    displayRaceName = `<div style="line-height:1.1;">${nameParts[0]}<br><span style="font-size:0.85em;">${nameParts.slice(1).join(' ')}</span></div>`;
+                    displayRaceName = `<div style="line-height:1.2;"><span style="font-size:1.5em; display:block; margin-bottom:2px;">${nameParts[0]}</span><span style="font-size:0.95em; font-weight:700;">${nameParts.slice(1).join(' ')}</span></div>`;
                 }
 
                 headerHtml += `<th class="header-gp${sprintClass}" ${isEditEnabled ? `onclick="deleteRace('${race.id}')"` : ''}>${displayRaceName}${race.type === 'Sprint' ? ' (S)' : ''}</th>`;
