@@ -15,6 +15,7 @@
             --f1-red: #e10600;
             --dark-bg: #0b0b10;
             --glass-bg: rgba(255, 255, 255, 0.05);
+            --f1-gray: #38383f; /* Cor adicionada para o novo H2H */
             --glass-border: rgba(255, 255, 255, 0.1);
             --cell-border: rgba(255, 255, 255, 0.1);
             --sticky-bg: #15151e;
@@ -52,7 +53,7 @@
         body.light-tables .sticky-col { background-color: var(--sticky-bg) !important; }
         body.light-tables th.sticky-col { background-color: #e6e6e6 !important; }
         body.light-tables input[type="text"] { color: black; }
-        body.light-tables .col-equipe { color: #555 !important; }
+        body.light-tables .col-equipe { color: #666 !important; }
         body.light-tables thead th { background: #eee !important; color: black !important; }
 
         .gold { background: rgba(255, 215, 0, 0.4) !important; font-weight: bold; }
@@ -221,9 +222,10 @@
             width: var(--w-equipe) !important; 
             min-width: var(--w-equipe) !important; 
             max-width: var(--w-equipe) !important;
-            font-style: italic; 
-            color: #bbb; 
+            color: #aaa; 
             text-align: left;
+            font-size: 0.85em;
+            text-transform: uppercase;
         }
 
         .col-pontos { 
@@ -311,16 +313,24 @@
             height: 450px;
         }
 
+        /* NOVOS ESTILOS H2H REFINADOS */
+        .h2h-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
         .h2h-card {
-            background: var(--glass-bg);
-            border-left: 4px solid var(--f1-red);
-            padding: 12px;
-            margin-bottom: 10px;
+            background: var(--f1-gray);
+            padding: 12px 15px;
             border-radius: 4px;
-            backdrop-filter: blur(5px);
-            border: 1px solid var(--glass-border);
-            border-left-width: 4px;
+            display: flex;
+            flex-direction: column;
+            border-left: 4px solid var(--f1-red);
+            margin-bottom: 0; /* Ajustado para o grid */
         }
+        .h2h-team { font-size: 0.75rem; color: #aaa; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 1px;}
+        .h2h-score { font-family: 'Oswald', sans-serif; font-size: 1.2rem; display: flex; justify-content: space-between; align-items: center;}
+        .h2h-score span { flex: 1; text-align: center; }
+        .h2h-score strong { font-weight: 700; flex: 2; }
+        .h2h-score strong:first-child { text-align: left; }
+        .h2h-score strong:last-child { text-align: right; }
+
     </style>
 </head>
 <body id="mainCaptureArea">
@@ -363,8 +373,8 @@
 
     <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start;">
         <div style="flex: 1; min-width: 300px;">
-            <h2>Duelo de Companheiros</h2>
-            <div id="h2hContainer"></div>
+            <h2>Duelo de Companheiros <span style="font-size: 0.5em; vertical-align: middle; color: #888;">CORRIDA</span></h2>
+            <div id="h2hContainer" class="h2h-list"></div>
         </div>
 
         <div class="constructors-wrapper">
@@ -554,7 +564,6 @@
 
         function saveData() { localStorage.setItem('f1_manager_data', JSON.stringify(data)); }
 
-        // Modificação para transição suave de posições
         function saveAndRender() { 
             saveData(); 
             if (!document.startViewTransition) {
@@ -730,7 +739,6 @@
                 const rowClass = (driver.id === mathChampionId) ? 'math-champion-row' : '';
                 const deleteAttr = isEditEnabled ? `onclick="deleteDriver(${driver.id})" style="cursor:pointer;" title="Excluir Piloto"` : '';
                 
-                // VT-Name para identificação da linha na animação
                 const vtName = `driver-${driver.id.toString().replace(/[^a-zA-Z0-9]/g, '')}`;
 
                 return `<tr class="${rowClass}" style="view-transition-name: ${vtName}">
@@ -850,11 +858,11 @@
             
             dom.construtoresBody.innerHTML = sorted.map((t, i) => `
                 <tr>
-                    <td>${i+1}º</td>
-                    <td style="text-align:left; font-weight:bold;">
+                    <td style="font-family:'Oswald',sans-serif;">${i+1}</td>
+                    <td style="text-align:left; text-transform:uppercase; font-size:0.9em; color:#aaa;">
                         <div class="team-content">${getTeamLogoHtml(t.name)}<span>${t.name}</span></div>
                     </td>
-                    <td>${t.points}</td>
+                    <td style="font-family:'Oswald',sans-serif; font-weight:700; font-size:1.1em;">${t.points}</td>
                 </tr>`).join('');
         }
 
@@ -871,6 +879,7 @@
                     let s1 = 0, s2 = 0;
                     const p1 = teams[t][0], p2 = teams[t][1];
                     data.races.forEach(r => {
+                        if (r.type === 'Sprint') return; // Excluir Sprints da contagem profissional
                         const v1 = p1.results[r.id], v2 = p2.results[r.id];
                         const getVal = (v) => {
                             if (v === undefined || v === "") return null;
@@ -883,8 +892,12 @@
                         }
                     });
                     h2hHtml.push(`<div class="h2h-card">
-                        <small style="color:var(--f1-red)">${t}</small><br>
-                        <strong>${p1.name.split(' ').pop().toUpperCase()}</strong> ${s1} x ${s2} <strong>${p2.name.split(' ').pop().toUpperCase()}</strong>
+                        <span class="h2h-team">${t}</span>
+                        <div class="h2h-score">
+                            <strong>${p1.name.split(' ').pop().toUpperCase()}</strong>
+                            <span>${s1} <span style="color:var(--f1-red); margin:0 5px;">-</span> ${s2}</span>
+                            <strong>${p2.name.split(' ').pop().toUpperCase()}</strong>
+                        </div>
                     </div>`);
                 }
             }
