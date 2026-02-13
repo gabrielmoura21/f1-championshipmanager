@@ -465,6 +465,23 @@
             "vcarb": "https://i.imgur.com/dcJutpD.png"
         };
 
+        // Mapeamento de Cores Padrão das Equipes
+        const teamColorMap = {
+            "red bull": "#3671C6",
+            "ferrari": "#E8002D",
+            "mclaren": "#FF8000",
+            "mercedes": "#27F4D2",
+            "aston martin": "#229971",
+            "alpine": "#0093CC",
+            "racing bulls": "#6692FF",
+            "rb": "#6692FF",
+            "vcarb": "#6692FF",
+            "sauber": "#52E252",
+            "kick": "#52E252",
+            "williams": "#64C4FF",
+            "haas": "#B6BABD"
+        };
+
         function getTeamLogoHtml(teamName) {
             const name = teamName.toLowerCase().trim();
             for (let key in logoMap) { 
@@ -706,9 +723,12 @@
                 }).join('');
 
                 const rowClass = (driver.id === mathChampionId) ? 'class="math-champion-row"' : '';
+                
+                // Adicionado: Evento de clique para deletar piloto
+                const deleteAttr = isEditEnabled ? `onclick="deleteDriver(${driver.id})" style="cursor:pointer;" title="Excluir Piloto"` : '';
 
                 return `<tr ${rowClass}>
-                    <td class="sticky-col col-pos">${trend} ${index + 1}º</td>
+                    <td class="sticky-col col-pos" ${deleteAttr}>${trend} ${index + 1}º</td>
                     <td class="sticky-col col-piloto" style="border-left: 4px solid ${teamColor} !important;">
                         <div class="glow-layer" style="background: linear-gradient(90deg, ${teamColor}33 0%, transparent 100%);"></div>
                         <div class="pilot-cell-wrapper">
@@ -731,6 +751,15 @@
         function deleteRace(id) {
             if(confirm('Excluir corrida?')) {
                 data.races = data.races.filter(r => r.id !== id);
+                saveAndRender();
+            }
+        }
+        
+        // Nova função adicionada
+        function deleteDriver(id) {
+            const driver = data.drivers.find(d => d.id === id);
+            if(driver && confirm(`Tem certeza que deseja excluir o piloto ${driver.name}?`)) {
+                data.drivers = data.drivers.filter(d => d.id !== id);
                 saveAndRender();
             }
         }
@@ -861,13 +890,26 @@
             const driver = data.drivers.find(d => d.id === id); 
             if(driver) { driver.color = color; saveAndRender(); } 
         }
+
         function addDriver() { 
             const n = prompt("Nome:"), t = prompt("Equipe:"); 
             if (n && t) { 
-                data.drivers.push({ id: Date.now(), name: n, team: t, color: '#e10600', results: {} }); 
+                // Lógica de Cor Padrão
+                const teamNameLower = t.toLowerCase().trim();
+                let color = '#e10600'; // Cor padrão F1 caso não encontre
+                
+                for (let key in teamColorMap) {
+                    if (teamNameLower.includes(key)) {
+                        color = teamColorMap[key];
+                        break;
+                    }
+                }
+
+                data.drivers.push({ id: Date.now(), name: n, team: t, color: color, results: {} }); 
                 saveAndRender(); 
             }
         }
+
         function editDriverName(id, n) { 
             const d = data.drivers.find(d => d.id === id);
             if(d) d.name = n; 
