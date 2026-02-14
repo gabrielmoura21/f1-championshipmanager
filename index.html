@@ -1,1122 +1,665 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>F1 2025 - Gerenciador de Campeonato</title>
-    <link rel="icon" type="image/png" href="https://img.icons8.com/?size=100&id=SmycgNNUprJa&format=png&color=000000">
-    
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Titillium+Web:wght@300;400;600;700&display=swap" rel="stylesheet">
-    
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <style>
-        :root {
-            --f1-red: #e10600;
-            --dark-bg: #0b0b10;
-            --glass-bg: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --cell-border: rgba(255, 255, 255, 0.1);
-            --sticky-bg: #15151e;
-            --w-pos: 65px;
-            --w-piloto: 220px; 
-            --w-equipe: 170px;
-            --w-pontos: 75px;
-            --w-vitorias: 75px;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F1 2025 - Gerenciador de Campeonato</title>
+<link rel="icon" type="image/png" href="https://img.icons8.com/?size=100&id=SmycgNNUprJa&format=png&color=000000">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Titillium+Web:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root {
+  --f1-red: #e10600;
+  --dark-bg: #0b0b10;
+  --glass-bg: rgba(255,255,255,0.05);
+  --glass-border: rgba(255,255,255,0.1);
+  --cell-border: rgba(255,255,255,0.1);
+  --sticky-bg: #15151e;
+  --w-pos: 65px; --w-piloto: 220px; --w-equipe: 170px; --w-pontos: 75px; --w-vitorias: 75px;
+}
+* { box-sizing: border-box; }
+body {
+  font-family: 'Titillium Web', sans-serif;
+  background: var(--dark-bg) radial-gradient(circle at 50% 0%, #1e1e2d, #0b0b10);
+  color: white; margin: 20px; min-height: 100vh; color-scheme: dark;
+}
+body.light-tables { --sticky-bg: #f2f2f2; color-scheme: light; }
+body.light-tables .table-container { background: white !important; backdrop-filter: none; color: black !important; border: 1px solid #ccc; }
+body.light-tables table { color: black !important; }
+body.light-tables th, body.light-tables td { border: 0.5px solid #ccc !important; }
+body.light-tables .sticky-col { background-color: var(--sticky-bg) !important; }
+body.light-tables th.sticky-col { background-color: #e6e6e6 !important; }
+body.light-tables input[type="text"] { color: black; }
+body.light-tables .col-equipe { color: #555 !important; }
+body.light-tables thead th { background: #eee !important; color: black !important; }
+body.light-tables .sprint-col { background: rgba(0,123,255,0.1) !important; }
+body.light-tables .math-champion-row td, body.light-tables .math-champion-row .sticky-col { background-color: #fff9c4 !important; }
 
-        * { box-sizing: border-box; }
+.gold { background: rgba(255,215,0,0.4) !important; font-weight: bold; }
+.silver { background: rgba(192,192,192,0.4) !important; font-weight: bold; }
+.bronze { background: rgba(205,127,50,0.4) !important; font-weight: bold; }
+.sprint-col { background: rgba(0,123,255,0.15); }
+.math-champion-row td { background-color: #2a2505 !important; border-top: 1px solid #f1c40f !important; border-bottom: 1px solid #f1c40f !important; }
+.math-champion-row .sticky-col { background-color: #2a2505 !important; }
 
-        body {
-            font-family: 'Titillium Web', sans-serif;
-            background-color: var(--dark-bg);
-            background-image: radial-gradient(circle at 50% 0%, #1e1e2d 0%, #0b0b10 100%);
-            color: white;
-            margin: 20px;
-            min-height: 100vh;
-            color-scheme: dark;
-        }
+h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 2px; border-bottom: 3px solid var(--f1-red); padding-bottom: 5px; }
 
-        .hardware-accel {
-            transform: translate3d(0, 0, 0);
-            backface-visibility: hidden;
-            perspective: 1000px;
-        }
+.calculator-panel-compact {
+  background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border);
+  padding: 20px; border-radius: 12px; margin-top: 10px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
+}
+.calc-item { display: flex; flex-direction: column; background: var(--glass-bg); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); }
+.calc-label { font-size: .7rem; text-transform: uppercase; color: #aaa; letter-spacing: 1px; margin-bottom: 5px; }
+.calc-val { font-family: 'Oswald', sans-serif; font-size: 1.4rem; font-weight: 700; }
+.calc-full-row { grid-column: span 2; padding: 15px; background: linear-gradient(90deg, rgba(225,6,0,0.2), transparent); border-left: 4px solid var(--f1-red); border-radius: 4px; }
+#titleStatus { font-family: 'Oswald', sans-serif; font-size: 1.1rem; font-weight: 700; text-transform: uppercase; display: block; }
 
-        body.light-tables { 
-            --sticky-bg: #f2f2f2; 
-            color-scheme: light;
-        }
-        body.light-tables .table-container {
-            background: white !important;
-            backdrop-filter: none;
-            color: black !important;
-            border: 1px solid #ccc;
-        }
-        body.light-tables table { color: black !important; }
-        body.light-tables th, body.light-tables td { border: 0.5px solid #ccc !important; }
-        body.light-tables .sticky-col { background-color: var(--sticky-bg) !important; }
-        body.light-tables th.sticky-col { background-color: #e6e6e6 !important; }
-        body.light-tables input[type="text"] { color: black; }
-        body.light-tables .col-equipe { color: #555 !important; }
-        body.light-tables thead th { background: #eee !important; color: black !important; }
+.controls { margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; background: var(--glass-bg); backdrop-filter: blur(10px); padding: 15px; border-radius: 12px; border: 1px solid var(--glass-border); }
+button {
+  font-family: 'Oswald', sans-serif; background: var(--f1-red); color: white; border: none;
+  padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold;
+  transition: all .2s; text-transform: uppercase; font-size: .8em; height: 38px;
+  display: flex; align-items: center; justify-content: center;
+}
+button:hover { background: #ff1e1e; transform: translateY(-1px); }
+.btn-export { background: #2e7d32; }
+.btn-import { background: #1976d2; }
+.btn-capture { background: #6a1b9a; }
+#editToggle { background: #333; border: 1px solid #555; min-width: 200px; }
+#editToggle.active { background: #f1c40f; color: #000; border-color: #000; }
+#themeToggle { background: #444; border: 1px solid #555; min-width: 200px; }
 
-        .gold { background: rgba(255, 215, 0, 0.4) !important; font-weight: bold; }
-        .silver { background: rgba(192, 192, 192, 0.4) !important; font-weight: bold; }
-        .bronze { background: rgba(205, 127, 50, 0.4) !important; font-weight: bold; }
-        .sprint-col { background: rgba(0, 123, 255, 0.15); }
-        body.light-tables .sprint-col { background: rgba(0, 123, 255, 0.1) !important; }
+.table-container { overflow-x: auto; margin-bottom: 40px; background: var(--glass-bg); backdrop-filter: blur(15px); border-radius: 12px; border: 1px solid var(--glass-border); width: 100%; }
+table { border-collapse: separate; border-spacing: 0; width: auto; color: white; font-size: .9em; table-layout: fixed; }
+th, td { border: 0.5px solid var(--cell-border); padding: 10px 8px; text-align: center; white-space: nowrap; height: 45px; overflow: hidden; }
+.sticky-col { position: sticky; background-color: var(--sticky-bg) !important; z-index: 10; }
+thead th { font-family: 'Oswald', sans-serif; position: sticky; top: 0; z-index: 20; background: #282832; text-transform: uppercase; font-size: .82em; letter-spacing: 1px; }
+th.sticky-col { z-index: 30 !important; background-color: #20202a !important; }
 
-        .math-champion-row td { 
-            background-color: #2a2505 !important; 
-            border-top: 1px solid #f1c40f !important;
-            border-bottom: 1px solid #f1c40f !important;
-        }
-        .math-champion-row .sticky-col { background-color: #2a2505 !important; }
-        body.light-tables .math-champion-row td { background-color: #fff9c4 !important; }
-        body.light-tables .math-champion-row .sticky-col { background-color: #fff9c4 !important; }
+.constructors-wrapper { width: 100%; max-width: 500px; display: block; }
+#construtoresTable { width: 100%; table-layout: fixed; }
+#construtoresTable th:nth-child(1) { width: 60px; }
+#construtoresTable th:nth-child(3) { width: 100px; }
 
-        h1, h2 { 
-            font-family: 'Oswald', sans-serif;
-            text-transform: uppercase; 
-            letter-spacing: 2px; 
-            border-bottom: 3px solid var(--f1-red); 
-            padding-bottom: 5px; 
-        }
+.col-pos { left: 0; width: var(--w-pos) !important; min-width: var(--w-pos) !important; max-width: var(--w-pos) !important; padding: 0 !important; }
+.pos-wrapper { display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; height: 100%; padding: 0 5px; }
+.col-piloto { font-family: 'Oswald', sans-serif; left: var(--w-pos); width: var(--w-piloto) !important; min-width: var(--w-piloto) !important; max-width: var(--w-piloto) !important; text-align: left; font-weight: 400; border-right: 2px solid rgba(255,255,255,0.2) !important; overflow: hidden; }
+.col-equipe { left: calc(var(--w-pos) + var(--w-piloto)); width: var(--w-equipe) !important; min-width: var(--w-equipe) !important; max-width: var(--w-equipe) !important; color: #aaa; text-align: left; font-size: .85em; text-transform: uppercase; }
+.col-pontos { font-family: 'Oswald', sans-serif; left: calc(var(--w-pos) + var(--w-piloto) + var(--w-equipe)); width: var(--w-pontos) !important; min-width: var(--w-pontos) !important; max-width: var(--w-pontos) !important; font-weight: 700; padding: 0 !important; background-color: var(--sticky-bg) !important; }
+.pts-container { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; width: 100%; line-height: 1.1; }
+.col-vitorias { font-family: 'Oswald', sans-serif; left: calc(var(--w-pos) + var(--w-piloto) + var(--w-equipe) + var(--w-pontos)); width: var(--w-vitorias) !important; min-width: var(--w-vitorias) !important; max-width: var(--w-vitorias) !important; border-right: 2px solid rgba(255,255,255,0.3) !important; }
 
-        .calculator-panel-compact {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid var(--glass-border);
-            padding: 20px;
-            border-radius: 12px;
-            margin-top: 10px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
+.glow-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+.pilot-cell-wrapper { position: relative; display: flex; align-items: center; gap: 8px; z-index: 1; }
+.team-content { display: flex; align-items: center; gap: 8px; }
+.team-logo { width: 22px; height: 22px; object-fit: contain; filter: drop-shadow(0 0 2px rgba(255,255,255,0.2)); }
+.flag-icon { width: 20px; height: 15px; border-radius: 2px; box-shadow: 0 0 2px rgba(0,0,0,0.5); vertical-align: middle; object-fit: cover; display: inline-block; }
+.race-header-flag { display: block; margin: 0 auto 4px; width: 24px; height: 16px; border-radius: 2px; object-fit: cover; }
+.header-gp { width: 68px !important; min-width: 68px !important; max-width: 68px !important; }
 
-        .calc-item {
-            display: flex;
-            flex-direction: column;
-            background: var(--glass-bg);
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.05);
-        }
+input[type="text"] { width: 100%; border: 1px solid transparent; text-align: center; padding: 4px; background: transparent; color: white; font-family: inherit; }
+input[type="text"]:focus { border-bottom: 2px solid var(--f1-red); outline: none; background: rgba(255,255,255,0.1); }
 
-        .calc-label {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            color: #aaa;
-            letter-spacing: 1px;
-            margin-bottom: 5px;
-        }
+.status-special { color: var(--f1-red) !important; font-weight: bold !important; }
+.up { color: #4caf50; } .down { color: #f44336; } .stable { color: #777; }
+.trend-up { color: #4caf50; font-size: .8em; margin-right: 4px; }
+.trend-down { color: #f44336; font-size: .8em; margin-right: 4px; }
+.trend-neutral { color: #777; font-size: 1.2em; line-height: .5; margin-right: 4px; vertical-align: middle; }
+.gap-better { color: #4caf50 !important; font-weight: bold; }
+.gap-worse { color: #f44336 !important; font-weight: bold; }
 
-        .calc-val {
-            font-family: 'Oswald', sans-serif;
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: white;
-        }
+.chart-container { background: var(--glass-bg); backdrop-filter: blur(10px); padding: 20px; border-radius: 12px; border: 1px solid var(--glass-border); margin-bottom: 40px; height: 450px; }
 
-        .calc-full-row {
-            grid-column: span 2;
-            padding: 15px;
-            background: linear-gradient(90deg, rgba(225, 6, 0, 0.2) 0%, transparent 100%);
-            border-left: 4px solid var(--f1-red);
-            border-radius: 4px;
-        }
+.h2h-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px,1fr)); gap: 10px; }
+.h2h-card { background: var(--glass-bg); backdrop-filter: blur(10px); padding: 12px 15px; border-radius: 4px; display: flex; flex-direction: column; border: 1px solid var(--glass-border); border-left: 4px solid var(--f1-red); }
+.h2h-team { font-size: .75rem; color: #aaa; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 1px; }
+.h2h-score { font-family: 'Oswald', sans-serif; font-size: 1.2rem; display: flex; justify-content: space-between; align-items: center; }
+.h2h-score span { flex: 1; text-align: center; }
+.h2h-score strong { font-weight: 700; flex: 2; }
+.h2h-score strong:first-child { text-align: left; }
+.h2h-score strong:last-child { text-align: right; }
 
-        #titleStatus {
-            font-family: 'Oswald', sans-serif;
-            font-size: 1.1rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            display: block;
-        }
-
-        .controls { 
-            margin-bottom: 20px;
-            display: flex; 
-            gap: 10px; 
-            flex-wrap: wrap; 
-            background: var(--glass-bg); 
-            backdrop-filter: blur(10px);
-            padding: 15px; 
-            border-radius: 12px; 
-            border: 1px solid var(--glass-border);
-            transform: translate3d(0,0,0);
-        }
-
-        button {
-            font-family: 'Oswald', sans-serif;
-            background-color: var(--f1-red);
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            cursor: pointer;
-            border-radius: 4px;
-            font-weight: bold;
-            transition: all 0.2s;
-            text-transform: uppercase;
-            font-size: 0.8em;
-            height: 38px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        button:hover { background-color: #ff1e1e; transform: translateY(-1px); }
-        .btn-export { background-color: #2e7d32; }
-        .btn-import { background-color: #1976d2; }
-        .btn-capture { background-color: #6a1b9a; }
-        
-        #editToggle { background-color: #333; border: 1px solid #555; min-width: 200px; }
-        #editToggle.active { background-color: #f1c40f; color: #000; border-color: #000; }
-        #themeToggle { background-color: #444; border: 1px solid #555; min-width: 200px; }
-
-        .table-container { 
-            overflow-x: auto;
-            margin-bottom: 40px; 
-            background: var(--glass-bg); 
-            backdrop-filter: blur(15px);
-            border-radius: 12px;
-            border: 1px solid var(--glass-border);
-            width: 100%;
-            transform: translate3d(0,0,0);
-            will-change: scroll-position;
-        }
-
-        table { border-collapse: separate; border-spacing: 0; width: auto; color: white; font-size: 0.9em; table-layout: fixed; }
-        th, td { border: 0.5px solid var(--cell-border); padding: 10px 8px; text-align: center; white-space: nowrap; height: 45px; overflow: hidden; }
-
-        /* CORREÇÃO DE Z-INDEX PARA COLUNAS FIXAS */
-        .sticky-col { 
-            position: sticky;
-            background-color: var(--sticky-bg) !important; 
-            z-index: 10; /* Menor que o Header */
-            opacity: 1 !important;
-            flex-shrink: 0 !important;
-        }
-        
-        /* Cabeçalho Fixo Principal */
-        thead th { 
-            font-family: 'Oswald', sans-serif;
-            position: sticky; 
-            top: 0; 
-            z-index: 20; /* Maior que o corpo da tabela */
-            background: #282832; /* Fundo Sólido (Sem transparência) */
-            text-transform: uppercase; 
-            font-size: 0.82em; 
-            letter-spacing: 1px; 
-        }
-
-        /* Interseção (Canto Superior Esquerdo) - Deve ficar acima de tudo */
-        th.sticky-col { 
-            z-index: 30 !important; 
-            background-color: #20202a !important; 
-        }
-
-        .constructors-wrapper {
-            width: 100%;
-            max-width: 500px;
-            display: block;
-        }
-
-        #construtoresTable { width: 100%; table-layout: fixed; }
-        #construtoresTable th:nth-child(1) { width: 60px; }
-        #construtoresTable th:nth-child(3) { width: 100px; }
-
-        /* CORREÇÃO DA CÉLULA DE POSIÇÃO */
-        .col-pos { 
-            left: 0; 
-            width: var(--w-pos) !important; 
-            min-width: var(--w-pos) !important; 
-            max-width: var(--w-pos) !important;
-            padding: 0 !important; /* Remove padding para usar wrapper */
-        }
-
-        /* Wrapper para alinhar conteúdo da posição sem quebrar o sticky */
-        .pos-wrapper {
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            gap: 5px;
-            width: 100%;
-            height: 100%;
-            padding: 0 5px;
-        }
-        
-        .col-piloto { 
-            font-family: 'Oswald', sans-serif;
-            left: var(--w-pos);
-            width: var(--w-piloto) !important; 
-            min-width: var(--w-piloto) !important; 
-            max-width: var(--w-piloto) !important;
-            text-align: left; 
-            font-weight: 400;
-            border-right: 2px solid rgba(255,255,255,0.2) !important;
-            overflow: hidden;
-        }
-        
-        .col-equipe { 
-            left: calc(var(--w-pos) + var(--w-piloto));
-            width: var(--w-equipe) !important; 
-            min-width: var(--w-equipe) !important; 
-            max-width: var(--w-equipe) !important;
-            color: #aaa; 
-            text-align: left;
-            font-size: 0.85em;
-            text-transform: uppercase;
-        }
-
-        .col-pontos { 
-            font-family: 'Oswald', sans-serif;
-            left: calc(var(--w-pos) + var(--w-piloto) + var(--w-equipe));
-            width: var(--w-pontos) !important; 
-            min-width: var(--w-pontos) !important; 
-            max-width: var(--w-pontos) !important;
-            font-weight: 700; 
-            color: inherit;
-            padding: 0 !important;
-            background-color: var(--sticky-bg) !important;
-        }
-
-        .pts-container {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100%;
-            width: 100%;
-            line-height: 1.1;
-        }
-
-        .col-vitorias { 
-            font-family: 'Oswald', sans-serif;
-            left: calc(var(--w-pos) + var(--w-piloto) + var(--w-equipe) + var(--w-pontos));
-            width: var(--w-vitorias) !important; 
-            min-width: var(--w-vitorias) !important; 
-            max-width: var(--w-vitorias) !important;
-            border-right: 2px solid rgba(255,255,255,0.3) !important;
-        }
-
-        .glow-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            pointer-events: none;
-        }
-
-        .pilot-cell-wrapper { position: relative; display: flex; align-items: center; gap: 8px; z-index: 1; }
-        .team-content { display: flex; align-items: center; gap: 8px; }
-        .team-logo { width: 22px; height: 22px; object-fit: contain; filter: drop-shadow(0 0 2px rgba(255,255,255,0.2)); }
-        
-        .flag-icon { 
-            width: 20px; 
-            height: 15px; 
-            border-radius: 2px; 
-            box-shadow: 0 0 2px rgba(0,0,0,0.5); 
-            vertical-align: middle; 
-            object-fit: cover;
-            display: inline-block;
-        }
-        
-        .race-header-flag { 
-            display: block; 
-            margin: 0 auto 4px auto; 
-            width: 24px; 
-            height: 16px; 
-            border-radius: 2px;
-            object-fit: cover;
-        }
-
-        .header-gp { width: 68px !important; min-width: 68px !important; max-width: 68px !important; }
-
-        input[type="text"] {
-            width: 100%;
-            border: 1px solid transparent;
-            text-align: center;
-            padding: 4px;
-            background: transparent;
-            color: white;
-            font-family: inherit;
-        }
-        input[type="text"]:focus { border-bottom: 2px solid var(--f1-red); outline: none; background: rgba(255,255,255,0.1); }
-        
-        .status-special { color: var(--f1-red) !important; font-weight: bold !important; }
-
-        .up { color: #4caf50; }
-        .down { color: #f44336; }
-        .stable { color: #777; }
-
-        .trend-up { color: #4caf50; font-size: 0.8em; margin-right: 4px; }
-        .trend-down { color: #f44336; font-size: 0.8em; margin-right: 4px; }
-        .trend-neutral { color: #777; font-size: 1.2em; line-height: 0.5; margin-right: 4px; vertical-align: middle;}
-        
-        .gap-better { color: #4caf50 !important; font-weight: bold; }
-        .gap-worse { color: #f44336 !important; font-weight: bold; }
-
-        .chart-container {
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid var(--glass-border);
-            margin-bottom: 40px;
-            height: 450px;
-            transform: translate3d(0,0,0);
-        }
-
-        .h2h-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
-        .h2h-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            padding: 12px 15px;
-            border-radius: 4px;
-            display: flex;
-            flex-direction: column;
-            border: 1px solid var(--glass-border);
-            border-left: 4px solid var(--f1-red);
-            margin-bottom: 0;
-            transform: translate3d(0,0,0); 
-            will-change: transform;
-        }
-        .h2h-team { font-size: 0.75rem; color: #aaa; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 1px;}
-        .h2h-score { font-family: 'Oswald', sans-serif; font-size: 1.2rem; display: flex; justify-content: space-between; align-items: center;}
-        .h2h-score span { flex: 1; text-align: center; }
-        .h2h-score strong { font-weight: 700; flex: 2; }
-        .h2h-score strong:first-child { text-align: left; }
-        .h2h-score strong:last-child { text-align: right; }
-
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
-            display: none; align-items: center; justify-content: center; z-index: 9999;
-        }
-        .modal-content {
-            background: #15151e; border: 1px solid var(--glass-border);
-            padding: 30px; border-radius: 12px; width: 100%; max-width: 400px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            animation: slideIn 0.3s ease-out;
-            transform: translate3d(0,0,0);
-        }
-        @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .modal-title { font-family: 'Oswald', sans-serif; font-size: 1.5rem; margin-bottom: 20px; border-bottom: 2px solid var(--f1-red); padding-bottom: 10px; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-size: 0.9em; color: #aaa; }
-        .form-control {
-            width: 100%; padding: 10px; background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 4px;
-            font-family: 'Titillium Web', sans-serif;
-        }
-        .form-control:focus { border-color: var(--f1-red); outline: none; }
-        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-        .btn-cancel { background-color: #555; }
-    </style>
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; z-index: 9999; }
+.modal-content { background: #15151e; border: 1px solid var(--glass-border); padding: 30px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideIn .3s ease-out; }
+@keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-title { font-family: 'Oswald', sans-serif; font-size: 1.5rem; margin-bottom: 20px; border-bottom: 2px solid var(--f1-red); padding-bottom: 10px; }
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; margin-bottom: 5px; font-size: .9em; color: #aaa; }
+.form-control { width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 4px; font-family: 'Titillium Web', sans-serif; }
+.form-control:focus { border-color: var(--f1-red); outline: none; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+.btn-cancel { background: #555; }
+</style>
 </head>
 <body id="mainCaptureArea">
 
-    <h1><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/F1.svg/1280px-F1.svg.png" alt="F1 Logo" style="height: 25px; margin-right: 15px; vertical-align: middle;"> F1 Championship Manager</h1>
+<h1><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/F1.svg/1280px-F1.svg.png" alt="F1 Logo" style="height:25px;margin-right:15px;vertical-align:middle;"> F1 Championship Manager</h1>
 
-    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-        <button id="editToggle" onclick="toggleEdit()">🔒 Modo Edição: Desativado</button>
-        <button id="themeToggle" onclick="toggleTheme()">🌓 Alternar Tema Tabelas</button>
+<div style="display:flex;gap:10px;margin-bottom:15px;">
+  <button id="editToggle" onclick="toggleEdit()">🔒 Modo Edição: Desativado</button>
+  <button id="themeToggle" onclick="toggleTheme()">🌓 Alternar Tema Tabelas</button>
+</div>
+
+<div class="controls" id="adminControls" style="display:none;">
+  <button onclick="openAddDriverModal()">🏎️ Adicionar Piloto</button>
+  <button onclick="loadF1Grid()" style="background:#000;">🏎️ Carregar Grid F1</button>
+  <button onclick="loadGameCalendar()" style="background:#333;">📅 Carregar Calendário F1 25</button>
+  <button onclick="openAddRaceModal('GP')">🏆 Adicionar GP</button>
+  <button onclick="openAddRaceModal('Sprint')">🥇 Adicionar Sprint</button>
+  <button class="btn-export" onclick="exportData()">💾 Exportar Dados</button>
+  <button onclick="document.getElementById('importFile').click()">📂 Importar Dados</button>
+  <input type="file" id="importFile" style="display:none" onchange="importData(event)">
+  <button class="btn-capture" onclick="captureHQ()">📸 EXPORTAR POSTER (HQ)</button>
+  <button style="background:#555" onclick="resetData()">🗑️ Limpar Tudo</button>
+</div>
+
+<h2 style="display:flex;justify-content:space-between;align-items:flex-end;">
+  <span>Classificação de Pilotos</span>
+  <span id="racesLeft" style="font-size:14px;color:#aaa;font-weight:normal;font-family:'Titillium Web',sans-serif;"></span>
+</h2>
+<div class="table-container">
+  <table id="pilotosTable"><thead><tr id="headerRow"></tr></thead><tbody id="pilotosBody"></tbody></table>
+</div>
+
+<h2>Evolução do Campeonato</h2>
+<div class="chart-container"><canvas id="performanceChart"></canvas></div>
+
+<div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;">
+  <div style="flex:1;min-width:300px;">
+    <h2>Duelo de Companheiros <span style="font-size:.5em;vertical-align:middle;color:#888;">CORRIDA</span></h2>
+    <div id="h2hContainer" class="h2h-list"></div>
+  </div>
+  <div class="constructors-wrapper">
+    <h2>Construtores</h2>
+    <div class="table-container" style="width:100%;margin-bottom:10px;">
+      <table id="construtoresTable">
+        <thead><tr><th>Pos</th><th>Equipe</th><th>Pontos</th></tr></thead>
+        <tbody id="construtoresBody"></tbody>
+      </table>
     </div>
-
-    <div class="controls hardware-accel" id="adminControls" style="display: none;">
-        <button onclick="openAddDriverModal()">🏎️ Adicionar Piloto</button>
-        <button onclick="loadF1Grid()" style="background-color: #000;">🏎️ Carregar Grid F1</button>
-        <button onclick="loadGameCalendar()" style="background-color: #333;">📅 Carregar Calendário F1 25</button>
-        <button onclick="openAddRaceModal('GP')">🏆Adicionar GP</button>
-        <button onclick="openAddRaceModal('Sprint')">🥇Adicionar Sprint</button>
-        <button class="btn-export" onclick="exportData()">💾 Exportar Dados</button>
-        <button onclick="document.getElementById('importFile').click()">📂 Importar Dados</button>
-        <input type="file" id="importFile" style="display:none" onchange="importData(event)">
-        <button class="btn-capture" onclick="captureHQ()">📸 EXPORTAR POSTER (HQ)</button>
-        <button style="background: #555" onclick="resetData()">🗑️Limpar Tudo</button>
+    <h2>Chances de Título</h2>
+    <div class="calculator-panel-compact">
+      <div class="calc-item"><span class="calc-label">Pontos em jogo</span><span id="remainingPoints" class="calc-val">0</span></div>
+      <div class="calc-item"><span class="calc-label">Na disputa</span><span id="mathContenders" class="calc-val">0</span></div>
+      <div class="calc-full-row"><span class="calc-label">Status da Temporada</span><span id="titleStatus">Aguardando dados...</span></div>
     </div>
+  </div>
+</div>
 
-    <h2 style="display: flex; justify-content: space-between; align-items: flex-end;">
-        <span>Classificação de Pilotos</span>
-        <span id="racesLeft" style="font-size: 14px; color: #aaa; font-weight: normal; font-family: 'Titillium Web', sans-serif;"></span>
-    </h2>
-    <div class="table-container hardware-accel">
-        <table id="pilotosTable">
-            <thead><tr id="headerRow"></tr></thead>
-            <tbody id="pilotosBody"></tbody>
-        </table>
+<div id="driverModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-title">Novo Piloto</div>
+    <div class="form-group"><label>Nome do Piloto</label><input type="text" id="newDriverName" class="form-control" placeholder="Ex: Ayrton Senna"></div>
+    <div class="form-group"><label>Equipe</label><input type="text" id="newDriverTeam" class="form-control" placeholder="Ex: McLaren" list="teamOptions" autocomplete="off"><datalist id="teamOptions"></datalist></div>
+    <div class="form-group"><label>Nacionalidade</label><select id="newDriverFlag" class="form-control"></select></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('driverModal')">Cancelar</button>
+      <button onclick="confirmAddDriver()">Adicionar</button>
     </div>
+  </div>
+</div>
 
-    <h2>Evolução do Campeonato</h2>
-    <div class="chart-container hardware-accel">
-        <canvas id="performanceChart"></canvas>
+<div id="raceModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-title">Nova Corrida</div>
+    <input type="hidden" id="newRaceType">
+    <div class="form-group"><label>Sigla da Corrida</label><input type="text" id="newRaceName" class="form-control" placeholder="Ex: BRA"></div>
+    <div class="form-group"><label>País (Bandeira)</label><select id="newRaceFlag" class="form-control"></select></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('raceModal')">Cancelar</button>
+      <button onclick="confirmAddRace()">Adicionar</button>
     </div>
-
-    <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start;">
-        <div style="flex: 1; min-width: 300px;">
-            <h2>Duelo de Companheiros <span style="font-size: 0.5em; vertical-align: middle; color: #888;">CORRIDA</span></h2>
-            <div id="h2hContainer" class="h2h-list hardware-accel"></div>
-        </div>
-
-        <div class="constructors-wrapper">
-            <h2>Construtores</h2>
-            <div class="table-container hardware-accel" style="width: 100%; margin-bottom: 10px;">
-                <table id="construtoresTable">
-                    <thead>
-                        <tr><th>Pos</th><th>Equipe</th><th>Pontos</th></tr>
-                    </thead>
-                    <tbody id="construtoresBody"></tbody>
-                </table>
-            </div>
-
-            <h2>Chances de Título</h2>
-            <div class="calculator-panel-compact hardware-accel">
-                <div class="calc-item">
-                    <span class="calc-label">Pontos em jogo</span>
-                    <span id="remainingPoints" class="calc-val">0</span>
-                </div>
-                <div class="calc-item">
-                    <span class="calc-label">Na disputa</span>
-                    <span id="mathContenders" class="calc-val">0</span>
-                </div>
-                <div class="calc-full-row">
-                    <span class="calc-label">Status da Temporada</span>
-                    <span id="titleStatus">Aguardando dados...</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="driverModal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-title">Novo Piloto</div>
-            <div class="form-group">
-                <label>Nome do Piloto</label>
-                <input type="text" id="newDriverName" class="form-control" placeholder="Ex: Ayrton Senna">
-            </div>
-            <div class="form-group">
-                <label>Equipe</label>
-                <input type="text" id="newDriverTeam" class="form-control" placeholder="Ex: McLaren" list="teamOptions" autocomplete="off">
-                <datalist id="teamOptions"></datalist>
-            </div>
-            <div class="form-group">
-                <label>Nacionalidade</label>
-                <select id="newDriverFlag" class="form-control"></select>
-            </div>
-            <div class="modal-actions">
-                <button class="btn-cancel" onclick="closeModal('driverModal')">Cancelar</button>
-                <button onclick="confirmAddDriver()">Adicionar</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="raceModal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-title">Nova Corrida</div>
-            <input type="hidden" id="newRaceType">
-            <div class="form-group">
-                <label>Sigla da Corrida</label>
-                <input type="text" id="newRaceName" class="form-control" placeholder="Ex: BRA">
-            </div>
-            <div class="form-group">
-                <label>País (Bandeira)</label>
-                <select id="newRaceFlag" class="form-control"></select>
-            </div>
-            <div class="modal-actions">
-                <button class="btn-cancel" onclick="closeModal('raceModal')">Cancelar</button>
-                <button onclick="confirmAddRace()">Adicionar</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let data = { drivers: [], races: [] };
-        let myChart = null;
-        let isEditEnabled = false;
-        let chartInstance = null;
-        let cachedTeamData = null; 
-        
-        const dom = {
-            headerRow: document.getElementById('headerRow'),
-            pilotosBody: document.getElementById('pilotosBody'),
-            construtoresBody: document.getElementById('construtoresBody'),
-            h2hContainer: document.getElementById('h2hContainer'),
-            remainingPoints: document.getElementById('remainingPoints'),
-            mathContenders: document.getElementById('mathContenders'),
-            titleStatus: document.getElementById('titleStatus')
-        };
-
-        const GP_POINTS = { 1:25, 2:18, 3:15, 4:12, 5:10, 6:8, 7:6, 8:4, 9:2, 10:1 };
-        const SPRINT_POINTS = { 1:8, 2:7, 3:6, 4:5, 5:4, 6:3, 7:2, 8:1 };
-
-        const countries = {
-            "af": "Afeganistão", "za": "África do Sul", "al": "Albânia", "de": "Alemanha", "ad": "Andorra", "ao": "Angola",
-            "sa": "Arábia Saudita", "dz": "Argélia", "ar": "Argentina", "am": "Armênia", "au": "Austrália", "at": "Áustria",
-            "az": "Azerbaijão", "bs": "Bahamas", "bh": "Bahrein", "be": "Bélgica", "bo": "Bolívia", "ba": "Bósnia",
-            "br": "Brasil", "bg": "Bulgária", "cm": "Camarões", "ca": "Canadá", "qa": "Catar", "kz": "Cazaquistão",
-            "cl": "Chile", "cn": "China", "cy": "Chipre", "co": "Colômbia", "kr": "Coreia do Sul", "ci": "Costa do Marfim",
-            "cr": "Costa Rica", "hr": "Croácia", "cu": "Cuba", "dk": "Dinamarca", "eg": "Egito", "sv": "El Salvador",
-            "ae": "Emirados Árabes", "ec": "Equador", "sk": "Eslováquia", "si": "Eslovênia", "es": "Espanha", "us": "Estados Unidos",
-            "ee": "Estônia", "fi": "Finlândia", "fr": "França", "gh": "Gana", "ge": "Geórgia", "gr": "Grécia",
-            "gt": "Guatemala", "hn": "Honduras", "hu": "Hungria", "in": "Índia", "id": "Indonésia", "ir": "Irã",
-            "ie": "Irlanda", "is": "Islândia", "il": "Israel", "it": "Itália", "jm": "Jamaica", "jp": "Japão",
-            "jo": "Jordânia", "lv": "Letônia", "lb": "Líbano", "lt": "Lituânia", "lu": "Luxemburgo", "my": "Malásia",
-            "mt": "Malta", "ma": "Marrocos", "mx": "México", "md": "Moldávia", "mc": "Mônaco", "mn": "Mongólia",
-            "me": "Montenegro", "na": "Namíbia", "np": "Nepal", "ni": "Nicarágua", "ng": "Nigéria", "no": "Noruega",
-            "nz": "Nova Zelândia", "nl": "Holanda", "om": "Omã", "pa": "Panamá", "pk": "Paquistão", "py": "Paraguai",
-            "pe": "Peru", "pl": "Polônia", "pt": "Portugal", "gb": "Reino Unido", "cz": "República Tcheca", "do": "Rep. Dominicana",
-            "ro": "Romênia", "ru": "Rússia", "sn": "Senegal", "rs": "Sérvia", "sg": "Cingapura", "sy": "Síria",
-            "lk": "Sri Lanka", "se": "Suécia", "ch": "Suíça", "th": "Tailândia", "tw": "Taiwan", "tn": "Tunísia",
-            "tr": "Turquia", "ua": "Ucrânia", "uy": "Uruguai", "uz": "Uzbequistão", "ve": "Venezuela", "vn": "Vietnã"
-        };
-
-        const teamColorMap = {
-            "red bull": "#3671C6", "ferrari": "#E8002D", "mclaren": "#FF8000", "mercedes": "#27F4D2",
-            "aston martin": "#229971", "alpine": "#0093CC", "racing bulls": "#6692FF", "rb": "#6692FF",
-            "vcarb": "#6692FF", "sauber": "#52E252", "kick": "#52E252", "williams": "#64C4FF", "haas": "#B6BABD"
-        };
-
-        const logoMap = {
-            "ferrari": "https://i.imgur.com/5l6wnVb.png", "mercedes": "https://i.imgur.com/vtZKCc5.png",
-            "red bull": "https://i.imgur.com/Q5idNac.png", "mclaren": "https://i.imgur.com/Ub26b0i.png",
-            "alpine": "https://i.imgur.com/DveLvT7.png", "aston martin": "https://i.imgur.com/VMHSp48.png",
-            "williams": "https://i.imgur.com/U7oMWX4.png", "haas": "https://i.imgur.com/dx7z7Kg.png",
-            "sauber": "https://i.imgur.com/MYyEAOA.png", "kick": "https://i.imgur.com/MYyEAOA.png",
-            "racing bulls": "https://i.imgur.com/dcJutpD.png", "rb": "https://i.imgur.com/dcJutpD.png", "vcarb": "https://i.imgur.com/dcJutpD.png"
-        };
-
-        function populateCountrySelects() {
-            const selects = ['newDriverFlag', 'newRaceFlag'];
-            const options = Object.keys(countries).sort((a, b) => countries[a].localeCompare(countries[b])).map(code => 
-                `<option value="${code}">${countries[code]}</option>`
-            ).join('');
-            selects.forEach(id => document.getElementById(id).innerHTML = options);
-        }
-
-        function getFlagUrl(code) { return `https://flagcdn.com/w40/${code.toLowerCase()}.png`; }
-
-        function formatDriverDisplayName(fullName) {
-            const parts = fullName.trim().split(' ');
-            if (parts.length <= 1) return fullName;
-            return `${parts.slice(0, -1).join(' ')} <strong>${parts[parts.length - 1].toUpperCase()}</strong>`;
-        }
-
-        function getTeamLogoHtml(teamName) {
-            const name = teamName.toLowerCase().trim();
-            for (let key in logoMap) { if (name.includes(key)) return `<img src="${logoMap[key]}" class="team-logo" alt="">`; }
-            return "";
-        }
-
-        async function captureHQ() {
-            const btn = document.querySelector('.btn-capture');
-            const originalText = btn.innerText;
-            btn.innerText = "⚡ PROCESSANDO...";
-            await new Promise(r => setTimeout(r, 500));
-            const area = document.getElementById('mainCaptureArea');
-            try {
-                const canvas = await html2canvas(area, {
-                    backgroundColor: "#0b0b10", scale: 4, useCORS: true, logging: false,
-                    ignoreElements: (el) => el.tagName === "BUTTON" || el.id === "adminControls" || (el.tagName === "INPUT" && el.type !== "text") || el.classList.contains('modal-overlay')
-                });
-                const link = document.createElement('a');
-                link.download = `F1_Championship_${new Date().toLocaleDateString()}.png`;
-                link.href = canvas.toDataURL("image/png", 1.0);
-                link.click();
-            } finally { btn.innerText = originalText; }
-        }
-
-        function toggleTheme() {
-            document.body.classList.toggle('light-tables');
-            localStorage.setItem('f1_table_theme', document.body.classList.contains('light-tables') ? 'light' : 'dark');
-            requestAnimationFrame(render);
-        }
-
-        function calculateDriverStats(driver) {
-            let total = 0, wins = 0;
-            const pointsEvolution = [0];
-            const posCounts = {};
-            
-            data.races.forEach(race => {
-                const pos = driver.results[race.id];
-                if (pos && !isNaN(pos)) {
-                    const pts = race.type === 'GP' ? GP_POINTS : SPRINT_POINTS;
-                    const pVal = parseInt(pos);
-                    const gained = pts[pVal] || 0;
-                    total += gained;
-                    if (race.type === 'GP' && pVal === 1) wins++;
-                    posCounts[pVal] = (posCounts[pVal] || 0) + 1;
-                }
-                pointsEvolution.push(total);
-            });
-            
-            return { total, wins, posCounts, pointsEvolution };
-        }
-
-        const tieBreak = (a, b) => {
-            if (b.stats.total !== a.stats.total) return b.stats.total - a.stats.total;
-            if (b.stats.wins !== a.stats.wins) return b.stats.wins - a.stats.wins;
-            for (let p = 1; p <= 20; p++) {
-                const countA = a.stats.posCounts[p] || 0;
-                const countB = b.stats.posCounts[p] || 0;
-                if (countA !== countB) return countB - countA;
-            }
-            return 0;
-        };
-
-        function processData() {
-            const processedDrivers = data.drivers.map(d => {
-                const stats = calculateDriverStats(d);
-                return { ...d, stats }; 
-            }).sort(tieBreak);
-
-            const teamsMap = {};
-            processedDrivers.forEach(d => {
-                const teamKey = d.team.trim().toLowerCase();
-                if (!teamsMap[teamKey]) {
-                    teamsMap[teamKey] = { name: d.team, points: 0, drivers: [] };
-                }
-                if (teamsMap[teamKey].name[0] === teamsMap[teamKey].name[0].toLowerCase() && d.team[0] === d.team[0].toUpperCase()) {
-                    teamsMap[teamKey].name = d.team;
-                }
-                teamsMap[teamKey].points += d.stats.total;
-                teamsMap[teamKey].drivers.push(d);
-            });
-
-            return { drivers: processedDrivers, teams: teamsMap };
-        }
-
-        function render() {
-            requestAnimationFrame(() => {
-                const { drivers, teams } = processData();
-                cachedTeamData = teams; 
-
-                renderDriversTable(drivers);
-                renderConstructorsAndH2H(teams);
-                renderChart(drivers);
-                renderStatus(drivers);
-            });
-        }
-
-        function calculateStatsUpToRace(limitIndex) {
-            if (limitIndex < 0) return {};
-            
-            const tempDrivers = data.drivers.map(d => {
-                let total = 0;
-                let wins = 0;
-                const posCounts = {};
-                
-                for(let i=0; i <= limitIndex; i++) {
-                    const r = data.races[i];
-                    const pos = d.results[r.id];
-                    if (pos && !isNaN(pos)) {
-                        const pts = r.type === 'GP' ? GP_POINTS : SPRINT_POINTS;
-                        const pVal = parseInt(pos);
-                        total += (pts[pVal] || 0);
-                        if (r.type === 'GP' && pVal === 1) wins++;
-                        posCounts[pVal] = (posCounts[pVal] || 0) + 1;
-                    }
-                }
-                return { id: d.id, stats: { total, wins, posCounts } };
-            });
-
-            tempDrivers.sort((a, b) => {
-                if (b.stats.total !== a.stats.total) return b.stats.total - a.stats.total;
-                if (b.stats.wins !== a.stats.wins) return b.stats.wins - a.stats.wins;
-                for (let p = 1; p <= 20; p++) {
-                    const countA = a.stats.posCounts[p] || 0;
-                    const countB = b.stats.posCounts[p] || 0;
-                    if (countA !== countB) return countB - countA;
-                }
-                return 0;
-            });
-
-            const resultMap = {};
-            tempDrivers.forEach((d, index) => {
-                resultMap[d.id] = { rank: index, points: d.stats.total };
-            });
-            return resultMap;
-        }
-
-        function renderDriversTable(drivers) {
-            let headerHtml = `<th class="sticky-col col-pos">Pos</th><th class="sticky-col col-piloto">Piloto</th><th class="sticky-col col-equipe">Equipe</th><th class="sticky-col col-pontos">Pts</th><th class="sticky-col col-vitorias">Vit</th>`;
-            
-            let lastRaceIndex = -1;
-            data.races.forEach((race, index) => {
-                const hasData = drivers.some(d => d.results[race.id] !== undefined && d.results[race.id] !== "");
-                if (hasData) lastRaceIndex = index;
-            });
-
-            const prevStats = calculateStatsUpToRace(lastRaceIndex - 1);
-
-            data.races.forEach(race => {
-                const flagImg = race.flag ? `<img src="${getFlagUrl(race.flag)}" class="race-header-flag">` : "";
-                const sprintLabel = race.type === 'Sprint' ? `<span style="display:block; font-size:0.65em; color:rgba(255,255,255,0.5); font-weight:400; margin-top:3px; letter-spacing:1px;">SPRINT</span>` : "";
-                const parts = race.name.split(' ');
-                const displayName = parts.length > 1 ? 
-                    `<div style="line-height:1.1;">${flagImg}<span style="font-size:1.3em; display:block;">${parts[0]}</span><span style="font-size:0.9em; font-weight:700;">${parts.slice(1).join(' ')}</span>${sprintLabel}</div>` : 
-                    `<div style="line-height:1.1;">${flagImg}<span style="display:block;">${race.name}</span>${sprintLabel}</div>`;
-                
-                headerHtml += `<th class="header-gp${race.type === 'Sprint' ? ' sprint-col' : ''}" ${isEditEnabled ? `onclick="deleteRace('${race.id}')"` : ''}>${displayName}</th>`;
-            });
-            dom.headerRow.innerHTML = headerHtml;
-
-            let remainingPts = 0;
-            data.races.forEach(r => {
-                if(!drivers.some(d => d.results[r.id])) remainingPts += (r.type === 'GP' ? 25 : 8);
-            });
-            const isDriverChamp = drivers.length > 1 && (drivers[0].stats.total > drivers[1].stats.total + remainingPts);
-
-            const html = drivers.map((d, i) => {
-                let diffDisplay = "";
-                if (i > 0) {
-                    const diff = drivers[i-1].stats.total - d.stats.total;
-                    let diffColorClass = "stable"; 
-                    
-                    if (lastRaceIndex >= 0 && prevStats[d.id] && prevStats[drivers[i-1].id]) {
-                        const currentGap = diff; 
-                        const prevGap = prevStats[drivers[i-1].id].points - prevStats[d.id].points;
-                        
-                        if (currentGap < prevGap) diffColorClass = "gap-better";
-                        else if (currentGap > prevGap) diffColorClass = "gap-worse";
-                    }
-
-                    diffDisplay = `<span class="${diffColorClass}" style="font-size:0.65em;">-${diff}</span>`;
-                }
-
-                let trendIcon = '<span class="trend-neutral">●</span>'; 
-                if (lastRaceIndex >= 0 && prevStats[d.id]) {
-                    const prevRank = prevStats[d.id].rank;
-                    const currentRank = i;
-                    
-                    if (prevRank > currentRank) {
-                        trendIcon = '<span class="trend-up">▲</span>'; 
-                    } else if (prevRank < currentRank) {
-                        trendIcon = '<span class="trend-down">▼</span>'; 
-                    }
-                }
-
-                const flag = d.country ? `<img src="${getFlagUrl(d.country)}" class="flag-icon">` : '';
-                const raceCells = data.races.map(r => {
-                    const val = d.results[r.id];
-                    let cls = r.type === 'Sprint' ? 'sprint-col' : '';
-                    if(val == 1) cls += ' gold'; else if(val == 2) cls += ' silver'; else if(val == 3) cls += ' bronze';
-                    const special = ["NC","DSQ","NP"].includes(val) ? 'class="status-special"' : '';
-                    return `<td class="${cls}"><input type="text" ${special} value="${val || ''}" onchange="updateResult(${d.id}, '${r.id}', this.value)" ${!isEditEnabled ? 'disabled' : ''}></td>`;
-                }).join('');
-
-                const rowClass = (i === 0 && isDriverChamp) ? 'class="math-champion-row"' : '';
-
-                // Usando o wrapper interno .pos-wrapper para o alinhamento
-                return `<tr ${rowClass}>
-                    <td class="sticky-col col-pos" ${isEditEnabled ? `onclick="deleteDriver(${d.id})"` : ''}>
-                        <div class="pos-wrapper">${trendIcon} <span>${i+1}º</span></div>
-                    </td>
-                    <td class="sticky-col col-piloto" style="border-left: 4px solid ${d.color} !important;">
-                        <div class="glow-layer" style="background: linear-gradient(90deg, ${d.color}33 0%, transparent 100%);"></div>
-                        <div class="pilot-cell-wrapper">${flag}<span contenteditable="${isEditEnabled}" onblur="editDriverName(${d.id}, this.innerText)">${formatDriverDisplayName(d.name)}</span></div>
-                    </td>
-                    <td class="sticky-col col-equipe"><div class="team-content">${getTeamLogoHtml(d.team)}<span contenteditable="${isEditEnabled}" onblur="editDriverTeam(${d.id}, this.innerText)">${d.team}</span></div></td>
-                    <td class="sticky-col col-pontos"><div class="pts-container"><span>${d.stats.total}</span>${diffDisplay}</div></td>
-                    <td class="sticky-col col-vitorias">${d.stats.wins}</td>
-                    ${raceCells}
-                </tr>`;
-            }).join('');
-            dom.pilotosBody.innerHTML = html;
-        }
-
-        function renderConstructorsAndH2H(teamsMap) {
-            const sortedTeams = Object.values(teamsMap).sort((a, b) => b.points - a.points);
-            
-            let remainingTeamPts = 0;
-            data.races.forEach(r => {
-                if (!data.drivers.some(d => d.results && d.results[r.id])) {
-                    remainingTeamPts += (r.type === 'GP' ? 43 : 15);
-                }
-            });
-            const isTeamChamp = sortedTeams.length > 1 && (sortedTeams[0].points > sortedTeams[1].points + remainingTeamPts);
-
-            dom.construtoresBody.innerHTML = sortedTeams.map((t, i) => {
-                const rowClass = (i === 0 && isTeamChamp) ? 'class="math-champion-row"' : '';
-                return `
-                <tr ${rowClass}>
-                    <td style="font-family:'Oswald',sans-serif;">${i+1}</td>
-                    <td style="text-align:left; text-transform:uppercase; font-size:0.9em; color:#aaa;">
-                        <div class="team-content">${getTeamLogoHtml(t.name)}<span>${t.name}</span></div>
-                    </td>
-                    <td style="font-family:'Oswald',sans-serif; font-weight:700; font-size:1.1em;">${t.points}</td>
-                </tr>`;
-            }).join('');
-
-            const h2hHtml = [];
-            for (let teamName in teamsMap) {
-                const team = teamsMap[teamName];
-                if (team.drivers.length >= 2) {
-                    const p1 = team.drivers[0];
-                    const p2 = team.drivers[1];
-                    let s1 = 0, s2 = 0;
-
-                    const raceLen = data.races.length;
-                    for(let i=0; i<raceLen; i++) {
-                        const r = data.races[i];
-                        if (r.type === 'Sprint') continue;
-                        
-                        let v1 = p1.results[r.id];
-                        let v2 = p2.results[r.id];
-                        
-                        let val1 = (v1 === undefined || v1 === "") ? null : (["NC","NP","DSQ"].includes(v1) ? 999 : parseInt(v1));
-                        let val2 = (v2 === undefined || v2 === "") ? null : (["NC","NP","DSQ"].includes(v2) ? 999 : parseInt(v2));
-
-                        if (val1 !== null && val2 !== null && val1 !== val2) {
-                            if (val1 < val2) s1++; else s2++;
-                        }
-                    }
-
-                    h2hHtml.push(`<div class="h2h-card">
-                        <span class="h2h-team">${teamName}</span>
-                        <div class="h2h-score">
-                            <strong>${p1.name.split(' ').pop().toUpperCase()}</strong>
-                            <span>${s1} <span style="color:var(--f1-red); margin:0 5px;">-</span> ${s2}</span>
-                            <strong>${p2.name.split(' ').pop().toUpperCase()}</strong>
-                        </div>
-                    </div>`);
-                }
-            }
-            dom.h2hContainer.innerHTML = h2hHtml.join('');
-        }
-
-        function renderChart(drivers) {
-            const ctx = document.getElementById('performanceChart').getContext('2d');
-            
-            let lastRaceIndex = -1;
-            data.races.forEach((race, index) => {
-                const hasResult = drivers.some(d => d.results && d.results[race.id] !== undefined && d.results[race.id] !== "");
-                if (hasResult) lastRaceIndex = index;
-            });
-
-            const cutOff = lastRaceIndex + 2; 
-            const allLabels = ['Start', ...data.races.map(r => r.name)];
-            const labels = allLabels.slice(0, cutOff);
-
-            const datasets = drivers.map((d, i) => ({
-                label: d.name,
-                data: d.stats.pointsEvolution.slice(0, cutOff),
-                borderColor: d.color,
-                backgroundColor: d.color,
-                tension: 0.2,
-                hidden: i >= 5,
-                driverId: d.id
-            }));
-
-            if (myChart) {
-                myChart.data.labels = labels;
-                myChart.data.datasets = datasets;
-                myChart.update('none'); 
-            } else {
-                myChart = new Chart(ctx, { 
-                    type: 'line', 
-                    data: { labels, datasets }, 
-                    options: { 
-                        responsive: true, maintainAspectRatio: false, animation: false,
-                        scales: { y: { grid: { color: 'rgba(255,255,255,0.1)' } }, x: { grid: { color: 'rgba(255,255,255,0.1)' } } },
-                        plugins: { legend: { labels: { color: '#fff', usePointStyle: true, font: { family: 'Titillium Web' } } } } 
-                    } 
-                });
-            }
-        }
-
-        function renderStatus(drivers) {
-            if(drivers.length === 0) return;
-            
-            let remaining = 0;
-            data.races.forEach(r => { 
-                if(!drivers.some(d => d.results[r.id])) remaining += (r.type === 'GP' ? 25 : 8); 
-            }); 
-            
-            dom.remainingPoints.innerText = remaining;
-
-            const leader = drivers[0];
-            const contendersList = drivers.filter(d => (d.stats.total + remaining) >= leader.stats.total);
-            const contendersCount = contendersList.length;
-            
-            dom.mathContenders.innerText = contendersCount;
-
-            if (remaining === 0 || contendersCount === 1) {
-                dom.titleStatus.innerText = `🏆 CAMPEÃO: ${leader.name}`;
-                dom.titleStatus.style.color = "#f1c40f";
-            } else {
-                if (contendersCount < 5) {
-                    const names = contendersList.map(d => {
-                        const parts = d.name.trim().split(" ");
-                        return parts[parts.length - 1].toUpperCase();
-                    }).join(", ");
-                    
-                    dom.titleStatus.innerText = names;
-                    dom.titleStatus.style.color = "#f1c40f"; 
-                } else {
-                    dom.titleStatus.innerText = "EM ABERTO";
-                    dom.titleStatus.style.color = "white";
-                }
-            }
-            
-            document.getElementById('racesLeft').innerText = `Faltam: ${data.races.filter(r => !drivers.some(d => d.results[r.id])).length} corridas`;
-        }
-
-        function updateResult(driverId, raceId, val) {
-            if (!isEditEnabled) return;
-            const driver = data.drivers.find(d => d.id == driverId);
-            const v = val.toUpperCase().trim();
-            
-            if (v !== "" && !["NC","DSQ","NP"].includes(v) && !isNaN(v)) {
-                if (data.drivers.some(d => d.id !== driverId && d.results[raceId] == v)) {
-                    alert(`Posição ${v}º já ocupada!`);
-                    render(); 
-                    return;
-                }
-            }
-
-            if (v === "") delete driver.results[raceId];
-            else if (["NC","DSQ","NP"].includes(v)) driver.results[raceId] = v;
-            else if (!isNaN(v)) driver.results[raceId] = parseInt(v);
-            else driver.results[raceId] = v;
-
-            saveData();
-            render();
-        }
-
-        function init() {
-            populateCountrySelects();
-            const saved = localStorage.getItem('f1_manager_data');
-            if (saved) data = JSON.parse(saved);
-            if (localStorage.getItem('f1_table_theme') === 'light') document.body.classList.add('light-tables');
-            render();
-        }
-
-        function saveData() { localStorage.setItem('f1_manager_data', JSON.stringify(data)); }
-        
-        function toggleEdit() {
-            isEditEnabled = !isEditEnabled;
-            document.getElementById('editToggle').classList.toggle('active', isEditEnabled);
-            document.getElementById('editToggle').innerText = isEditEnabled ? "🔓 Modo Edição: Ativado" : "🔒 Modo Edição: Desativado";
-            document.getElementById('adminControls').style.display = isEditEnabled ? 'flex' : 'none';
-            render();
-        }
-
-        function openAddDriverModal() {
-            document.getElementById('newDriverName').value = '';
-            document.getElementById('newDriverTeam').value = '';
-            document.getElementById('newDriverFlag').value = 'br';
-            
-            const datalist = document.getElementById('teamOptions');
-            datalist.innerHTML = '';
-            const defaults = ["Red Bull Racing", "Ferrari", "McLaren", "Mercedes", "Aston Martin", "Alpine", "Williams", "Racing Bulls", "Kick Sauber", "Haas"];
-            const current = data.drivers.map(d => d.team);
-            [...new Set([...defaults, ...current])].sort().forEach(t => {
-                const opt = document.createElement('option');
-                opt.value = t;
-                datalist.appendChild(opt);
-            });
-            document.getElementById('driverModal').style.display = 'flex';
-        }
-
-        function confirmAddDriver() {
-            const n = document.getElementById('newDriverName').value;
-            let t = document.getElementById('newDriverTeam').value;
-            const f = document.getElementById('newDriverFlag').value;
-
-            if (n && t) {
-                const defaults = ["Red Bull Racing", "Ferrari", "McLaren", "Mercedes", "Aston Martin", "Alpine", "Williams", "Racing Bulls", "Kick Sauber", "Haas"];
-                const existing = data.drivers.map(d => d.team);
-                const all = [...new Set([...defaults, ...existing])];
-                const match = all.find(ex => ex.toLowerCase() === t.trim().toLowerCase());
-                if(match) t = match;
-
-                let color = '#e10600';
-                for (let k in teamColorMap) { if (t.toLowerCase().includes(k)) { color = teamColorMap[k]; break; } }
-                
-                data.drivers.push({ id: Date.now(), name: n, team: t, color, country: f, results: {} });
-                saveData(); render(); closeModal('driverModal');
-            } else alert("Preencha tudo!");
-        }
-
-        function openAddRaceModal(type) {
-            document.getElementById('newRaceType').value = type;
-            document.getElementById('newRaceName').value = '';
-            document.getElementById('newRaceFlag').value = 'br';
-            document.getElementById('raceModal').style.display = 'flex';
-        }
-
-        function confirmAddRace() {
-            const n = document.getElementById('newRaceName').value;
-            if(n) {
-                data.races.push({ id: 'r'+Date.now(), name: n.toUpperCase(), flag: document.getElementById('newRaceFlag').value, type: document.getElementById('newRaceType').value });
-                saveData(); render(); closeModal('raceModal');
-            }
-        }
-
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-        
-        function loadF1Grid() {
-            if(confirm("Carregar Grid 2025?")) {
-                const g = [
-                    {n:"Max Verstappen",t:"Red Bull Racing",c:"#3671C6",f:"nl"},{n:"Sergio Perez",t:"Red Bull Racing",c:"#3671C6",f:"mx"},
-                    {n:"Lewis Hamilton",t:"Ferrari",c:"#E8002D",f:"gb"},{n:"Charles Leclerc",t:"Ferrari",c:"#E8002D",f:"mc"},
-                    {n:"Lando Norris",t:"McLaren",c:"#FF8000",f:"gb"},{n:"Oscar Piastri",t:"McLaren",c:"#FF8000",f:"au"},
-                    {n:"George Russell",t:"Mercedes",c:"#27F4D2",f:"gb"},{n:"Kimi Antonelli",t:"Mercedes",c:"#27F4D2",f:"it"},
-                    {n:"Fernando Alonso",t:"Aston Martin",c:"#229971",f:"es"},{n:"Lance Stroll",t:"Aston Martin",c:"#229971",f:"ca"},
-                    {n:"Pierre Gasly",t:"Alpine",c:"#0093CC",f:"fr"},{n:"Jack Doohan",t:"Alpine",c:"#0093CC",f:"au"},
-                    {n:"Yuki Tsunoda",t:"Racing Bulls",c:"#6692FF",f:"jp"},{n:"Liam Lawson",t:"Racing Bulls",c:"#6692FF",f:"nz"},
-                    {n:"Nico Hulkenberg",t:"Kick Sauber",c:"#52E252",f:"de"},{n:"Gabriel Bortoleto",t:"Kick Sauber",c:"#52E252",f:"br"},
-                    {n:"Alex Albon",t:"Williams",c:"#64C4FF",f:"th"},{n:"Carlos Sainz",t:"Williams",c:"#64C4FF",f:"es"},
-                    {n:"Esteban Ocon",t:"Haas",c:"#B6BABD",f:"fr"},{n:"Oliver Bearman",t:"Haas",c:"#B6BABD",f:"gb"}
-                ];
-                g.forEach(p => data.drivers.push({id:Date.now()+Math.random(), name:p.n, team:p.t, color:p.c, country:p.f, results:{}}));
-                saveData(); render();
-            }
-        }
-
-        function loadGameCalendar() {
-            if(confirm("Carregar Calendário?")) {
-                let i=0; const a=(n,f,t)=>data.races.push({id:'r'+(Date.now()+(i++)), name:n.toUpperCase(), flag:f, type:t});
-                a("AUS","au","GP"); a("CHN","cn","Sprint"); a("CHN","cn","GP"); a("JPN","jp","GP"); a("BAH","bh","GP"); a("SAU","sa","GP");
-                a("MIA","us","Sprint"); a("MIA","us","GP"); a("EMI","it","GP"); a("MON","mc","GP"); a("ESP","es","GP"); a("CAN","ca","GP");
-                a("AUT","at","GP"); a("AUT(R)","at","GP"); a("GBR","gb","GP"); a("SIL(R)","gb","GP"); a("BEL","be","Sprint"); a("BEL","be","GP");
-                a("HUN","hu","GP"); a("HOL","nl","GP"); a("ZAN(R)","nl","GP"); a("ITA","it","GP"); a("AZE","az","GP"); a("SIN","sg","GP");
-                a("USA","us","Sprint"); a("USA","us","GP"); a("MEX","mx","GP"); a("BRA","br","Sprint"); a("BRA","br","GP"); a("LAS","us","GP");
-                a("QAT","qa","Sprint"); a("QAT","qa","GP"); a("ABU","ae","GP");
-                saveData(); render();
-            }
-        }
-
-        function deleteDriver(id) { if(confirm("Excluir?")) { data.drivers = data.drivers.filter(d=>d.id!==id); saveData(); render(); } }
-        function deleteRace(id) { if(confirm("Excluir?")) { data.races = data.races.filter(r=>r.id!==id); saveData(); render(); } }
-        function editDriverName(id,v) { const d=data.drivers.find(x=>x.id===id); if(d) { d.name=v; saveData(); } }
-        function editDriverTeam(id,v) { 
-            const d = data.drivers.find(x => x.id === id); 
-            if(d) { 
-                const match = data.drivers.find(other => other.team.toLowerCase() === v.trim().toLowerCase());
-                d.team = match ? match.team : v.trim(); 
-                saveData(); 
-                render(); 
-            } 
-        }
-
-        function resetData() { if(confirm("Limpar tudo?")) { data={drivers:[],races:[]}; saveData(); render(); } }
-        function exportData() { 
-            const blob = new Blob([JSON.stringify(data)], {type:'application/json'});
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'f1_data.json'; a.click();
-        }
-        function importData(e) {
-            const r = new FileReader();
-            r.onload = ev => { try { data = JSON.parse(ev.target.result); saveData(); render(); } catch(e) { alert("Erro arquivo"); } };
-            r.readAsText(e.target.files[0]);
-        }
-
-        init();
-    </script>
+  </div>
+</div>
+
+<script>
+let data = { drivers: [], races: [] };
+let myChart = null, isEditEnabled = false, cachedTeamData = null;
+
+const dom = {
+  headerRow: document.getElementById('headerRow'),
+  pilotosBody: document.getElementById('pilotosBody'),
+  construtoresBody: document.getElementById('construtoresBody'),
+  h2hContainer: document.getElementById('h2hContainer'),
+  remainingPoints: document.getElementById('remainingPoints'),
+  mathContenders: document.getElementById('mathContenders'),
+  titleStatus: document.getElementById('titleStatus')
+};
+
+const GP_POINTS = {1:25,2:18,3:15,4:12,5:10,6:8,7:6,8:4,9:2,10:1};
+const SPRINT_POINTS = {1:8,2:7,3:6,4:5,5:4,6:3,7:2,8:1};
+
+const countries = {
+  "af":"Afeganistão","za":"África do Sul","al":"Albânia","de":"Alemanha","ad":"Andorra","ao":"Angola",
+  "sa":"Arábia Saudita","dz":"Argélia","ar":"Argentina","am":"Armênia","au":"Austrália","at":"Áustria",
+  "az":"Azerbaijão","bs":"Bahamas","bh":"Bahrein","be":"Bélgica","bo":"Bolívia","ba":"Bósnia",
+  "br":"Brasil","bg":"Bulgária","cm":"Camarões","ca":"Canadá","qa":"Catar","kz":"Cazaquistão",
+  "cl":"Chile","cn":"China","cy":"Chipre","co":"Colômbia","kr":"Coreia do Sul","ci":"Costa do Marfim",
+  "cr":"Costa Rica","hr":"Croácia","cu":"Cuba","dk":"Dinamarca","eg":"Egito","sv":"El Salvador",
+  "ae":"Emirados Árabes","ec":"Equador","sk":"Eslováquia","si":"Eslovênia","es":"Espanha","us":"Estados Unidos",
+  "ee":"Estônia","fi":"Finlândia","fr":"França","gh":"Gana","ge":"Geórgia","gr":"Grécia",
+  "gt":"Guatemala","hn":"Honduras","hu":"Hungria","in":"Índia","id":"Indonésia","ir":"Irã",
+  "ie":"Irlanda","is":"Islândia","il":"Israel","it":"Itália","jm":"Jamaica","jp":"Japão",
+  "jo":"Jordânia","lv":"Letônia","lb":"Líbano","lt":"Lituânia","lu":"Luxemburgo","my":"Malásia",
+  "mt":"Malta","ma":"Marrocos","mx":"México","md":"Moldávia","mc":"Mônaco","mn":"Mongólia",
+  "me":"Montenegro","na":"Namíbia","np":"Nepal","ni":"Nicarágua","ng":"Nigéria","no":"Noruega",
+  "nz":"Nova Zelândia","nl":"Holanda","om":"Omã","pa":"Panamá","pk":"Paquistão","py":"Paraguai",
+  "pe":"Peru","pl":"Polônia","pt":"Portugal","gb":"Reino Unido","cz":"República Tcheca","do":"Rep. Dominicana",
+  "ro":"Romênia","ru":"Rússia","sn":"Senegal","rs":"Sérvia","sg":"Cingapura","sy":"Síria",
+  "lk":"Sri Lanka","se":"Suécia","ch":"Suíça","th":"Tailândia","tw":"Taiwan","tn":"Tunísia",
+  "tr":"Turquia","ua":"Ucrânia","uy":"Uruguai","uz":"Uzbequistão","ve":"Venezuela","vn":"Vietnã"
+};
+
+const teamColorMap = {
+  "red bull":"#3671C6","ferrari":"#E8002D","mclaren":"#FF8000","mercedes":"#27F4D2",
+  "aston martin":"#229971","alpine":"#0093CC","racing bulls":"#6692FF","rb":"#6692FF",
+  "vcarb":"#6692FF","sauber":"#52E252","kick":"#52E252","williams":"#64C4FF","haas":"#B6BABD"
+};
+
+const logoMap = {
+  "ferrari":"https://i.imgur.com/5l6wnVb.png","mercedes":"https://i.imgur.com/vtZKCc5.png",
+  "red bull":"https://i.imgur.com/Q5idNac.png","mclaren":"https://i.imgur.com/Ub26b0i.png",
+  "alpine":"https://i.imgur.com/DveLvT7.png","aston martin":"https://i.imgur.com/VMHSp48.png",
+  "williams":"https://i.imgur.com/U7oMWX4.png","haas":"https://i.imgur.com/dx7z7Kg.png",
+  "sauber":"https://i.imgur.com/MYyEAOA.png","kick":"https://i.imgur.com/MYyEAOA.png",
+  "racing bulls":"https://i.imgur.com/dcJutpD.png","rb":"https://i.imgur.com/dcJutpD.png","vcarb":"https://i.imgur.com/dcJutpD.png"
+};
+
+function populateCountrySelects() {
+  const opts = Object.keys(countries).sort((a,b) => countries[a].localeCompare(countries[b])).map(c => `<option value="${c}">${countries[c]}</option>`).join('');
+  ['newDriverFlag','newRaceFlag'].forEach(id => document.getElementById(id).innerHTML = opts);
+}
+
+const getFlagUrl = code => `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
+
+function formatDriverDisplayName(n) {
+  const p = n.trim().split(' ');
+  return p.length <= 1 ? n : `${p.slice(0,-1).join(' ')} <strong>${p[p.length-1].toUpperCase()}</strong>`;
+}
+
+function getTeamLogoHtml(teamName) {
+  const n = teamName.toLowerCase().trim();
+  for (let k in logoMap) { if (n.includes(k)) return `<img src="${logoMap[k]}" class="team-logo" alt="">`; }
+  return "";
+}
+
+async function captureHQ() {
+  const btn = document.querySelector('.btn-capture');
+  const orig = btn.innerText;
+  btn.innerText = "⚡ PROCESSANDO...";
+  await new Promise(r => setTimeout(r, 500));
+  try {
+    const canvas = await html2canvas(document.getElementById('mainCaptureArea'), {
+      backgroundColor: "#0b0b10", scale: 4, useCORS: true, logging: false,
+      ignoreElements: el => el.tagName === "BUTTON" || el.id === "adminControls" || (el.tagName === "INPUT" && el.type !== "text") || el.classList.contains('modal-overlay')
+    });
+    const a = document.createElement('a');
+    a.download = `F1_Championship_${new Date().toLocaleDateString()}.png`;
+    a.href = canvas.toDataURL("image/png", 1.0);
+    a.click();
+  } finally { btn.innerText = orig; }
+}
+
+function toggleTheme() {
+  document.body.classList.toggle('light-tables');
+  localStorage.setItem('f1_table_theme', document.body.classList.contains('light-tables') ? 'light' : 'dark');
+  requestAnimationFrame(render);
+}
+
+function calculateDriverStats(driver) {
+  let total = 0, wins = 0;
+  const pointsEvolution = [0], posCounts = {};
+  data.races.forEach(race => {
+    const pos = driver.results[race.id];
+    if (pos && !isNaN(pos)) {
+      const pVal = parseInt(pos);
+      total += (race.type === 'GP' ? GP_POINTS : SPRINT_POINTS)[pVal] || 0;
+      if (race.type === 'GP' && pVal === 1) wins++;
+      posCounts[pVal] = (posCounts[pVal] || 0) + 1;
+    }
+    pointsEvolution.push(total);
+  });
+  return { total, wins, posCounts, pointsEvolution };
+}
+
+const tieBreak = (a, b) => {
+  if (b.stats.total !== a.stats.total) return b.stats.total - a.stats.total;
+  if (b.stats.wins !== a.stats.wins) return b.stats.wins - a.stats.wins;
+  for (let p = 1; p <= 20; p++) {
+    const d = (b.stats.posCounts[p]||0) - (a.stats.posCounts[p]||0);
+    if (d !== 0) return d;
+  }
+  return 0;
+};
+
+function processData() {
+  const drivers = data.drivers.map(d => ({ ...d, stats: calculateDriverStats(d) })).sort(tieBreak);
+  const teamsMap = {};
+  drivers.forEach(d => {
+    const key = d.team.trim().toLowerCase();
+    if (!teamsMap[key]) teamsMap[key] = { name: d.team, points: 0, drivers: [] };
+    if (teamsMap[key].name[0] === teamsMap[key].name[0].toLowerCase() && d.team[0] === d.team[0].toUpperCase())
+      teamsMap[key].name = d.team;
+    teamsMap[key].points += d.stats.total;
+    teamsMap[key].drivers.push(d);
+  });
+  return { drivers, teams: teamsMap };
+}
+
+function render() {
+  requestAnimationFrame(() => {
+    const { drivers, teams } = processData();
+    cachedTeamData = teams;
+    renderDriversTable(drivers);
+    renderConstructorsAndH2H(teams);
+    renderChart(drivers);
+    renderStatus(drivers);
+  });
+}
+
+function calculateStatsUpToRace(limitIndex) {
+  if (limitIndex < 0) return {};
+  const temp = data.drivers.map(d => {
+    let total = 0, wins = 0;
+    const posCounts = {};
+    for (let i = 0; i <= limitIndex; i++) {
+      const r = data.races[i];
+      const pos = d.results[r.id];
+      if (pos && !isNaN(pos)) {
+        const pVal = parseInt(pos);
+        total += (r.type === 'GP' ? GP_POINTS : SPRINT_POINTS)[pVal] || 0;
+        if (r.type === 'GP' && pVal === 1) wins++;
+        posCounts[pVal] = (posCounts[pVal] || 0) + 1;
+      }
+    }
+    return { id: d.id, stats: { total, wins, posCounts } };
+  }).sort((a,b) => {
+    if (b.stats.total !== a.stats.total) return b.stats.total - a.stats.total;
+    if (b.stats.wins !== a.stats.wins) return b.stats.wins - a.stats.wins;
+    for (let p = 1; p <= 20; p++) { const d = (b.stats.posCounts[p]||0)-(a.stats.posCounts[p]||0); if(d) return d; }
+    return 0;
+  });
+  const map = {};
+  temp.forEach((d,i) => map[d.id] = { rank: i, points: d.stats.total });
+  return map;
+}
+
+function renderDriversTable(drivers) {
+  let headerHtml = `<th class="sticky-col col-pos">Pos</th><th class="sticky-col col-piloto">Piloto</th><th class="sticky-col col-equipe">Equipe</th><th class="sticky-col col-pontos">Pts</th><th class="sticky-col col-vitorias">Vit</th>`;
+
+  let lastRaceIndex = -1;
+  data.races.forEach((r,i) => { if (drivers.some(d => d.results[r.id] !== undefined && d.results[r.id] !== "")) lastRaceIndex = i; });
+  const prevStats = calculateStatsUpToRace(lastRaceIndex - 1);
+
+  data.races.forEach(race => {
+    const flag = race.flag ? `<img src="${getFlagUrl(race.flag)}" class="race-header-flag">` : "";
+    const sprint = race.type === 'Sprint' ? `<span style="display:block;font-size:.65em;color:rgba(255,255,255,0.5);font-weight:400;margin-top:3px;letter-spacing:1px;">SPRINT</span>` : "";
+    const parts = race.name.split(' ');
+    const name = parts.length > 1
+      ? `<div style="line-height:1.1;">${flag}<span style="font-size:1.3em;display:block;">${parts[0]}</span><span style="font-size:.9em;font-weight:700;">${parts.slice(1).join(' ')}</span>${sprint}</div>`
+      : `<div style="line-height:1.1;">${flag}<span style="display:block;">${race.name}</span>${sprint}</div>`;
+    headerHtml += `<th class="header-gp${race.type==='Sprint'?' sprint-col':''}"${isEditEnabled?` onclick="deleteRace('${race.id}')"`:''} >${name}</th>`;
+  });
+  dom.headerRow.innerHTML = headerHtml;
+
+  let remainingPts = 0;
+  data.races.forEach(r => { if (!drivers.some(d => d.results[r.id])) remainingPts += r.type === 'GP' ? 25 : 8; });
+  const isDriverChamp = drivers.length > 1 && drivers[0].stats.total > drivers[1].stats.total + remainingPts;
+
+  dom.pilotosBody.innerHTML = drivers.map((d, i) => {
+    let diffDisplay = "";
+    if (i > 0) {
+      const diff = drivers[i-1].stats.total - d.stats.total;
+      let cls = "stable";
+      if (lastRaceIndex >= 0 && prevStats[d.id] && prevStats[drivers[i-1].id]) {
+        const prevGap = prevStats[drivers[i-1].id].points - prevStats[d.id].points;
+        cls = diff < prevGap ? "gap-better" : diff > prevGap ? "gap-worse" : "stable";
+      }
+      diffDisplay = `<span class="${cls}" style="font-size:.65em;">-${diff}</span>`;
+    }
+
+    let trendIcon = '<span class="trend-neutral">●</span>';
+    if (lastRaceIndex >= 0 && prevStats[d.id]) {
+      const pr = prevStats[d.id].rank;
+      trendIcon = pr > i ? '<span class="trend-up">▲</span>' : pr < i ? '<span class="trend-down">▼</span>' : trendIcon;
+    }
+
+    const flag = d.country ? `<img src="${getFlagUrl(d.country)}" class="flag-icon">` : '';
+    const raceCells = data.races.map(r => {
+      const val = d.results[r.id];
+      let cls = r.type === 'Sprint' ? 'sprint-col' : '';
+      if (val==1) cls+=' gold'; else if(val==2) cls+=' silver'; else if(val==3) cls+=' bronze';
+      const special = ["NC","DSQ","NP"].includes(val) ? 'class="status-special"' : '';
+      return `<td class="${cls}"><input type="text" ${special} value="${val||''}" onchange="updateResult(${d.id},'${r.id}',this.value)"${!isEditEnabled?' disabled':''}></td>`;
+    }).join('');
+
+    return `<tr${i===0&&isDriverChamp?' class="math-champion-row"':''}>
+      <td class="sticky-col col-pos"${isEditEnabled?` onclick="deleteDriver(${d.id})"`:''}>
+        <div class="pos-wrapper">${trendIcon}<span>${i+1}º</span></div>
+      </td>
+      <td class="sticky-col col-piloto" style="border-left:4px solid ${d.color} !important;">
+        <div class="glow-layer" style="background:linear-gradient(90deg,${d.color}33,transparent);"></div>
+        <div class="pilot-cell-wrapper">${flag}<span contenteditable="${isEditEnabled}" onblur="editDriverName(${d.id},this.innerText)">${formatDriverDisplayName(d.name)}</span></div>
+      </td>
+      <td class="sticky-col col-equipe"><div class="team-content">${getTeamLogoHtml(d.team)}<span contenteditable="${isEditEnabled}" onblur="editDriverTeam(${d.id},this.innerText)">${d.team}</span></div></td>
+      <td class="sticky-col col-pontos"><div class="pts-container"><span>${d.stats.total}</span>${diffDisplay}</div></td>
+      <td class="sticky-col col-vitorias">${d.stats.wins}</td>
+      ${raceCells}
+    </tr>`;
+  }).join('');
+}
+
+function renderConstructorsAndH2H(teamsMap) {
+  const sorted = Object.values(teamsMap).sort((a,b) => b.points - a.points);
+  let remTeam = 0;
+  data.races.forEach(r => { if (!data.drivers.some(d => d.results && d.results[r.id])) remTeam += r.type==='GP'?43:15; });
+  const isTeamChamp = sorted.length > 1 && sorted[0].points > sorted[1].points + remTeam;
+
+  dom.construtoresBody.innerHTML = sorted.map((t,i) => `
+    <tr${i===0&&isTeamChamp?' class="math-champion-row"':''}>
+      <td style="font-family:'Oswald',sans-serif;">${i+1}</td>
+      <td style="text-align:left;text-transform:uppercase;font-size:.9em;color:#aaa;"><div class="team-content">${getTeamLogoHtml(t.name)}<span>${t.name}</span></div></td>
+      <td style="font-family:'Oswald',sans-serif;font-weight:700;font-size:1.1em;">${t.points}</td>
+    </tr>`).join('');
+
+  dom.h2hContainer.innerHTML = Object.entries(teamsMap).filter(([,t]) => t.drivers.length >= 2).map(([teamName, team]) => {
+    const [p1, p2] = team.drivers;
+    let s1 = 0, s2 = 0;
+    data.races.forEach(r => {
+      if (r.type === 'Sprint') return;
+      const v1 = p1.results[r.id], v2 = p2.results[r.id];
+      const n1 = (v1===undefined||v1==="") ? null : (["NC","NP","DSQ"].includes(v1) ? 999 : parseInt(v1));
+      const n2 = (v2===undefined||v2==="") ? null : (["NC","NP","DSQ"].includes(v2) ? 999 : parseInt(v2));
+      if (n1!==null && n2!==null && n1!==n2) n1<n2 ? s1++ : s2++;
+    });
+    return `<div class="h2h-card">
+      <span class="h2h-team">${teamName}</span>
+      <div class="h2h-score">
+        <strong>${p1.name.split(' ').pop().toUpperCase()}</strong>
+        <span>${s1} <span style="color:var(--f1-red);margin:0 5px;">-</span> ${s2}</span>
+        <strong>${p2.name.split(' ').pop().toUpperCase()}</strong>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderChart(drivers) {
+  let lastRaceIndex = -1;
+  data.races.forEach((r,i) => { if (drivers.some(d => d.results && d.results[r.id]!==undefined && d.results[r.id]!=="")) lastRaceIndex = i; });
+  const cutOff = lastRaceIndex + 2;
+  const labels = ['Start', ...data.races.map(r => r.name)].slice(0, cutOff);
+  const datasets = drivers.map((d,i) => ({
+    label: d.name, data: d.stats.pointsEvolution.slice(0, cutOff),
+    borderColor: d.color, backgroundColor: d.color, tension: .2, hidden: i >= 5, driverId: d.id
+  }));
+  if (myChart) { myChart.data.labels = labels; myChart.data.datasets = datasets; myChart.update('none'); }
+  else myChart = new Chart(document.getElementById('performanceChart').getContext('2d'), {
+    type: 'line', data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      scales: { y: { grid: { color: 'rgba(255,255,255,0.1)' } }, x: { grid: { color: 'rgba(255,255,255,0.1)' } } },
+      plugins: { legend: { labels: { color: '#fff', usePointStyle: true, font: { family: 'Titillium Web' } } } }
+    }
+  });
+}
+
+function renderStatus(drivers) {
+  if (!drivers.length) return;
+  let remaining = 0;
+  data.races.forEach(r => { if (!drivers.some(d => d.results[r.id])) remaining += r.type==='GP'?25:8; });
+  dom.remainingPoints.innerText = remaining;
+  const leader = drivers[0];
+  const contenders = drivers.filter(d => d.stats.total + remaining >= leader.stats.total);
+  dom.mathContenders.innerText = contenders.length;
+  if (remaining === 0 || contenders.length === 1) {
+    dom.titleStatus.innerText = `🏆 CAMPEÃO: ${leader.name}`;
+    dom.titleStatus.style.color = "#f1c40f";
+  } else if (contenders.length < 5) {
+    dom.titleStatus.innerText = contenders.map(d => d.name.trim().split(' ').pop().toUpperCase()).join(', ');
+    dom.titleStatus.style.color = "#f1c40f";
+  } else {
+    dom.titleStatus.innerText = "EM ABERTO";
+    dom.titleStatus.style.color = "white";
+  }
+  document.getElementById('racesLeft').innerText = `Faltam: ${data.races.filter(r => !drivers.some(d => d.results[r.id])).length} corridas`;
+}
+
+function updateResult(driverId, raceId, val) {
+  if (!isEditEnabled) return;
+  const driver = data.drivers.find(d => d.id == driverId);
+  const v = val.toUpperCase().trim();
+  if (v !== "" && !["NC","DSQ","NP"].includes(v) && !isNaN(v)) {
+    if (data.drivers.some(d => d.id !== driverId && d.results[raceId] == v)) { alert(`Posição ${v}º já ocupada!`); render(); return; }
+  }
+  if (v === "") delete driver.results[raceId];
+  else if (["NC","DSQ","NP"].includes(v)) driver.results[raceId] = v;
+  else if (!isNaN(v)) driver.results[raceId] = parseInt(v);
+  else driver.results[raceId] = v;
+  saveData(); render();
+}
+
+function init() {
+  populateCountrySelects();
+  const saved = localStorage.getItem('f1_manager_data');
+  if (saved) data = JSON.parse(saved);
+  if (localStorage.getItem('f1_table_theme') === 'light') document.body.classList.add('light-tables');
+  render();
+}
+
+const saveData = () => localStorage.setItem('f1_manager_data', JSON.stringify(data));
+
+function toggleEdit() {
+  isEditEnabled = !isEditEnabled;
+  const btn = document.getElementById('editToggle');
+  btn.classList.toggle('active', isEditEnabled);
+  btn.innerText = isEditEnabled ? "🔓 Modo Edição: Ativado" : "🔒 Modo Edição: Desativado";
+  document.getElementById('adminControls').style.display = isEditEnabled ? 'flex' : 'none';
+  render();
+}
+
+function openAddDriverModal() {
+  document.getElementById('newDriverName').value = '';
+  document.getElementById('newDriverTeam').value = '';
+  document.getElementById('newDriverFlag').value = 'br';
+  const defaults = ["Red Bull Racing","Ferrari","McLaren","Mercedes","Aston Martin","Alpine","Williams","Racing Bulls","Kick Sauber","Haas"];
+  const dl = document.getElementById('teamOptions');
+  dl.innerHTML = '';
+  [...new Set([...defaults, ...data.drivers.map(d => d.team)])].sort().forEach(t => {
+    const o = document.createElement('option'); o.value = t; dl.appendChild(o);
+  });
+  document.getElementById('driverModal').style.display = 'flex';
+}
+
+function confirmAddDriver() {
+  const n = document.getElementById('newDriverName').value;
+  let t = document.getElementById('newDriverTeam').value;
+  const f = document.getElementById('newDriverFlag').value;
+  if (n && t) {
+    const defaults = ["Red Bull Racing","Ferrari","McLaren","Mercedes","Aston Martin","Alpine","Williams","Racing Bulls","Kick Sauber","Haas"];
+    const all = [...new Set([...defaults, ...data.drivers.map(d => d.team)])];
+    const match = all.find(x => x.toLowerCase() === t.trim().toLowerCase());
+    if (match) t = match;
+    let color = '#e10600';
+    for (let k in teamColorMap) { if (t.toLowerCase().includes(k)) { color = teamColorMap[k]; break; } }
+    data.drivers.push({ id: Date.now(), name: n, team: t, color, country: f, results: {} });
+    saveData(); render(); closeModal('driverModal');
+  } else alert("Preencha tudo!");
+}
+
+function openAddRaceModal(type) {
+  document.getElementById('newRaceType').value = type;
+  document.getElementById('newRaceName').value = '';
+  document.getElementById('newRaceFlag').value = 'br';
+  document.getElementById('raceModal').style.display = 'flex';
+}
+
+function confirmAddRace() {
+  const n = document.getElementById('newRaceName').value;
+  if (n) {
+    data.races.push({ id: 'r'+Date.now(), name: n.toUpperCase(), flag: document.getElementById('newRaceFlag').value, type: document.getElementById('newRaceType').value });
+    saveData(); render(); closeModal('raceModal');
+  }
+}
+
+const closeModal = id => document.getElementById(id).style.display = 'none';
+
+function loadF1Grid() {
+  if (!confirm("Carregar Grid 2025?")) return;
+  const g = [
+    {n:"Max Verstappen",t:"Red Bull Racing",c:"#3671C6",f:"nl"},{n:"Sergio Perez",t:"Red Bull Racing",c:"#3671C6",f:"mx"},
+    {n:"Lewis Hamilton",t:"Ferrari",c:"#E8002D",f:"gb"},{n:"Charles Leclerc",t:"Ferrari",c:"#E8002D",f:"mc"},
+    {n:"Lando Norris",t:"McLaren",c:"#FF8000",f:"gb"},{n:"Oscar Piastri",t:"McLaren",c:"#FF8000",f:"au"},
+    {n:"George Russell",t:"Mercedes",c:"#27F4D2",f:"gb"},{n:"Kimi Antonelli",t:"Mercedes",c:"#27F4D2",f:"it"},
+    {n:"Fernando Alonso",t:"Aston Martin",c:"#229971",f:"es"},{n:"Lance Stroll",t:"Aston Martin",c:"#229971",f:"ca"},
+    {n:"Pierre Gasly",t:"Alpine",c:"#0093CC",f:"fr"},{n:"Jack Doohan",t:"Alpine",c:"#0093CC",f:"au"},
+    {n:"Yuki Tsunoda",t:"Racing Bulls",c:"#6692FF",f:"jp"},{n:"Liam Lawson",t:"Racing Bulls",c:"#6692FF",f:"nz"},
+    {n:"Nico Hulkenberg",t:"Kick Sauber",c:"#52E252",f:"de"},{n:"Gabriel Bortoleto",t:"Kick Sauber",c:"#52E252",f:"br"},
+    {n:"Alex Albon",t:"Williams",c:"#64C4FF",f:"th"},{n:"Carlos Sainz",t:"Williams",c:"#64C4FF",f:"es"},
+    {n:"Esteban Ocon",t:"Haas",c:"#B6BABD",f:"fr"},{n:"Oliver Bearman",t:"Haas",c:"#B6BABD",f:"gb"}
+  ];
+  g.forEach(p => data.drivers.push({id:Date.now()+Math.random(), name:p.n, team:p.t, color:p.c, country:p.f, results:{}}));
+  saveData(); render();
+}
+
+function loadGameCalendar() {
+  if (!confirm("Carregar Calendário?")) return;
+  let i = 0;
+  const a = (n,f,t) => data.races.push({id:'r'+(Date.now()+(i++)), name:n.toUpperCase(), flag:f, type:t});
+  [["AUS","au","GP"],["CHN","cn","Sprint"],["CHN","cn","GP"],["JPN","jp","GP"],["BAH","bh","GP"],["SAU","sa","GP"],
+   ["MIA","us","Sprint"],["MIA","us","GP"],["EMI","it","GP"],["MON","mc","GP"],["ESP","es","GP"],["CAN","ca","GP"],
+   ["AUT","at","GP"],["AUT(R)","at","GP"],["GBR","gb","GP"],["SIL(R)","gb","GP"],["BEL","be","Sprint"],["BEL","be","GP"],
+   ["HUN","hu","GP"],["HOL","nl","GP"],["ZAN(R)","nl","GP"],["ITA","it","GP"],["AZE","az","GP"],["SIN","sg","GP"],
+   ["USA","us","Sprint"],["USA","us","GP"],["MEX","mx","GP"],["BRA","br","Sprint"],["BRA","br","GP"],["LAS","us","GP"],
+   ["QAT","qa","Sprint"],["QAT","qa","GP"],["ABU","ae","GP"]].forEach(r => a(...r));
+  saveData(); render();
+}
+
+const deleteDriver = id => { if (confirm("Excluir?")) { data.drivers = data.drivers.filter(d => d.id !== id); saveData(); render(); } };
+const deleteRace = id => { if (confirm("Excluir?")) { data.races = data.races.filter(r => r.id !== id); saveData(); render(); } };
+const editDriverName = (id, v) => { const d = data.drivers.find(x => x.id === id); if(d) { d.name = v; saveData(); } };
+function editDriverTeam(id, v) {
+  const d = data.drivers.find(x => x.id === id);
+  if (d) {
+    const match = data.drivers.find(o => o.team.toLowerCase() === v.trim().toLowerCase());
+    d.team = match ? match.team : v.trim();
+    saveData(); render();
+  }
+}
+const resetData = () => { if (confirm("Limpar tudo?")) { data = {drivers:[],races:[]}; saveData(); render(); } };
+function exportData() {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], {type:'application/json'}));
+  a.download = 'f1_data.json'; a.click();
+}
+function importData(e) {
+  const r = new FileReader();
+  r.onload = ev => { try { data = JSON.parse(ev.target.result); saveData(); render(); } catch(e) { alert("Erro arquivo"); } };
+  r.readAsText(e.target.files[0]);
+}
+
+init();
+</script>
 </body>
 </html>
-
