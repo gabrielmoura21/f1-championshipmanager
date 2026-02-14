@@ -18,7 +18,7 @@
             --glass-border: rgba(255, 255, 255, 0.1);
             --cell-border: rgba(255, 255, 255, 0.1);
             --sticky-bg: #15151e;
-            --w-pos: 75px;
+            --w-pos: 90px;
             --w-piloto: 220px; 
             --w-equipe: 170px;
             --w-pontos: 75px;
@@ -37,7 +37,6 @@
             color-scheme: dark;
         }
 
-        /* Otimização de Performance para Scroll e Renderização */
         .hardware-accel {
             transform: translate3d(0, 0, 0);
             backface-visibility: hidden;
@@ -68,7 +67,6 @@
         .sprint-col { background: rgba(0, 123, 255, 0.15); }
         body.light-tables .sprint-col { background: rgba(0, 123, 255, 0.1) !important; }
 
-        /* Estilo do Campeão Matemático */
         .math-champion-row td { 
             background-color: #2a2505 !important; 
             border-top: 1px solid #f1c40f !important;
@@ -147,7 +145,7 @@
             padding: 15px; 
             border-radius: 12px; 
             border: 1px solid var(--glass-border);
-            transform: translate3d(0,0,0); /* Performance Fix */
+            transform: translate3d(0,0,0);
         }
 
         button {
@@ -185,7 +183,6 @@
             border-radius: 12px;
             border: 1px solid var(--glass-border);
             width: 100%;
-            /* Performance Fix para rolagem */
             transform: translate3d(0,0,0);
             will-change: scroll-position;
         }
@@ -193,15 +190,32 @@
         table { border-collapse: separate; border-spacing: 0; width: auto; color: white; font-size: 0.9em; table-layout: fixed; }
         th, td { border: 0.5px solid var(--cell-border); padding: 10px 8px; text-align: center; white-space: nowrap; height: 45px; overflow: hidden; }
 
+        /* CORREÇÃO DE Z-INDEX PARA COLUNAS FIXAS */
         .sticky-col { 
             position: sticky;
             background-color: var(--sticky-bg) !important; 
-            z-index: 10; 
+            z-index: 10; /* Menor que o Header */
             opacity: 1 !important;
             flex-shrink: 0 !important;
         }
         
-        th.sticky-col { z-index: 11; background-color: #20202a !important; }
+        /* Cabeçalho Fixo Principal */
+        thead th { 
+            font-family: 'Oswald', sans-serif;
+            position: sticky; 
+            top: 0; 
+            z-index: 20; /* Maior que o corpo da tabela */
+            background: #282832; /* Fundo Sólido (Sem transparência) */
+            text-transform: uppercase; 
+            font-size: 0.82em; 
+            letter-spacing: 1px; 
+        }
+
+        /* Interseção (Canto Superior Esquerdo) - Deve ficar acima de tudo */
+        th.sticky-col { 
+            z-index: 30 !important; 
+            background-color: #20202a !important; 
+        }
 
         .constructors-wrapper {
             width: 100%;
@@ -213,7 +227,25 @@
         #construtoresTable th:nth-child(1) { width: 60px; }
         #construtoresTable th:nth-child(3) { width: 100px; }
 
-        .col-pos { left: 0; width: var(--w-pos) !important; min-width: var(--w-pos) !important; max-width: var(--w-pos) !important; }
+        /* CORREÇÃO DA CÉLULA DE POSIÇÃO */
+        .col-pos { 
+            left: 0; 
+            width: var(--w-pos) !important; 
+            min-width: var(--w-pos) !important; 
+            max-width: var(--w-pos) !important;
+            padding: 0 !important; /* Remove padding para usar wrapper */
+        }
+
+        /* Wrapper para alinhar conteúdo da posição sem quebrar o sticky */
+        .pos-wrapper {
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 5px;
+            width: 100%;
+            height: 100%;
+            padding: 0 5px;
+        }
         
         .col-piloto { 
             font-family: 'Oswald', sans-serif;
@@ -302,17 +334,6 @@
             object-fit: cover;
         }
 
-        thead th { 
-            font-family: 'Oswald', sans-serif;
-            position: sticky; 
-            top: 0; 
-            z-index: 5; 
-            background: rgba(40, 40, 50, 0.9); 
-            text-transform: uppercase; 
-            font-size: 0.82em; 
-            letter-spacing: 1px; 
-        }
-
         .header-gp { width: 68px !important; min-width: 68px !important; max-width: 68px !important; }
 
         input[type="text"] {
@@ -331,6 +352,13 @@
         .up { color: #4caf50; }
         .down { color: #f44336; }
         .stable { color: #777; }
+
+        .trend-up { color: #4caf50; font-size: 0.8em; margin-right: 4px; }
+        .trend-down { color: #f44336; font-size: 0.8em; margin-right: 4px; }
+        .trend-neutral { color: #777; font-size: 1.2em; line-height: 0.5; margin-right: 4px; vertical-align: middle;}
+        
+        .gap-better { color: #4caf50 !important; font-weight: bold; }
+        .gap-worse { color: #f44336 !important; font-weight: bold; }
 
         .chart-container {
             background: var(--glass-bg);
@@ -364,7 +392,6 @@
         .h2h-score strong:first-child { text-align: left; }
         .h2h-score strong:last-child { text-align: right; }
 
-        /* Estilos do Modal */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
@@ -507,7 +534,6 @@
     </div>
 
     <script>
-        // --- Cache e Estado ---
         let data = { drivers: [], races: [] };
         let myChart = null;
         let isEditEnabled = false;
@@ -609,8 +635,6 @@
             requestAnimationFrame(render);
         }
 
-        // --- Core Logic Optimized ---
-
         function calculateDriverStats(driver) {
             let total = 0, wins = 0;
             const pointsEvolution = [0];
@@ -651,18 +675,13 @@
 
             const teamsMap = {};
             processedDrivers.forEach(d => {
-                // CORREÇÃO: Usar chave em minúsculo para garantir agrupamento independente do Case
                 const teamKey = d.team.trim().toLowerCase();
-                
                 if (!teamsMap[teamKey]) {
                     teamsMap[teamKey] = { name: d.team, points: 0, drivers: [] };
                 }
-                
-                // Se a equipe salva estiver em minúsculo e a nova em maiúsculo, atualiza o nome de exibição para ficar bonito
                 if (teamsMap[teamKey].name[0] === teamsMap[teamKey].name[0].toLowerCase() && d.team[0] === d.team[0].toUpperCase()) {
                     teamsMap[teamKey].name = d.team;
                 }
-
                 teamsMap[teamKey].points += d.stats.total;
                 teamsMap[teamKey].drivers.push(d);
             });
@@ -682,8 +701,57 @@
             });
         }
 
+        function calculateStatsUpToRace(limitIndex) {
+            if (limitIndex < 0) return {};
+            
+            const tempDrivers = data.drivers.map(d => {
+                let total = 0;
+                let wins = 0;
+                const posCounts = {};
+                
+                for(let i=0; i <= limitIndex; i++) {
+                    const r = data.races[i];
+                    const pos = d.results[r.id];
+                    if (pos && !isNaN(pos)) {
+                        const pts = r.type === 'GP' ? GP_POINTS : SPRINT_POINTS;
+                        const pVal = parseInt(pos);
+                        total += (pts[pVal] || 0);
+                        if (r.type === 'GP' && pVal === 1) wins++;
+                        posCounts[pVal] = (posCounts[pVal] || 0) + 1;
+                    }
+                }
+                return { id: d.id, stats: { total, wins, posCounts } };
+            });
+
+            tempDrivers.sort((a, b) => {
+                if (b.stats.total !== a.stats.total) return b.stats.total - a.stats.total;
+                if (b.stats.wins !== a.stats.wins) return b.stats.wins - a.stats.wins;
+                for (let p = 1; p <= 20; p++) {
+                    const countA = a.stats.posCounts[p] || 0;
+                    const countB = b.stats.posCounts[p] || 0;
+                    if (countA !== countB) return countB - countA;
+                }
+                return 0;
+            });
+
+            const resultMap = {};
+            tempDrivers.forEach((d, index) => {
+                resultMap[d.id] = { rank: index, points: d.stats.total };
+            });
+            return resultMap;
+        }
+
         function renderDriversTable(drivers) {
             let headerHtml = `<th class="sticky-col col-pos">Pos</th><th class="sticky-col col-piloto">Piloto</th><th class="sticky-col col-equipe">Equipe</th><th class="sticky-col col-pontos">Pts</th><th class="sticky-col col-vitorias">Vit</th>`;
+            
+            let lastRaceIndex = -1;
+            data.races.forEach((race, index) => {
+                const hasData = drivers.some(d => d.results[race.id] !== undefined && d.results[race.id] !== "");
+                if (hasData) lastRaceIndex = index;
+            });
+
+            const prevStats = calculateStatsUpToRace(lastRaceIndex - 1);
+
             data.races.forEach(race => {
                 const flagImg = race.flag ? `<img src="${getFlagUrl(race.flag)}" class="race-header-flag">` : "";
                 const sprintLabel = race.type === 'Sprint' ? `<span style="display:block; font-size:0.65em; color:rgba(255,255,255,0.5); font-weight:400; margin-top:3px; letter-spacing:1px;">SPRINT</span>` : "";
@@ -696,17 +764,41 @@
             });
             dom.headerRow.innerHTML = headerHtml;
 
-            // Lógica de Campeão Matemático (Pilotos)
             let remainingPts = 0;
             data.races.forEach(r => {
                 if(!drivers.some(d => d.results[r.id])) remainingPts += (r.type === 'GP' ? 25 : 8);
             });
             const isDriverChamp = drivers.length > 1 && (drivers[0].stats.total > drivers[1].stats.total + remainingPts);
 
-            const diffs = drivers.map((d, i) => i > 0 ? drivers[i-1].stats.total - d.stats.total : 0);
-            
             const html = drivers.map((d, i) => {
-                const diffDisplay = i > 0 ? `<span class="stable" style="font-size:0.65em;">-${diffs[i]}</span>` : "";
+                let diffDisplay = "";
+                if (i > 0) {
+                    const diff = drivers[i-1].stats.total - d.stats.total;
+                    let diffColorClass = "stable"; 
+                    
+                    if (lastRaceIndex >= 0 && prevStats[d.id] && prevStats[drivers[i-1].id]) {
+                        const currentGap = diff; 
+                        const prevGap = prevStats[drivers[i-1].id].points - prevStats[d.id].points;
+                        
+                        if (currentGap < prevGap) diffColorClass = "gap-better";
+                        else if (currentGap > prevGap) diffColorClass = "gap-worse";
+                    }
+
+                    diffDisplay = `<span class="${diffColorClass}" style="font-size:0.65em;">-${diff}</span>`;
+                }
+
+                let trendIcon = '<span class="trend-neutral">●</span>'; 
+                if (lastRaceIndex >= 0 && prevStats[d.id]) {
+                    const prevRank = prevStats[d.id].rank;
+                    const currentRank = i;
+                    
+                    if (prevRank > currentRank) {
+                        trendIcon = '<span class="trend-up">▲</span>'; 
+                    } else if (prevRank < currentRank) {
+                        trendIcon = '<span class="trend-down">▼</span>'; 
+                    }
+                }
+
                 const flag = d.country ? `<img src="${getFlagUrl(d.country)}" class="flag-icon">` : '';
                 const raceCells = data.races.map(r => {
                     const val = d.results[r.id];
@@ -716,11 +808,13 @@
                     return `<td class="${cls}"><input type="text" ${special} value="${val || ''}" onchange="updateResult(${d.id}, '${r.id}', this.value)" ${!isEditEnabled ? 'disabled' : ''}></td>`;
                 }).join('');
 
-                // Aplica a classe de campeão apenas se for o líder e for matematicamente campeão
                 const rowClass = (i === 0 && isDriverChamp) ? 'class="math-champion-row"' : '';
 
+                // Usando o wrapper interno .pos-wrapper para o alinhamento
                 return `<tr ${rowClass}>
-                    <td class="sticky-col col-pos" ${isEditEnabled ? `onclick="deleteDriver(${d.id})"` : ''}>${i+1}º</td>
+                    <td class="sticky-col col-pos" ${isEditEnabled ? `onclick="deleteDriver(${d.id})"` : ''}>
+                        <div class="pos-wrapper">${trendIcon} <span>${i+1}º</span></div>
+                    </td>
                     <td class="sticky-col col-piloto" style="border-left: 4px solid ${d.color} !important;">
                         <div class="glow-layer" style="background: linear-gradient(90deg, ${d.color}33 0%, transparent 100%);"></div>
                         <div class="pilot-cell-wrapper">${flag}<span contenteditable="${isEditEnabled}" onblur="editDriverName(${d.id}, this.innerText)">${formatDriverDisplayName(d.name)}</span></div>
@@ -737,11 +831,8 @@
         function renderConstructorsAndH2H(teamsMap) {
             const sortedTeams = Object.values(teamsMap).sort((a, b) => b.points - a.points);
             
-            // Lógica de Campeão Matemático (Construtores)
-            // Máximo por corrida = 25+18 = 43. Máximo por Sprint = 8+7 = 15.
             let remainingTeamPts = 0;
             data.races.forEach(r => {
-                // Verifica se a corrida já aconteceu (se algum piloto tem resultado)
                 if (!data.drivers.some(d => d.results && d.results[r.id])) {
                     remainingTeamPts += (r.type === 'GP' ? 43 : 15);
                 }
@@ -800,7 +891,6 @@
         function renderChart(drivers) {
             const ctx = document.getElementById('performanceChart').getContext('2d');
             
-            // CORREÇÃO: Cortar gráfico na última corrida válida
             let lastRaceIndex = -1;
             data.races.forEach((race, index) => {
                 const hasResult = drivers.some(d => d.results && d.results[race.id] !== undefined && d.results[race.id] !== "");
@@ -842,7 +932,6 @@
             if(drivers.length === 0) return;
             
             let remaining = 0;
-            // Calcula pontos restantes (mantendo a lógica original)
             data.races.forEach(r => { 
                 if(!drivers.some(d => d.results[r.id])) remaining += (r.type === 'GP' ? 25 : 8); 
             }); 
@@ -850,21 +939,16 @@
             dom.remainingPoints.innerText = remaining;
 
             const leader = drivers[0];
-            
-            // FILTRAR A LISTA DE PILOTOS NA DISPUTA
             const contendersList = drivers.filter(d => (d.stats.total + remaining) >= leader.stats.total);
             const contendersCount = contendersList.length;
             
             dom.mathContenders.innerText = contendersCount;
 
-            // LÓGICA ATUALIZADA: Se só tem 1 na disputa ou não há mais pontos, temos um campeão
             if (remaining === 0 || contendersCount === 1) {
                 dom.titleStatus.innerText = `🏆 CAMPEÃO: ${leader.name}`;
                 dom.titleStatus.style.color = "#f1c40f";
             } else {
-                // LÓGICA NOVA: Se menos de 5 na disputa, mostra os sobrenomes
                 if (contendersCount < 5) {
-                    // Pega o último nome de cada piloto, coloca em maiúsculo e junta com vírgula
                     const names = contendersList.map(d => {
                         const parts = d.name.trim().split(" ");
                         return parts[parts.length - 1].toUpperCase();
@@ -880,9 +964,6 @@
             
             document.getElementById('racesLeft').innerText = `Faltam: ${data.races.filter(r => !drivers.some(d => d.results[r.id])).length} corridas`;
         }
-
-
-        // --- Data Operations ---
 
         function updateResult(driverId, raceId, val) {
             if (!isEditEnabled) return;
@@ -906,8 +987,6 @@
             render();
         }
 
-        // --- Initialization & Boilerplate ---
-
         function init() {
             populateCountrySelects();
             const saved = localStorage.getItem('f1_manager_data');
@@ -926,8 +1005,6 @@
             render();
         }
 
-        // --- Modais & Inputs ---
-        
         function openAddDriverModal() {
             document.getElementById('newDriverName').value = '';
             document.getElementById('newDriverTeam').value = '';
@@ -1017,8 +1094,6 @@
         function deleteDriver(id) { if(confirm("Excluir?")) { data.drivers = data.drivers.filter(d=>d.id!==id); saveData(); render(); } }
         function deleteRace(id) { if(confirm("Excluir?")) { data.races = data.races.filter(r=>r.id!==id); saveData(); render(); } }
         function editDriverName(id,v) { const d=data.drivers.find(x=>x.id===id); if(d) { d.name=v; saveData(); } }
-        
-        // CORREÇÃO: Função atualizada para normalizar nomes de equipe
         function editDriverTeam(id,v) { 
             const d = data.drivers.find(x => x.id === id); 
             if(d) { 
