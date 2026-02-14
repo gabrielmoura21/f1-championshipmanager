@@ -68,6 +68,7 @@
         .sprint-col { background: rgba(0, 123, 255, 0.15); }
         body.light-tables .sprint-col { background: rgba(0, 123, 255, 0.1) !important; }
 
+        /* Estilo do Campeão Matemático */
         .math-champion-row td { 
             background-color: #2a2505 !important; 
             border-top: 1px solid #f1c40f !important;
@@ -695,6 +696,13 @@
             });
             dom.headerRow.innerHTML = headerHtml;
 
+            // Lógica de Campeão Matemático (Pilotos)
+            let remainingPts = 0;
+            data.races.forEach(r => {
+                if(!drivers.some(d => d.results[r.id])) remainingPts += (r.type === 'GP' ? 25 : 8);
+            });
+            const isDriverChamp = drivers.length > 1 && (drivers[0].stats.total > drivers[1].stats.total + remainingPts);
+
             const diffs = drivers.map((d, i) => i > 0 ? drivers[i-1].stats.total - d.stats.total : 0);
             
             const html = drivers.map((d, i) => {
@@ -708,7 +716,10 @@
                     return `<td class="${cls}"><input type="text" ${special} value="${val || ''}" onchange="updateResult(${d.id}, '${r.id}', this.value)" ${!isEditEnabled ? 'disabled' : ''}></td>`;
                 }).join('');
 
-                return `<tr>
+                // Aplica a classe de campeão apenas se for o líder e for matematicamente campeão
+                const rowClass = (i === 0 && isDriverChamp) ? 'class="math-champion-row"' : '';
+
+                return `<tr ${rowClass}>
                     <td class="sticky-col col-pos" ${isEditEnabled ? `onclick="deleteDriver(${d.id})"` : ''}>${i+1}º</td>
                     <td class="sticky-col col-piloto" style="border-left: 4px solid ${d.color} !important;">
                         <div class="glow-layer" style="background: linear-gradient(90deg, ${d.color}33 0%, transparent 100%);"></div>
@@ -725,14 +736,29 @@
 
         function renderConstructorsAndH2H(teamsMap) {
             const sortedTeams = Object.values(teamsMap).sort((a, b) => b.points - a.points);
-            dom.construtoresBody.innerHTML = sortedTeams.map((t, i) => `
-                <tr>
+            
+            // Lógica de Campeão Matemático (Construtores)
+            // Máximo por corrida = 25+18 = 43. Máximo por Sprint = 8+7 = 15.
+            let remainingTeamPts = 0;
+            data.races.forEach(r => {
+                // Verifica se a corrida já aconteceu (se algum piloto tem resultado)
+                if (!data.drivers.some(d => d.results && d.results[r.id])) {
+                    remainingTeamPts += (r.type === 'GP' ? 43 : 15);
+                }
+            });
+            const isTeamChamp = sortedTeams.length > 1 && (sortedTeams[0].points > sortedTeams[1].points + remainingTeamPts);
+
+            dom.construtoresBody.innerHTML = sortedTeams.map((t, i) => {
+                const rowClass = (i === 0 && isTeamChamp) ? 'class="math-champion-row"' : '';
+                return `
+                <tr ${rowClass}>
                     <td style="font-family:'Oswald',sans-serif;">${i+1}</td>
                     <td style="text-align:left; text-transform:uppercase; font-size:0.9em; color:#aaa;">
                         <div class="team-content">${getTeamLogoHtml(t.name)}<span>${t.name}</span></div>
                     </td>
                     <td style="font-family:'Oswald',sans-serif; font-weight:700; font-size:1.1em;">${t.points}</td>
-                </tr>`).join('');
+                </tr>`;
+            }).join('');
 
             const h2hHtml = [];
             for (let teamName in teamsMap) {
@@ -812,7 +838,7 @@
             }
         }
 
-                function renderStatus(drivers) {
+        function renderStatus(drivers) {
             if(drivers.length === 0) return;
             
             let remaining = 0;
@@ -831,7 +857,8 @@
             
             dom.mathContenders.innerText = contendersCount;
 
-            if (remaining === 0) {
+            // LÓGICA ATUALIZADA: Se só tem 1 na disputa ou não há mais pontos, temos um campeão
+            if (remaining === 0 || contendersCount === 1) {
                 dom.titleStatus.innerText = `🏆 CAMPEÃO: ${leader.name}`;
                 dom.titleStatus.style.color = "#f1c40f";
             } else {
@@ -1017,4 +1044,3 @@
     </script>
 </body>
 </html>
-
