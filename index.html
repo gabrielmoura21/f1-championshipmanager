@@ -282,14 +282,13 @@
         .team-content { display: flex; align-items: center; gap: 8px; }
         .team-logo { width: 22px; height: 22px; object-fit: contain; filter: drop-shadow(0 0 2px rgba(255,255,255,0.2)); }
         
-        /* CORREÇÃO DO TAMANHO DAS BANDEIRAS */
         .flag-icon { 
             width: 20px; 
             height: 15px; 
             border-radius: 2px; 
             box-shadow: 0 0 2px rgba(0,0,0,0.5); 
             vertical-align: middle; 
-            object-fit: cover; /* Garante que a imagem preencha sem distorcer */
+            object-fit: cover;
             display: inline-block;
         }
         
@@ -299,7 +298,7 @@
             width: 24px; 
             height: 16px; 
             border-radius: 2px;
-            object-fit: cover; /* Garante tamanho uniforme */
+            object-fit: cover;
         }
 
         thead th { 
@@ -651,9 +650,20 @@
 
             const teamsMap = {};
             processedDrivers.forEach(d => {
-                if (!teamsMap[d.team]) teamsMap[d.team] = { name: d.team, points: 0, drivers: [] };
-                teamsMap[d.team].points += d.stats.total;
-                teamsMap[d.team].drivers.push(d);
+                // CORREÇÃO: Usar chave em minúsculo para garantir agrupamento independente do Case
+                const teamKey = d.team.trim().toLowerCase();
+                
+                if (!teamsMap[teamKey]) {
+                    teamsMap[teamKey] = { name: d.team, points: 0, drivers: [] };
+                }
+                
+                // Se a equipe salva estiver em minúsculo e a nova em maiúsculo, atualiza o nome de exibição para ficar bonito
+                if (teamsMap[teamKey].name[0] === teamsMap[teamKey].name[0].toLowerCase() && d.team[0] === d.team[0].toUpperCase()) {
+                    teamsMap[teamKey].name = d.team;
+                }
+
+                teamsMap[teamKey].points += d.stats.total;
+                teamsMap[teamKey].drivers.push(d);
             });
 
             return { drivers: processedDrivers, teams: teamsMap };
@@ -763,11 +773,21 @@
 
         function renderChart(drivers) {
             const ctx = document.getElementById('performanceChart').getContext('2d');
-            const labels = ['Start', ...data.races.map(r => r.name)];
             
+            // CORREÇÃO: Cortar gráfico na última corrida válida
+            let lastRaceIndex = -1;
+            data.races.forEach((race, index) => {
+                const hasResult = drivers.some(d => d.results && d.results[race.id] !== undefined && d.results[race.id] !== "");
+                if (hasResult) lastRaceIndex = index;
+            });
+
+            const cutOff = lastRaceIndex + 2; 
+            const allLabels = ['Start', ...data.races.map(r => r.name)];
+            const labels = allLabels.slice(0, cutOff);
+
             const datasets = drivers.map((d, i) => ({
                 label: d.name,
-                data: d.stats.pointsEvolution,
+                data: d.stats.pointsEvolution.slice(0, cutOff),
                 borderColor: d.color,
                 backgroundColor: d.color,
                 tension: 0.2,
@@ -949,7 +969,18 @@
         function deleteDriver(id) { if(confirm("Excluir?")) { data.drivers = data.drivers.filter(d=>d.id!==id); saveData(); render(); } }
         function deleteRace(id) { if(confirm("Excluir?")) { data.races = data.races.filter(r=>r.id!==id); saveData(); render(); } }
         function editDriverName(id,v) { const d=data.drivers.find(x=>x.id===id); if(d) { d.name=v; saveData(); } }
-        function editDriverTeam(id,v) { const d=data.drivers.find(x=>x.id===id); if(d) { d.team=v; saveData(); } }
+        
+        // CORREÇÃO: Função atualizada para normalizar nomes de equipe
+        function editDriverTeam(id,v) { 
+            const d = data.drivers.find(x => x.id === id); 
+            if(d) { 
+                const match = data.drivers.find(other => other.team.toLowerCase() === v.trim().toLowerCase());
+                d.team = match ? match.team : v.trim(); 
+                saveData(); 
+                render(); 
+            } 
+        }
+
         function resetData() { if(confirm("Limpar tudo?")) { data={drivers:[],races:[]}; saveData(); render(); } }
         function exportData() { 
             const blob = new Blob([JSON.stringify(data)], {type:'application/json'});
