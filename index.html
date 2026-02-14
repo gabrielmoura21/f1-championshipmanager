@@ -592,7 +592,7 @@
             const area = document.getElementById('mainCaptureArea');
             try {
                 const canvas = await html2canvas(area, {
-                    backgroundColor: "#0b0b10", scale: 3, useCORS: true, logging: false,
+                    backgroundColor: "#0b0b10", scale: 4, useCORS: true, logging: false,
                     ignoreElements: (el) => el.tagName === "BUTTON" || el.id === "adminControls" || (el.tagName === "INPUT" && el.type !== "text") || el.classList.contains('modal-overlay')
                 });
                 const link = document.createElement('a');
@@ -812,27 +812,48 @@
             }
         }
 
-        function renderStatus(drivers) {
+                function renderStatus(drivers) {
             if(drivers.length === 0) return;
-            let remaining = 0;
-            data.races.forEach(r => {
-                if(!drivers.some(d => d.results[r.id])) remaining += (r.type === 'GP' ? 25 : 8);
-            });
-            dom.remainingPoints.innerText = remaining;
             
+            let remaining = 0;
+            // Calcula pontos restantes (mantendo a lógica original)
+            data.races.forEach(r => { 
+                if(!drivers.some(d => d.results[r.id])) remaining += (r.type === 'GP' ? 25 : 8); 
+            }); 
+            
+            dom.remainingPoints.innerText = remaining;
+
             const leader = drivers[0];
-            const contenders = drivers.filter(d => (d.stats.total + remaining) >= leader.stats.total).length;
-            dom.mathContenders.innerText = contenders;
+            
+            // FILTRAR A LISTA DE PILOTOS NA DISPUTA
+            const contendersList = drivers.filter(d => (d.stats.total + remaining) >= leader.stats.total);
+            const contendersCount = contendersList.length;
+            
+            dom.mathContenders.innerText = contendersCount;
 
             if (remaining === 0) {
                 dom.titleStatus.innerText = `🏆 CAMPEÃO: ${leader.name}`;
                 dom.titleStatus.style.color = "#f1c40f";
             } else {
-                dom.titleStatus.innerText = contenders <= 4 ? "DISPUTA ACIRRADA" : "EM ABERTO";
-                dom.titleStatus.style.color = "white";
+                // LÓGICA NOVA: Se menos de 5 na disputa, mostra os sobrenomes
+                if (contendersCount < 5) {
+                    // Pega o último nome de cada piloto, coloca em maiúsculo e junta com vírgula
+                    const names = contendersList.map(d => {
+                        const parts = d.name.trim().split(" ");
+                        return parts[parts.length - 1].toUpperCase();
+                    }).join(", ");
+                    
+                    dom.titleStatus.innerText = names;
+                    dom.titleStatus.style.color = "#f1c40f"; 
+                } else {
+                    dom.titleStatus.innerText = "EM ABERTO";
+                    dom.titleStatus.style.color = "white";
+                }
             }
+            
             document.getElementById('racesLeft').innerText = `Faltam: ${data.races.filter(r => !drivers.some(d => d.results[r.id])).length} corridas`;
         }
+
 
         // --- Data Operations ---
 
@@ -996,3 +1017,4 @@
     </script>
 </body>
 </html>
+
