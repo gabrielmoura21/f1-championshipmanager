@@ -192,8 +192,23 @@ input[type="text"]:focus { border-bottom: 2px solid var(--f1-red); outline: none
   <div class="modal-content">
     <div class="modal-title">Novo Piloto</div>
     <div class="form-group"><label>Nome do Piloto</label><input type="text" id="newDriverName" class="form-control" placeholder="Ex: Ayrton Senna"></div>
-    <div class="form-group"><label>Equipe</label><input type="text" id="newDriverTeam" class="form-control" placeholder="Ex: McLaren" list="teamOptions" autocomplete="off"><datalist id="teamOptions"></datalist></div>
-    <div class="form-group"><label>Nacionalidade</label><select id="newDriverFlag" class="form-control"></select></div>
+    <div class="form-group">
+      <label>Equipe</label>
+      <input type="text" id="newDriverTeam" class="form-control" placeholder="Ex: McLaren" list="teamOptions" autocomplete="off" oninput="updateDriverTeamPreview()"><datalist id="teamOptions"></datalist>
+      <div id="driverTeamPreview" style="display:none;margin-top:8px;align-items:center;gap:10px;padding:8px 10px;background:rgba(255,255,255,0.05);border-radius:6px;border:1px solid rgba(255,255,255,0.08);">
+        <div id="driverTeamColorBar" style="width:4px;height:32px;border-radius:2px;background:#e10600;flex-shrink:0;"></div>
+        <img id="driverTeamLogoPreview" src="" style="width:28px;height:28px;object-fit:contain;display:none;">
+        <span id="driverTeamNamePreview" style="font-family:'Oswald',sans-serif;font-size:1rem;text-transform:uppercase;letter-spacing:1px;color:#fff;"></span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Nacionalidade</label>
+      <select id="newDriverFlag" class="form-control" onchange="updateDriverFlagPreview()"></select>
+      <div style="margin-top:8px;display:flex;align-items:center;gap:10px;">
+        <img id="newDriverFlagPreview" src="" style="width:32px;height:22px;border-radius:2px;object-fit:cover;box-shadow:0 0 4px rgba(0,0,0,0.5);">
+        <span id="newDriverFlagLabel" style="font-size:.9em;color:#aaa;"></span>
+      </div>
+    </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal('driverModal')">Cancelar</button>
       <button onclick="confirmAddDriver()">Adicionar</button>
@@ -206,10 +221,33 @@ input[type="text"]:focus { border-bottom: 2px solid var(--f1-red); outline: none
     <div class="modal-title">Nova Corrida</div>
     <input type="hidden" id="newRaceType">
     <div class="form-group"><label>Sigla da Corrida</label><input type="text" id="newRaceName" class="form-control" placeholder="Ex: BRA"></div>
-    <div class="form-group"><label>País (Bandeira)</label><select id="newRaceFlag" class="form-control"></select></div>
+    <div class="form-group">
+      <label>País (Bandeira)</label>
+      <select id="newRaceFlag" class="form-control" onchange="updateRaceFlagPreview()"></select>
+      <div style="margin-top:8px;display:flex;align-items:center;gap:10px;">
+        <img id="newRaceFlagPreview" src="" style="width:32px;height:22px;border-radius:2px;object-fit:cover;box-shadow:0 0 4px rgba(0,0,0,0.5);">
+        <span id="newRaceFlagLabel" style="font-size:.9em;color:#aaa;"></span>
+      </div>
+    </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal('raceModal')">Cancelar</button>
       <button onclick="confirmAddRace()">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<div id="flagEditModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-title">Trocar Bandeira</div>
+    <input type="hidden" id="flagEditDriverId">
+    <div class="form-group"><label>Selecione a Nacionalidade</label><select id="flagEditSelect" class="form-control"></select></div>
+    <div style="margin-top:10px;display:flex;align-items:center;gap:10px;">
+      <img id="flagEditPreview" src="" style="width:32px;height:22px;border-radius:2px;object-fit:cover;box-shadow:0 0 4px rgba(0,0,0,0.5);">
+      <span id="flagEditPreviewLabel" style="font-size:.9em;color:#aaa;"></span>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('flagEditModal')">Cancelar</button>
+      <button onclick="confirmFlagEdit()">Salvar</button>
     </div>
   </div>
 </div>
@@ -269,7 +307,7 @@ const logoMap = {
 
 function populateCountrySelects() {
   const opts = Object.keys(countries).sort((a,b) => countries[a].localeCompare(countries[b])).map(c => `<option value="${c}">${countries[c]}</option>`).join('');
-  ['newDriverFlag','newRaceFlag'].forEach(id => document.getElementById(id).innerHTML = opts);
+  ['newDriverFlag','newRaceFlag','flagEditSelect'].forEach(id => document.getElementById(id).innerHTML = opts);
 }
 
 const getFlagUrl = code => `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
@@ -426,7 +464,11 @@ function renderDriversTable(drivers) {
       trendIcon = pr > i ? '<span class="trend-up">▲</span>' : pr < i ? '<span class="trend-down">▼</span>' : trendIcon;
     }
 
-    const flag = d.country ? `<img src="${getFlagUrl(d.country)}" class="flag-icon">` : '';
+    const flag = d.country
+      ? (isEditEnabled
+          ? `<img src="${getFlagUrl(d.country)}" class="flag-icon" style="cursor:pointer;outline:2px solid transparent;transition:outline .15s;" onmouseenter="this.style.outline='2px solid #f1c40f'" onmouseleave="this.style.outline='2px solid transparent'" onclick="openFlagEditModal(${d.id})" title="Trocar bandeira">`
+          : `<img src="${getFlagUrl(d.country)}" class="flag-icon">`)
+      : (isEditEnabled ? `<span style="cursor:pointer;font-size:.75em;color:#aaa;" onclick="openFlagEditModal(${d.id})">🏳️</span>` : '');
     const raceCells = data.races.map(r => {
       const val = d.results[r.id];
       let cls = r.type === 'Sprint' ? 'sprint-col' : '';
@@ -569,7 +611,39 @@ function openAddDriverModal() {
   [...new Set([...defaults, ...data.drivers.map(d => d.team)])].sort().forEach(t => {
     const o = document.createElement('option'); o.value = t; dl.appendChild(o);
   });
+  updateDriverFlagPreview();
+  updateDriverTeamPreview();
   document.getElementById('driverModal').style.display = 'flex';
+}
+
+function updateDriverFlagPreview() {
+  const val = document.getElementById('newDriverFlag').value;
+  document.getElementById('newDriverFlagPreview').src = getFlagUrl(val);
+  document.getElementById('newDriverFlagLabel').innerText = countries[val] || '';
+}
+
+function updateDriverTeamPreview() {
+  const t = document.getElementById('newDriverTeam').value.trim();
+  const previewBox = document.getElementById('driverTeamPreview');
+  const logoImg = document.getElementById('driverTeamLogoPreview');
+  const nameEl = document.getElementById('driverTeamNamePreview');
+  const colorBar = document.getElementById('driverTeamColorBar');
+  if (!t) { previewBox.style.display = 'none'; return; }
+  let color = '#e10600';
+  for (let k in teamColorMap) { if (t.toLowerCase().includes(k)) { color = teamColorMap[k]; break; } }
+  colorBar.style.background = color;
+  nameEl.innerText = t;
+  let logoSrc = '';
+  for (let k in logoMap) { if (t.toLowerCase().includes(k)) { logoSrc = logoMap[k]; break; } }
+  if (logoSrc) { logoImg.src = logoSrc; logoImg.style.display = 'inline-block'; }
+  else { logoImg.style.display = 'none'; }
+  previewBox.style.display = 'flex';
+}
+
+function updateRaceFlagPreview() {
+  const val = document.getElementById('newRaceFlag').value;
+  document.getElementById('newRaceFlagPreview').src = getFlagUrl(val);
+  document.getElementById('newRaceFlagLabel').innerText = countries[val] || '';
 }
 
 function confirmAddDriver() {
@@ -592,6 +666,7 @@ function openAddRaceModal(type) {
   document.getElementById('newRaceType').value = type;
   document.getElementById('newRaceName').value = '';
   document.getElementById('newRaceFlag').value = 'br';
+  updateRaceFlagPreview();
   document.getElementById('raceModal').style.display = 'flex';
 }
 
@@ -657,6 +732,35 @@ function importData(e) {
   const r = new FileReader();
   r.onload = ev => { try { data = JSON.parse(ev.target.result); saveData(); render(); } catch(e) { alert("Erro arquivo"); } };
   r.readAsText(e.target.files[0]);
+}
+
+function openFlagEditModal(driverId) {
+  if (!isEditEnabled) return;
+  const driver = data.drivers.find(d => d.id === driverId);
+  if (!driver) return;
+  document.getElementById('flagEditDriverId').value = driverId;
+  const sel = document.getElementById('flagEditSelect');
+  sel.value = driver.country || 'br';
+  const preview = document.getElementById('flagEditPreview');
+  const label = document.getElementById('flagEditPreviewLabel');
+  preview.src = getFlagUrl(sel.value);
+  label.innerText = countries[sel.value] || '';
+  sel.onchange = () => {
+    preview.src = getFlagUrl(sel.value);
+    label.innerText = countries[sel.value] || '';
+  };
+  document.getElementById('flagEditModal').style.display = 'flex';
+}
+
+function confirmFlagEdit() {
+  const id = parseInt(document.getElementById('flagEditDriverId').value) || document.getElementById('flagEditDriverId').value;
+  const newFlag = document.getElementById('flagEditSelect').value;
+  const driver = data.drivers.find(d => d.id == id);
+  if (driver) {
+    driver.country = newFlag;
+    saveData(); render();
+  }
+  closeModal('flagEditModal');
 }
 
 init();
