@@ -132,11 +132,6 @@ input[type="text"]:focus { border-bottom: 2px solid var(--f1-red); outline: none
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
 .btn-cancel { background: #555; }
 
-/* ── Gradiente apenas nas sticky cols ── */
-.driver-row-glow .sticky-col {
-  box-shadow: inset 9999px 0 0 0 var(--driver-sticky-tint, transparent);
-}
-
 /* ── Legenda customizada do gráfico ── */
 .chart-legend-item {
   display: inline-flex; align-items: center; gap: 6px;
@@ -153,7 +148,6 @@ input[type="text"]:focus { border-bottom: 2px solid var(--f1-red); outline: none
 
 /* ── Emoji lápis: oculto no poster HQ ── */
 .legend-edit-icon { font-size: .7em; color: #f1c40f; margin-left: 1px; }
-.no-capture { /* marcador usado pelo captureHQ para ignorar o elemento */ }
 
 /* ── Color Picker Popup ── */
 .color-picker-popup {
@@ -166,23 +160,14 @@ input[type="text"]:focus { border-bottom: 2px solid var(--f1-red); outline: none
   animation: slideIn .2s ease-out;
 }
 .color-picker-popup.visible { display: flex; }
-.color-picker-title {
-  font-family: 'Oswald', sans-serif; font-size: .85rem;
-  text-transform: uppercase; letter-spacing: 1px; color: #aaa;
-}
+.color-picker-title { font-family: 'Oswald', sans-serif; font-size: .85rem; text-transform: uppercase; letter-spacing: 1px; color: #aaa; }
 .color-presets { display: flex; flex-wrap: wrap; gap: 7px; }
-.color-preset {
-  width: 24px; height: 24px; border-radius: 50%; cursor: pointer;
-  border: 2px solid transparent; transition: all .15s; flex-shrink: 0;
-}
+.color-preset { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: all .15s; flex-shrink: 0; }
 .color-preset:hover { transform: scale(1.2); border-color: rgba(255,255,255,0.6); }
 .color-preset.active { border-color: white; transform: scale(1.15); box-shadow: 0 0 0 2px rgba(255,255,255,0.3); }
 .color-custom-row { display: flex; align-items: center; gap: 10px; }
 .color-custom-row label { font-size: .8em; color: #aaa; white-space: nowrap; }
-.color-custom-row input[type="color"] {
-  width: 48px; height: 34px; border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 6px; cursor: pointer; background: none; padding: 2px;
-}
+.color-custom-row input[type="color"] { width: 48px; height: 34px; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; cursor: pointer; background: none; padding: 2px; }
 .color-picker-actions { display: flex; gap: 8px; justify-content: flex-end; }
 .color-picker-actions button { font-size: .75em; padding: 5px 14px; height: 30px; min-width: unset; }
 </style>
@@ -325,16 +310,76 @@ input[type="text"]:focus { border-bottom: 2px solid var(--f1-red); outline: none
 let data = { drivers: [], races: [] };
 let myChart = null, isEditEnabled = false, cachedTeamData = null;
 let hiddenDrivers = new Set();
-let chartInitialized = false; // controla se o gráfico já foi inicializado com o padrão top-5
-
-let colorPickerDriverId = null;
-let colorPickerPendingColor = null;
+let chartInitialized = false;
+let colorPickerDriverId = null, colorPickerPendingColor = null;
 
 const F1_PRESET_COLORS = [
   "#E8002D","#FF8000","#3671C6","#27F4D2","#229971",
   "#0093CC","#6692FF","#52E252","#64C4FF","#B6BABD",
   "#ffffff","#f1c40f","#e67e22","#9b59b6","#1abc9c"
 ];
+
+function hexToRGB(hex) {
+  const h = hex.replace('#','');
+  return `${parseInt(h.slice(0,2),16)},${parseInt(h.slice(2,4),16)},${parseInt(h.slice(4,6),16)}`;
+}
+
+function openColorPicker(driverId, anchorEl) {
+  const driver = data.drivers.find(d => d.id == driverId);
+  if (!driver) return;
+  colorPickerDriverId = driverId;
+  colorPickerPendingColor = driver.color || '#e10600';
+  document.getElementById('colorPickerDriverName').innerText =
+    driver.name.trim().split(' ').pop().toUpperCase() + ' — Cor';
+  const presetsEl = document.getElementById('colorPresets');
+  presetsEl.innerHTML = F1_PRESET_COLORS.map(c =>
+    `<div class="color-preset${c.toLowerCase()===colorPickerPendingColor.toLowerCase()?' active':''}"
+      style="background:${c};" title="${c}" onclick="selectPresetColor('${c}')"></div>`
+  ).join('');
+  const input = document.getElementById('colorPickerInput');
+  input.value = colorPickerPendingColor;
+  input.oninput = function() {
+    colorPickerPendingColor = this.value;
+    presetsEl.querySelectorAll('.color-preset').forEach(p => p.classList.remove('active'));
+  };
+  const popup = document.getElementById('colorPickerPopup');
+  popup.classList.add('visible');
+  const rect = anchorEl.getBoundingClientRect();
+  let left = rect.left + window.scrollX;
+  let top  = rect.bottom + 8 + window.scrollY;
+  if (left + 240 > window.innerWidth - 10) left = window.innerWidth - 250;
+  popup.style.left = left + 'px';
+  popup.style.top  = top  + 'px';
+}
+
+function selectPresetColor(color) {
+  colorPickerPendingColor = color;
+  document.getElementById('colorPickerInput').value = color;
+  document.querySelectorAll('.color-preset').forEach(p =>
+    p.classList.toggle('active', p.getAttribute('title') === color)
+  );
+}
+
+function confirmColorChange() {
+  if (!colorPickerDriverId || !colorPickerPendingColor) return;
+  const driver = data.drivers.find(d => d.id == colorPickerDriverId);
+  if (driver) { driver.color = colorPickerPendingColor; saveData(); render(); }
+  closeColorPicker();
+}
+
+function closeColorPicker() {
+  document.getElementById('colorPickerPopup').classList.remove('visible');
+  colorPickerDriverId = null; colorPickerPendingColor = null;
+}
+
+document.addEventListener('click', function(e) {
+  const popup = document.getElementById('colorPickerPopup');
+  if (popup.classList.contains('visible')
+    && !popup.contains(e.target)
+    && !e.target.closest('.chart-legend-item')) {
+    closeColorPicker();
+  }
+});
 
 const dom = {
   headerRow: document.getElementById('headerRow'),
@@ -385,75 +430,8 @@ const logoMap = {
   "racing bulls":"https://i.imgur.com/dcJutpD.png","rb":"https://i.imgur.com/dcJutpD.png","vcarb":"https://i.imgur.com/dcJutpD.png"
 };
 
-function hexToRGB(hex) {
-  const h = hex.replace('#','');
-  return `${parseInt(h.slice(0,2),16)},${parseInt(h.slice(2,4),16)},${parseInt(h.slice(4,6),16)}`;
-}
-
-// ── Color Picker ──────────────────────────────────────────────
-function openColorPicker(driverId, anchorEl) {
-  const driver = data.drivers.find(d => d.id == driverId);
-  if (!driver) return;
-  colorPickerDriverId = driverId;
-  colorPickerPendingColor = driver.color || '#e10600';
-  document.getElementById('colorPickerDriverName').innerText =
-    driver.name.trim().split(' ').pop().toUpperCase() + ' — Cor';
-  const presetsEl = document.getElementById('colorPresets');
-  presetsEl.innerHTML = F1_PRESET_COLORS.map(c =>
-    `<div class="color-preset${c.toLowerCase()===colorPickerPendingColor.toLowerCase()?' active':''}"
-      style="background:${c};" title="${c}"
-      onclick="selectPresetColor('${c}')"></div>`
-  ).join('');
-  const input = document.getElementById('colorPickerInput');
-  input.value = colorPickerPendingColor;
-  input.oninput = function() {
-    colorPickerPendingColor = this.value;
-    presetsEl.querySelectorAll('.color-preset').forEach(p => p.classList.remove('active'));
-  };
-  const popup = document.getElementById('colorPickerPopup');
-  popup.classList.add('visible');
-  const rect = anchorEl.getBoundingClientRect();
-  let left = rect.left + window.scrollX;
-  let top  = rect.bottom + 8 + window.scrollY;
-  if (left + 240 > window.innerWidth - 10) left = window.innerWidth - 250;
-  popup.style.left = left + 'px';
-  popup.style.top  = top  + 'px';
-}
-
-function selectPresetColor(color) {
-  colorPickerPendingColor = color;
-  document.getElementById('colorPickerInput').value = color;
-  document.querySelectorAll('.color-preset').forEach(p =>
-    p.classList.toggle('active', p.getAttribute('title') === color)
-  );
-}
-
-function confirmColorChange() {
-  if (!colorPickerDriverId || !colorPickerPendingColor) return;
-  const driver = data.drivers.find(d => d.id == colorPickerDriverId);
-  if (driver) { driver.color = colorPickerPendingColor; saveData(); render(); }
-  closeColorPicker();
-}
-
-function closeColorPicker() {
-  document.getElementById('colorPickerPopup').classList.remove('visible');
-  colorPickerDriverId = null;
-  colorPickerPendingColor = null;
-}
-
-document.addEventListener('click', function(e) {
-  const popup = document.getElementById('colorPickerPopup');
-  if (popup.classList.contains('visible')
-    && !popup.contains(e.target)
-    && !e.target.closest('.chart-legend-item')) {
-    closeColorPicker();
-  }
-});
-// ─────────────────────────────────────────────────────────────
-
 function populateCountrySelects() {
-  const opts = Object.keys(countries).sort((a,b) => countries[a].localeCompare(countries[b]))
-    .map(c => `<option value="${c}">${countries[c]}</option>`).join('');
+  const opts = Object.keys(countries).sort((a,b) => countries[a].localeCompare(countries[b])).map(c => `<option value="${c}">${countries[c]}</option>`).join('');
   ['newDriverFlag','newRaceFlag','flagEditSelect'].forEach(id => document.getElementById(id).innerHTML = opts);
 }
 
@@ -478,13 +456,7 @@ async function captureHQ() {
   try {
     const canvas = await html2canvas(document.getElementById('mainCaptureArea'), {
       backgroundColor: "#0b0b10", scale: 4, useCORS: true, logging: false,
-      ignoreElements: el =>
-        el.tagName === "BUTTON" ||
-        el.id === "adminControls" ||
-        (el.tagName === "INPUT" && el.type !== "text") ||
-        el.classList.contains('modal-overlay') ||
-        el.id === "colorPickerPopup" ||
-        el.classList.contains('no-capture')   // ← oculta o emoji de lápis
+      ignoreElements: el => el.tagName === "BUTTON" || el.id === "adminControls" || (el.tagName === "INPUT" && el.type !== "text") || el.classList.contains('modal-overlay') || el.id === "colorPickerPopup" || el.classList.contains('no-capture')
     });
     const a = document.createElement('a');
     a.download = `F1_Championship_${new Date().toLocaleDateString()}.png`;
@@ -600,9 +572,6 @@ function renderDriversTable(drivers) {
   const isDriverChamp = drivers.length > 1 && drivers[0].stats.total > drivers[1].stats.total + remainingPts;
 
   dom.pilotosBody.innerHTML = drivers.map((d, i) => {
-    const rgb = hexToRGB(d.color || '#e10600');
-    const stickyTint = `rgba(${rgb},0.13)`;
-
     let diffDisplay = "";
     if (i > 0) {
       const diff = drivers[i-1].stats.total - d.stats.total;
@@ -625,7 +594,6 @@ function renderDriversTable(drivers) {
           ? `<img src="${getFlagUrl(d.country)}" class="flag-icon" style="cursor:pointer;outline:2px solid transparent;transition:outline .15s;" onmouseenter="this.style.outline='2px solid #f1c40f'" onmouseleave="this.style.outline='2px solid transparent'" onclick="openFlagEditModal(${d.id})" title="Trocar bandeira">`
           : `<img src="${getFlagUrl(d.country)}" class="flag-icon">`)
       : (isEditEnabled ? `<span style="cursor:pointer;font-size:.75em;color:#aaa;" onclick="openFlagEditModal(${d.id})">🏳️</span>` : '');
-
     const raceCells = data.races.map(r => {
       const val = d.results[r.id];
       let cls = r.type === 'Sprint' ? 'sprint-col' : '';
@@ -634,9 +602,7 @@ function renderDriversTable(drivers) {
       return `<td class="${cls}"><input type="text" ${special} value="${val||''}" onchange="updateResult(${d.id},'${r.id}',this.value)"${!isEditEnabled?' disabled':''}></td>`;
     }).join('');
 
-    const isChamp = i === 0 && isDriverChamp;
-
-    return `<tr class="driver-row-glow${isChamp?' math-champion-row':''}" style="--driver-sticky-tint:${stickyTint};">
+    return `<tr${i===0&&isDriverChamp?' class="math-champion-row"':''}>
       <td class="sticky-col col-pos"${isEditEnabled?` onclick="deleteDriver(${d.id})"`:''}>
         <div class="pos-wrapper">${trendIcon}<span>${i+1}º</span></div>
       </td>
@@ -692,23 +658,17 @@ function renderChart(drivers) {
   const cutOff = lastRaceIndex + 2;
   const labels = ['Start', ...data.races.map(r => r.name)].slice(0, cutOff);
 
-  // Na primeira vez que o gráfico é renderizado com pilotos,
-  // oculta automaticamente todos os pilotos fora do top-5
+  // Na primeira vez que há pilotos, oculta automaticamente do 6º em diante
   if (!chartInitialized && drivers.length > 0) {
     chartInitialized = true;
-    drivers.forEach((d, i) => {
-      if (i >= 5) hiddenDrivers.add(d.id);
-    });
+    drivers.forEach((d, i) => { if (i >= 5) hiddenDrivers.add(d.id); });
   }
 
   const datasets = drivers.map(d => ({
-    label: d.name,
+    label: d.name.trim().split(' ').pop().toUpperCase(),
     data: d.stats.pointsEvolution.slice(0, cutOff),
-    borderColor: d.color,
-    backgroundColor: d.color,
-    tension: .2,
-    hidden: hiddenDrivers.has(d.id),
-    driverId: d.id
+    borderColor: d.color, backgroundColor: d.color, tension: .2,
+    hidden: hiddenDrivers.has(d.id), driverId: d.id
   }));
 
   if (myChart) {
@@ -720,11 +680,8 @@ function renderChart(drivers) {
       type: 'line', data: { labels, datasets },
       options: {
         responsive: true, maintainAspectRatio: false, animation: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          y: { grid: { color: 'rgba(255,255,255,0.1)' } },
-          x: { grid: { color: 'rgba(255,255,255,0.1)' } }
-        }
+        scales: { y: { grid: { color: 'rgba(255,255,255,0.1)' } }, x: { grid: { color: 'rgba(255,255,255,0.1)' } } },
+        plugins: { legend: { display: false } }
       }
     });
   }
@@ -739,10 +696,7 @@ function renderChartLegend(drivers) {
     const lastName = d.name.trim().split(' ').pop().toUpperCase();
     const editBorder = isEditEnabled ? 'box-shadow:0 0 0 2px rgba(241,196,15,0.5);' : '';
     const tooltip = isEditEnabled ? 'Clique para alterar a cor' : 'Clique para mostrar/ocultar';
-    // ← emoji lápis tem classe no-capture para ser ignorado no poster HQ
-    const editIcon = isEditEnabled
-      ? '<span class="legend-edit-icon no-capture">✏️</span>'
-      : '';
+    const editIcon = isEditEnabled ? '<span class="legend-edit-icon no-capture">✏️</span>' : '';
     return `<div
       class="chart-legend-item${isHidden?' hidden-driver':''}${isEditEnabled?' edit-mode-legend':''}"
       data-driver-id="${d.id}"
@@ -953,14 +907,7 @@ function exportData() {
 }
 function importData(e) {
   const r = new FileReader();
-  r.onload = ev => {
-    try {
-      data = JSON.parse(ev.target.result);
-      hiddenDrivers.clear();
-      chartInitialized = false; // força re-aplicação do padrão top-5 ao importar
-      saveData(); render();
-    } catch(e) { alert("Erro arquivo"); }
-  };
+  r.onload = ev => { try { data = JSON.parse(ev.target.result); hiddenDrivers.clear(); chartInitialized = false; saveData(); render(); } catch(e) { alert("Erro arquivo"); } };
   r.readAsText(e.target.files[0]);
 }
 
@@ -986,7 +933,10 @@ function confirmFlagEdit() {
   const id = parseInt(document.getElementById('flagEditDriverId').value) || document.getElementById('flagEditDriverId').value;
   const newFlag = document.getElementById('flagEditSelect').value;
   const driver = data.drivers.find(d => d.id == id);
-  if (driver) { driver.country = newFlag; saveData(); render(); }
+  if (driver) {
+    driver.country = newFlag;
+    saveData(); render();
+  }
   closeModal('flagEditModal');
 }
 
