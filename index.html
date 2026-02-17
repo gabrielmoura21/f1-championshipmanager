@@ -758,12 +758,64 @@ function updateResult(driverId, raceId, val) {
   saveData(); render();
 }
 
+function setupScrollLock() {
+  const container = document.querySelector('#pilotosTable').closest('.table-container');
+  if (!container) return;
+
+  // Calcula a largura total das colunas sticky com base nas variáveis CSS
+  function getStickyWidth() {
+    const style = getComputedStyle(document.documentElement);
+    const parse = v => parseFloat(style.getPropertyValue(v).trim()) || 0;
+    return parse('--w-pos') + parse('--w-piloto') + parse('--w-equipe') + parse('--w-pontos') + parse('--w-vitorias');
+  }
+
+  function isInsideSticky(clientX) {
+    const rect = container.getBoundingClientRect();
+    const xInContainer = clientX - rect.left;
+    return xInContainer < getStickyWidth();
+  }
+
+  // Touch (mobile)
+  let touchStartX = 0, touchStartY = 0, startedOnSticky = false;
+  container.addEventListener('touchstart', function(e) {
+    startedOnSticky = isInsideSticky(e.touches[0].clientX);
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  container.addEventListener('touchmove', function(e) {
+    if (!startedOnSticky) return;
+    const dx = Math.abs(e.touches[0].clientX - touchStartX);
+    const dy = Math.abs(e.touches[0].clientY - touchStartY);
+    if (dx > dy) e.preventDefault();
+  }, { passive: false });
+
+  // Mouse drag (desktop)
+  let isMouseDown = false, mouseStartX = 0, mouseScrollStart = 0;
+  container.addEventListener('mousedown', function(e) {
+    if (isInsideSticky(e.clientX)) return;
+    isMouseDown = true;
+    mouseStartX = e.clientX;
+    mouseScrollStart = container.scrollLeft;
+    container.style.cursor = 'grabbing';
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', function(e) {
+    if (!isMouseDown) return;
+    container.scrollLeft = mouseScrollStart - (e.clientX - mouseStartX);
+  });
+  document.addEventListener('mouseup', function() {
+    isMouseDown = false;
+    container.style.cursor = '';
+  });
+}
+
 function init() {
   populateCountrySelects();
   const saved = localStorage.getItem('f1_manager_data');
   if (saved) data = JSON.parse(saved);
   if (localStorage.getItem('f1_table_theme') === 'light') document.body.classList.add('light-tables');
   render();
+  setupScrollLock();
 }
 
 const saveData = () => localStorage.setItem('f1_manager_data', JSON.stringify(data));
