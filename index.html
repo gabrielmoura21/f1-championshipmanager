@@ -782,7 +782,7 @@ function setupScrollLock() {
   }
 
   // Touch (mobile)
-  let touchActive = false;
+  let touchingSticky = false;
   let scrollTimeout = null;
   
   function hideScrollbar() {
@@ -791,33 +791,48 @@ function setupScrollLock() {
   
   container.addEventListener('touchstart', function(e) {
     // Se tem mais de 1 toque (pinch/zoom), ignora
-    if (e.touches.length > 1) return;
+    if (e.touches.length > 1) {
+      touchingSticky = false;
+      container.style.overflowX = 'auto';
+      return;
+    }
     
     if (isInsideSticky(e.touches[0].clientX)) {
-      touchActive = true;
+      touchingSticky = true;
+      container.style.overflowX = 'hidden';
     } else {
-      touchActive = false;
+      touchingSticky = false;
+      container.style.overflowX = 'auto';
     }
   }, { passive: true });
 
   container.addEventListener('scroll', function() {
-    // Se iniciou toque nas sticky, não mostra scrollbar
-    if (touchActive) return;
-    
-    // Mostra scrollbar enquanto rola
-    container.classList.add('show-scrollbar');
-    
-    // Esconde após 1 segundo sem rolar
-    if (scrollTimeout) clearTimeout(scrollTimeout);
-    scrollTimeout = setTimeout(hideScrollbar, 1000);
+    // Mostra scrollbar enquanto rola (só acontece se não estiver nas sticky)
+    if (!touchingSticky) {
+      container.classList.add('show-scrollbar');
+      
+      // Esconde após 1 segundo sem rolar
+      if (scrollTimeout) clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(hideScrollbar, 1000);
+    }
   }, { passive: true });
 
   container.addEventListener('touchend', function() {
-    touchActive = false;
+    touchingSticky = false;
+    container.style.overflowX = 'auto';
   }, { passive: true });
   
   container.addEventListener('touchcancel', function() {
-    touchActive = false;
+    touchingSticky = false;
+    container.style.overflowX = 'auto';
+  }, { passive: true });
+  
+  // Listeners globais para garantir que overflow sempre volta
+  document.addEventListener('touchend', function() {
+    if (touchingSticky) {
+      touchingSticky = false;
+      container.style.overflowX = 'auto';
+    }
   }, { passive: true });
 
   // Mouse drag (desktop)
