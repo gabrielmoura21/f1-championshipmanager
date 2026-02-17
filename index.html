@@ -71,10 +71,16 @@ button:hover { background: #ff1e1e; transform: translateY(-1px); }
 #editToggle.active { background: #f1c40f; color: #000; border-color: #000; }
 #themeToggle { background: #444; border: 1px solid #555; min-width: 200px; }
 
-.table-container { overflow-x: auto; margin-bottom: 40px; background: var(--glass-bg); backdrop-filter: blur(15px); border-radius: 12px; border: 1px solid var(--glass-border); width: 100%; }
+.table-container { overflow-x: auto; margin-bottom: 40px; background: var(--glass-bg); backdrop-filter: blur(15px); border-radius: 12px; border: 1px solid var(--glass-border); width: 100%; scrollbar-width: none; -ms-overflow-style: none; }
+.table-container::-webkit-scrollbar { display: none; }
+.table-container.show-scrollbar { scrollbar-width: thin; -ms-overflow-style: auto; }
+.table-container.show-scrollbar::-webkit-scrollbar { display: block; width: 8px; height: 8px; }
+.table-container.show-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+.table-container.show-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 4px; }
+.table-container.show-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.5); }
 table { border-collapse: separate; border-spacing: 0; width: auto; color: white; font-size: .9em; table-layout: fixed; }
 th, td { border: 0.5px solid var(--cell-border); padding: 10px 8px; text-align: center; white-space: nowrap; height: 45px; overflow: hidden; }
-.sticky-col { position: sticky; background-color: var(--sticky-bg) !important; z-index: 10; touch-action: pan-y pinch-zoom; }
+.sticky-col { position: sticky; background-color: var(--sticky-bg) !important; z-index: 10; }
 thead th { font-family: 'Oswald', sans-serif; position: sticky; top: 0; z-index: 20; background: #282832; text-transform: uppercase; font-size: .82em; letter-spacing: 1px; }
 th.sticky-col { z-index: 30 !important; background-color: #20202a !important; }
 
@@ -762,7 +768,7 @@ function setupScrollLock() {
   const container = document.querySelector('#pilotosTable').closest('.table-container');
   if (!container) return;
 
-  // Calcula a largura total das colunas sticky com base nas variáveis CSS
+  // Calcula a largura total das colunas sticky
   function getStickyWidth() {
     const style = getComputedStyle(document.documentElement);
     const parse = v => parseFloat(style.getPropertyValue(v).trim()) || 0;
@@ -776,18 +782,43 @@ function setupScrollLock() {
   }
 
   // Touch (mobile)
-  let touchStartX = 0, touchStartY = 0, startedOnSticky = false;
+  let touchActive = false;
+  let scrollTimeout = null;
+  
+  function hideScrollbar() {
+    container.classList.remove('show-scrollbar');
+  }
+  
   container.addEventListener('touchstart', function(e) {
-    startedOnSticky = isInsideSticky(e.touches[0].clientX);
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
+    // Se tem mais de 1 toque (pinch/zoom), ignora
+    if (e.touches.length > 1) return;
+    
+    if (isInsideSticky(e.touches[0].clientX)) {
+      touchActive = true;
+    } else {
+      touchActive = false;
+    }
   }, { passive: true });
-  container.addEventListener('touchmove', function(e) {
-    if (!startedOnSticky) return;
-    const dx = Math.abs(e.touches[0].clientX - touchStartX);
-    const dy = Math.abs(e.touches[0].clientY - touchStartY);
-    if (dx > dy) e.preventDefault();
-  }, { passive: false });
+
+  container.addEventListener('scroll', function() {
+    // Se iniciou toque nas sticky, não mostra scrollbar
+    if (touchActive) return;
+    
+    // Mostra scrollbar enquanto rola
+    container.classList.add('show-scrollbar');
+    
+    // Esconde após 1 segundo sem rolar
+    if (scrollTimeout) clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(hideScrollbar, 1000);
+  }, { passive: true });
+
+  container.addEventListener('touchend', function() {
+    touchActive = false;
+  }, { passive: true });
+  
+  container.addEventListener('touchcancel', function() {
+    touchActive = false;
+  }, { passive: true });
 
   // Mouse drag (desktop)
   let isMouseDown = false, mouseStartX = 0, mouseScrollStart = 0, didDrag = false;
@@ -805,13 +836,25 @@ function setupScrollLock() {
       didDrag = true;
       container.style.cursor = 'grabbing';
       container.style.userSelect = 'none';
+      container.classList.add('show-scrollbar');
     }
     if (didDrag) container.scrollLeft = mouseScrollStart - dx;
   });
   document.addEventListener('mouseup', function() {
+    if (isMouseDown && didDrag) {
+      setTimeout(hideScrollbar, 1000);
+    }
     isMouseDown = false;
     container.style.cursor = '';
     container.style.userSelect = '';
+  });
+  
+  // Mostra scrollbar ao passar o mouse sobre as corridas (opcional)
+  container.addEventListener('mouseenter', function() {
+    container.classList.add('show-scrollbar');
+  });
+  container.addEventListener('mouseleave', function() {
+    if (!isMouseDown) hideScrollbar();
   });
 }
 
