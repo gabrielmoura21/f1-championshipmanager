@@ -74,7 +74,7 @@ button:hover { background: #ff1e1e; transform: translateY(-1px); }
 .table-container { overflow-x: auto; margin-bottom: 40px; background: var(--glass-bg); backdrop-filter: blur(15px); border-radius: 12px; border: 1px solid var(--glass-border); width: 100%; }
 table { border-collapse: separate; border-spacing: 0; width: auto; color: white; font-size: .9em; table-layout: fixed; }
 th, td { border: 0.5px solid var(--cell-border); padding: 10px 8px; text-align: center; white-space: nowrap; height: 45px; overflow: hidden; }
-.sticky-col { position: sticky; background-color: var(--sticky-bg) !important; z-index: 10; }
+.sticky-col { position: sticky; background-color: var(--sticky-bg) !important; z-index: 10; touch-action: pan-y pinch-zoom; }
 thead th { font-family: 'Oswald', sans-serif; position: sticky; top: 0; z-index: 20; background: #282832; text-transform: uppercase; font-size: .82em; letter-spacing: 1px; }
 th.sticky-col { z-index: 30 !important; background-color: #20202a !important; }
 
@@ -790,22 +790,28 @@ function setupScrollLock() {
   }, { passive: false });
 
   // Mouse drag (desktop)
-  let isMouseDown = false, mouseStartX = 0, mouseScrollStart = 0;
+  let isMouseDown = false, mouseStartX = 0, mouseScrollStart = 0, didDrag = false;
   container.addEventListener('mousedown', function(e) {
     if (isInsideSticky(e.clientX)) return;
     isMouseDown = true;
+    didDrag = false;
     mouseStartX = e.clientX;
     mouseScrollStart = container.scrollLeft;
-    container.style.cursor = 'grabbing';
-    e.preventDefault();
   });
   document.addEventListener('mousemove', function(e) {
     if (!isMouseDown) return;
-    container.scrollLeft = mouseScrollStart - (e.clientX - mouseStartX);
+    const dx = e.clientX - mouseStartX;
+    if (!didDrag && Math.abs(dx) > 4) {
+      didDrag = true;
+      container.style.cursor = 'grabbing';
+      container.style.userSelect = 'none';
+    }
+    if (didDrag) container.scrollLeft = mouseScrollStart - dx;
   });
   document.addEventListener('mouseup', function() {
     isMouseDown = false;
     container.style.cursor = '';
+    container.style.userSelect = '';
   });
 }
 
