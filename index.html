@@ -197,6 +197,7 @@ input[type="text"]:focus { border-bottom: 2px solid var(--f1-red); outline: none
   <button onclick="document.getElementById('importFile').click()">📂 Importar Dados</button>
   <input type="file" id="importFile" style="display:none" onchange="importData(event)">
   <button class="btn-capture" onclick="captureHQ()">📸 EXPORTAR POSTER (HQ)</button>
+  <button class="btn-capture" onclick="captureTableHQ()" style="background:#4a148c;">🏁 EXPORTAR TABELA (HQ)</button>
   <button style="background:#555" onclick="resetData()">🗑️ Limpar Tudo</button>
 </div>
 
@@ -469,6 +470,61 @@ async function captureHQ() {
     a.href = canvas.toDataURL("image/png", 1.0);
     a.click();
   } finally { btn.innerText = orig; }
+}
+
+async function captureTableHQ() {
+  const btn = document.querySelectorAll('.btn-capture')[1];
+  const orig = btn.innerText;
+  btn.innerText = "⚡ PROCESSANDO...";
+  await new Promise(r => setTimeout(r, 300));
+
+  const tableEl = document.getElementById('pilotosTable');
+  const container = tableEl.closest('.table-container');
+
+  // 1) Substituir todos os inputs de texto por spans com o valor
+  const inputs = Array.from(tableEl.querySelectorAll('input[type="text"]'));
+  const replacements = inputs.map(inp => {
+    const span = document.createElement('span');
+    span.textContent = inp.value;
+    span.style.cssText = `display:block;width:100%;text-align:center;font-family:inherit;font-size:inherit;color:inherit;`;
+    inp.parentNode.replaceChild(span, inp);
+    return { span, inp };
+  });
+
+  // 2) Expandir container para capturar colunas fora da tela
+  const prevOverflow = container.style.overflowX;
+  const prevWidth    = container.style.width;
+  container.style.overflowX = 'visible';
+  container.style.width = tableEl.scrollWidth + 'px';
+  await new Promise(r => requestAnimationFrame(r));
+
+  try {
+    const canvas = await html2canvas(tableEl, {
+      backgroundColor: "#0b0b10",
+      scale: 6,
+      useCORS: true,
+      logging: false,
+      scrollX: 0,
+      scrollY: 0,
+      width: tableEl.scrollWidth,
+      windowWidth: tableEl.scrollWidth + 200,
+      ignoreElements: el => (el.tagName === "INPUT") || el.classList.contains('modal-overlay') || el.id === "colorPickerPopup"
+    });
+
+    const a = document.createElement('a');
+    a.download = `F1_Tabela_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.png`;
+    a.href = canvas.toDataURL("image/png", 1.0);
+    a.click();
+  } catch(e) {
+    console.error(e);
+    alert("Erro ao capturar tabela.");
+  } finally {
+    // 3) Restaurar inputs originais
+    replacements.forEach(({ span, inp }) => span.parentNode.replaceChild(inp, span));
+    container.style.overflowX = prevOverflow;
+    container.style.width = prevWidth;
+    btn.innerText = orig;
+  }
 }
 
 function toggleTheme() {
