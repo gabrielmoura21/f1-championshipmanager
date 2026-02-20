@@ -9,7 +9,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-<!-- Firebase -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
@@ -26,45 +25,42 @@
     measurementId: "G-B0P2NZVCWY"
   };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
+  const app  = initializeApp(firebaseConfig);
+  const db   = getDatabase(app);
   const auth = getAuth(app);
-  const dbRef = ref(db, 'f1data');
+  const dbRef = ref(db, "f1data");
 
-  // Salvar dados no Firebase
-  window.firebaseSave = (dataObj) => {
-    return set(dbRef, dataObj).catch(err => alert("Erro ao salvar: " + err.message));
-  };
+  window.firebaseSave = (dataObj) =>
+    set(dbRef, dataObj).catch(err => alert("Erro ao salvar: " + err.message));
 
-  // Escutar dados em tempo real
-  window.firebaseInit = (callback) => {
-    onValue(dbRef, (snapshot) => {
-      const val = snapshot.val();
-      if (val) callback(val);
-    });
-  };
+  window.firebaseLogin = (password) =>
+    signInWithEmailAndPassword(auth, "admin@f1manager.local", password);
 
-  // Login com e-mail fixo + senha fornecida pelo usuário
-  window.firebaseLogin = (password) => {
-    return signInWithEmailAndPassword(auth, "admin@f1manager.local", password);
-  };
-
-  // Logout
   window.firebaseLogout = () => signOut(auth);
 
-  // Monitora estado de autenticação: se sessão expirar, desativa edição automaticamente
   onAuthStateChanged(auth, (user) => {
     window.currentUser = user;
-    if (!user && typeof isEditEnabled !== 'undefined' && isEditEnabled) {
+    if (!user && window.isEditEnabled) {
       window.isEditEnabled = false;
-      const btn = document.getElementById('editToggle');
-      if (btn) {
-        btn.classList.remove('active');
-        btn.innerText = "🔒 Modo Edição: Desativado";
+      const btn = document.getElementById("editToggle");
+      if (btn) { btn.classList.remove("active"); btn.innerText = "Modo Edicao: Desativado"; }
+      const ac = document.getElementById("adminControls");
+      if (ac) ac.style.display = "none";
+      if (typeof render === "function") render();
+    }
+  });
+
+  onValue(dbRef, (snapshot) => {
+    const val = snapshot.val();
+    if (typeof window._fbReady === "undefined") {
+      window._fbReady = true;
+      window._fbInitialData = val || { drivers: [], races: [] };
+      if (typeof init === "function") init();
+    } else {
+      if (typeof data !== "undefined") {
+        data = val || { drivers: [], races: [] };
+        if (typeof render === "function") render();
       }
-      const adminControls = document.getElementById('adminControls');
-      if (adminControls) adminControls.style.display = 'none';
-      if (typeof render === 'function') render();
     }
   });
 </script>
@@ -994,59 +990,53 @@ function init() {
   if (localStorage.getItem('f1_table_theme') === 'light') document.body.classList.add('light-tables');
   setupScrollLock();
 
-  if (window.firebaseInit) {
-    // Escuta o Firebase em tempo real: qualquer alteracao reflete para todos os visitantes
-    window.firebaseInit((remoteData) => {
-      data = remoteData;
-      if (!data.drivers) data.drivers = [];
-      if (!data.races) data.races = [];
-      render();
-    });
+  if (window._fbInitialData !== undefined) {
+    // Firebase ja carregou: usa os dados da nuvem
+    data = window._fbInitialData;
+    if (!data.drivers) data.drivers = [];
+    if (!data.races)   data.races   = [];
   } else {
-    // Fallback local caso Firebase ainda nao tenha carregado
+    // Fallback: localStorage (nao deve acontecer normalmente)
     const saved = localStorage.getItem('f1_manager_data');
     if (saved) data = JSON.parse(saved);
-    render();
   }
+  render();
 }
 
 const saveData = () => {
   if (window.firebaseSave) {
     window.firebaseSave(data);
   } else {
-    // Fallback local
     localStorage.setItem('f1_manager_data', JSON.stringify(data));
   }
 };
 
 function toggleEdit() {
   if (isEditEnabled) {
-    // Desativar edicao = fazer logout
     isEditEnabled = false;
     if (window.firebaseLogout) window.firebaseLogout();
     const btn = document.getElementById('editToggle');
     btn.classList.remove('active');
-    btn.innerText = "🔒 Modo Edição: Desativado";
+    btn.innerText = "\uD83D\uDD12 Modo Edi\u00E7\u00E3o: Desativado";
     document.getElementById('adminControls').style.display = 'none';
     closeColorPicker();
     render();
   } else {
-    // Pedir apenas a senha
-    const password = prompt("🔐 Digite a senha de edição:");
+    const password = prompt("\uD83D\uDD10 Digite a senha de edi\u00E7\u00E3o:");
     if (!password) return;
-
     if (window.firebaseLogin) {
       window.firebaseLogin(password)
         .then(() => {
           isEditEnabled = true;
+          window.isEditEnabled = true;
           const btn = document.getElementById('editToggle');
           btn.classList.add('active');
-          btn.innerText = "🔓 Modo Edição: Ativado";
+          btn.innerText = "\uD83D\uDD13 Modo Edi\u00E7\u00E3o: Ativado";
           document.getElementById('adminControls').style.display = 'flex';
           closeColorPicker();
           render();
         })
-        .catch(() => alert("❌ Senha incorreta."));
+        .catch(() => alert("\u274C Senha incorreta."));
     } else {
       alert("Firebase ainda carregando. Tente novamente em instantes.");
     }
