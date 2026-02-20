@@ -185,6 +185,7 @@ input[type="text"]:focus { border-bottom: 2px solid var(--f1-red); outline: none
 <div style="display:flex;gap:10px;margin-bottom:15px;">
   <button id="editToggle" onclick="toggleEdit()">🔒 Modo Edição: Desativado</button>
   <button id="themeToggle" onclick="toggleTheme()">🌓 Alternar Tema Tabelas</button>
+  <button id="syncBtn" onclick="syncToCloud()" style="background:#0077b6;min-width:200px;">☁️ Sincronizar na Nuvem</button>
 </div>
 
 <div class="controls" id="adminControls" style="display:none;">
@@ -929,10 +930,65 @@ function setupScrollLock() {
   });
 }
 
-function init() {
+const JSONBIN_BIN_ID = '69988af1d0ea881f40ca27b3';
+const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+
+async function loadFromCloud() {
+  try {
+    const res = await fetch(JSONBIN_URL + '/latest', {
+      headers: { 'X-Bin-Meta': 'false' }
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json && (json.drivers || json.races)) {
+        data = json;
+        localStorage.setItem('f1_manager_data', JSON.stringify(data));
+        return true;
+      }
+    }
+  } catch(e) { console.warn('Falha ao carregar da nuvem:', e); }
+  return false;
+}
+
+async function syncToCloud() {
+  const masterKey = prompt('Digite a Master Key do JSONBin.io para sincronizar:');
+  if (!masterKey) return;
+  const btn = document.getElementById('syncBtn');
+  const orig = btn.innerText;
+  btn.innerText = '⏳ Sincronizando...';
+  btn.disabled = true;
+  try {
+    const res = await fetch(JSONBIN_URL, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': masterKey
+      },
+      body: JSON.stringify(data)
+    });
+    if (res.ok) {
+      btn.innerText = '✅ Sincronizado!';
+      setTimeout(() => { btn.innerText = orig; }, 2500);
+    } else {
+      const err = await res.json().catch(() => ({}));
+      alert('Erro ao sincronizar: ' + (err.message || res.status));
+      btn.innerText = orig;
+    }
+  } catch(e) {
+    alert('Erro de conexão: ' + e.message);
+    btn.innerText = orig;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function init() {
   populateCountrySelects();
-  const saved = localStorage.getItem('f1_manager_data');
-  if (saved) data = JSON.parse(saved);
+  const cloudLoaded = await loadFromCloud();
+  if (!cloudLoaded) {
+    const saved = localStorage.getItem('f1_manager_data');
+    if (saved) data = JSON.parse(saved);
+  }
   if (localStorage.getItem('f1_table_theme') === 'light') document.body.classList.add('light-tables');
   render();
   setupScrollLock();
@@ -1116,4 +1172,3 @@ init();
 </script>
 </body>
 </html>
-
