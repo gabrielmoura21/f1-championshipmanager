@@ -8,62 +8,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Titillium+Web:wght@300;400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyBGPBbGErcyjolivSLYFDDoWS1kNQ27m-g",
-    authDomain: "f1-championship-manager.firebaseapp.com",
-    databaseURL: "https://f1-championship-manager-default-rtdb.firebaseio.com",
-    projectId: "f1-championship-manager",
-    storageBucket: "f1-championship-manager.firebasestorage.app",
-    messagingSenderId: "221919320868",
-    appId: "1:221919320868:web:e927c110b62cbef8aeb1b1",
-    measurementId: "G-B0P2NZVCWY"
-  };
-
-  const app  = initializeApp(firebaseConfig);
-  const db   = getDatabase(app);
-  const auth = getAuth(app);
-  const dbRef = ref(db, "f1data");
-
-  window.firebaseSave = (dataObj) =>
-    set(dbRef, dataObj).catch(err => alert("Erro ao salvar: " + err.message));
-
-  window.firebaseLogin = (password) =>
-    signInWithEmailAndPassword(auth, "admin@f1manager.local", password);
-
-  window.firebaseLogout = () => signOut(auth);
-
-  onAuthStateChanged(auth, (user) => {
-    window.currentUser = user;
-    if (!user && window.isEditEnabled) {
-      window.isEditEnabled = false;
-      const btn = document.getElementById("editToggle");
-      if (btn) { btn.classList.remove("active"); btn.innerText = "Modo Edicao: Desativado"; }
-      const ac = document.getElementById("adminControls");
-      if (ac) ac.style.display = "none";
-      if (typeof render === "function") render();
-    }
-  });
-
-  onValue(dbRef, (snapshot) => {
-    const val = snapshot.val();
-    if (typeof window._fbReady === "undefined") {
-      window._fbReady = true;
-      window._fbInitialData = val || { drivers: [], races: [] };
-      if (typeof init === "function") init();
-    } else {
-      if (typeof data !== "undefined") {
-        data = val || { drivers: [], races: [] };
-        if (typeof render === "function") render();
-      }
-    }
-  });
-</script>
 <style>
 :root {
   --f1-red: #e10600;
@@ -987,60 +931,23 @@ function setupScrollLock() {
 
 function init() {
   populateCountrySelects();
+  const saved = localStorage.getItem('f1_manager_data');
+  if (saved) data = JSON.parse(saved);
   if (localStorage.getItem('f1_table_theme') === 'light') document.body.classList.add('light-tables');
-  setupScrollLock();
-
-  if (window._fbInitialData !== undefined) {
-    // Firebase ja carregou: usa os dados da nuvem
-    data = window._fbInitialData;
-    if (!data.drivers) data.drivers = [];
-    if (!data.races)   data.races   = [];
-  } else {
-    // Fallback: localStorage (nao deve acontecer normalmente)
-    const saved = localStorage.getItem('f1_manager_data');
-    if (saved) data = JSON.parse(saved);
-  }
   render();
+  setupScrollLock();
 }
 
-const saveData = () => {
-  if (window.firebaseSave) {
-    window.firebaseSave(data);
-  } else {
-    localStorage.setItem('f1_manager_data', JSON.stringify(data));
-  }
-};
+const saveData = () => localStorage.setItem('f1_manager_data', JSON.stringify(data));
 
 function toggleEdit() {
-  if (isEditEnabled) {
-    isEditEnabled = false;
-    if (window.firebaseLogout) window.firebaseLogout();
-    const btn = document.getElementById('editToggle');
-    btn.classList.remove('active');
-    btn.innerText = "\uD83D\uDD12 Modo Edi\u00E7\u00E3o: Desativado";
-    document.getElementById('adminControls').style.display = 'none';
-    closeColorPicker();
-    render();
-  } else {
-    const password = prompt("\uD83D\uDD10 Digite a senha de edi\u00E7\u00E3o:");
-    if (!password) return;
-    if (window.firebaseLogin) {
-      window.firebaseLogin(password)
-        .then(() => {
-          isEditEnabled = true;
-          window.isEditEnabled = true;
-          const btn = document.getElementById('editToggle');
-          btn.classList.add('active');
-          btn.innerText = "\uD83D\uDD13 Modo Edi\u00E7\u00E3o: Ativado";
-          document.getElementById('adminControls').style.display = 'flex';
-          closeColorPicker();
-          render();
-        })
-        .catch(() => alert("\u274C Senha incorreta."));
-    } else {
-      alert("Firebase ainda carregando. Tente novamente em instantes.");
-    }
-  }
+  isEditEnabled = !isEditEnabled;
+  const btn = document.getElementById('editToggle');
+  btn.classList.toggle('active', isEditEnabled);
+  btn.innerText = isEditEnabled ? "🔓 Modo Edição: Ativado" : "🔒 Modo Edição: Desativado";
+  document.getElementById('adminControls').style.display = isEditEnabled ? 'flex' : 'none';
+  closeColorPicker();
+  render();
 }
 
 function openAddDriverModal() {
