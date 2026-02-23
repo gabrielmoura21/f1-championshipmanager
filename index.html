@@ -1102,7 +1102,7 @@ function openFlagEditModal(driverId) {
 }
 
 function confirmFlagEdit() {
-  const id = parseInt(document.getElementById('flagEditDriverId').value) || document.getElementById('flagEditDriverId').value;
+  const id = parseFloat(document.getElementById('flagEditDriverId').value) || document.getElementById('flagEditDriverId').value;
   const newFlag = document.getElementById('flagEditSelect').value;
   const driver = data.drivers.find(d => d.id == id);
   if (driver) {
