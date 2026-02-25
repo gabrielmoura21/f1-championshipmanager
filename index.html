@@ -318,6 +318,7 @@ let data = { drivers: [], races: [] };
 let myChart = null, isEditEnabled = false, cachedTeamData = null;
 let hiddenDrivers = new Set();
 let chartInitialized = false;
+let resultJustUpdated = false;
 let colorPickerDriverId = null, colorPickerPendingColor = null;
 
 const F1_PRESET_COLORS = [
@@ -486,7 +487,8 @@ async function captureTableHQ() {
   const replacements = inputs.map(inp => {
     const span = document.createElement('span');
     span.textContent = inp.value;
-    span.style.cssText = `display:block;width:100%;text-align:center;font-family:inherit;font-size:inherit;color:inherit;`;
+    const isSpecial = ["NC","DSQ","NP"].includes(inp.value.trim().toUpperCase());
+    span.style.cssText = `display:block;width:100%;text-align:center;font-family:inherit;font-size:inherit;color:${isSpecial ? '#e10600' : 'inherit'};font-weight:${isSpecial ? 'bold' : 'inherit'};`;
     inp.parentNode.replaceChild(span, inp);
     return { span, inp };
   });
@@ -726,6 +728,15 @@ function renderChart(drivers) {
     drivers.forEach((d, i) => { if (i >= 5) hiddenDrivers.add(d.id); });
   }
 
+  // Quando um resultado novo for inserido, sincroniza visibilidade com top 5 atual
+  if (resultJustUpdated && drivers.length > 0) {
+    resultJustUpdated = false;
+    drivers.forEach((d, i) => {
+      if (i < 5) hiddenDrivers.delete(d.id);
+      else hiddenDrivers.add(d.id);
+    });
+  }
+
   const datasets = drivers.map(d => ({
     label: d.name.trim().split(' ').pop().toUpperCase(),
     data: d.stats.pointsEvolution.slice(0, cutOff),
@@ -817,6 +828,7 @@ function updateResult(driverId, raceId, val) {
   else if (["NC","DSQ","NP"].includes(v)) driver.results[raceId] = v;
   else if (!isNaN(v)) driver.results[raceId] = parseInt(v);
   else driver.results[raceId] = v;
+  resultJustUpdated = true;
   saveData(); render();
 }
 
