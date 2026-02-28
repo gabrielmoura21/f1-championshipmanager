@@ -24,26 +24,95 @@ body {
   background: var(--dark-bg) radial-gradient(circle at 50% 0%, #1e1e2d, #0b0b10);
   color: white; margin: 20px; min-height: 100vh; color-scheme: dark;
 }
-body.light-tables { --sticky-bg: #f2f2f2; color-scheme: light; }
-body.light-tables .table-container { background: var(--sticky-bg) !important; backdrop-filter: none; color: black !important; border: 1px solid #ccc; }
-body.light-tables table { color: black !important; }
-body.light-tables th, body.light-tables td { border: 0.5px solid #ccc !important; }
-body.light-tables .sticky-col { background-color: var(--sticky-bg) !important; }
-body.light-tables th.sticky-col { background-color: #e6e6e6 !important; }
-body.light-tables input[type="text"] { color: black; }
-body.light-tables .col-equipe { color: #555 !important; }
-body.light-tables thead th { background: #eee !important; color: black !important; }
-body.light-tables .sprint-col { background: rgba(0,123,255,0.1) !important; }
-body.light-tables .math-champion-row td, body.light-tables .math-champion-row .sticky-col { background-color: #fff9c4 !important; }
-body.light-tables .chart-container { background: #ffffff !important; border-color: #ddd; }
-body.light-tables .chart-legend-item:hover { border-color: rgba(0,0,0,0.2); background: rgba(0,0,0,0.04); }
-body.light-tables .h2h-card { background: #ffffff !important; border-color: #ddd; }
-body.light-tables .h2h-score strong, body.light-tables .h2h-score span { color: black !important; }
-body.light-tables .calculator-panel-compact { background: #ffffff !important; border-color: #ddd; }
-body.light-tables .calc-item { background: rgba(0,0,0,0.04) !important; border-color: #ddd; }
-body.light-tables .calc-val { color: black !important; }
-body.light-tables .calc-full-row { background: linear-gradient(90deg, rgba(225,6,0,0.10), rgba(225,6,0,0.03) 60%, transparent) !important; border-color: rgba(225,6,0,0.3); }
-body.light-tables #titleStatus { color: inherit; }
+/* ── TEMA CLARO ── */
+body.theme-light {
+  --sticky-bg: #dcdfe6;
+  --glass-bg: rgba(255,255,255,0.55);
+  --glass-border: rgba(0,0,0,0.12);
+  --cell-border: rgba(0,0,0,0.12);
+  background: #b8bec9 radial-gradient(circle at 50% 0%, #c8cdd8, #adb3bf) !important;
+  color: #111 !important;
+  color-scheme: light;
+}
+body.theme-light h1, body.theme-light h2 { color: #111 !important; }
+body.theme-light .controls { background: rgba(255,255,255,0.5) !important; border-color: rgba(0,0,0,0.12) !important; }
+body.theme-light .table-container { background: rgba(255,255,255,0.65) !important; backdrop-filter: blur(12px); color: black !important; border: 1px solid #bbb; }
+body.theme-light table { color: black !important; }
+body.theme-light th, body.theme-light td { border: 0.5px solid #c0c0c0 !important; }
+body.theme-light .sticky-col { background-color: var(--sticky-bg) !important; }
+body.theme-light th.sticky-col { background-color: #cdd0d9 !important; }
+body.theme-light input[type="text"] { color: black; }
+body.theme-light .col-equipe { color: #555 !important; }
+body.theme-light thead th { background: #d2d5de !important; color: #111 !important; }
+body.theme-light .sprint-col { background: rgba(0,100,220,0.1) !important; }
+body.theme-light .math-champion-row td, body.theme-light .math-champion-row .sticky-col { background-color: #fdf5b0 !important; }
+body.theme-light .chart-container { background: rgba(255,255,255,0.7) !important; border-color: #ccc; }
+body.theme-light .chart-legend-item:hover { border-color: rgba(0,0,0,0.2); background: rgba(0,0,0,0.05); }
+body.theme-light .h2h-card { background: rgba(255,255,255,0.75) !important; border-color: #ccc; }
+body.theme-light .h2h-team { color: inherit !important; }
+body.theme-light .h2h-score strong, body.theme-light .h2h-score span { color: #111 !important; }
+body.theme-light .calculator-panel-compact { background: rgba(255,255,255,0.65) !important; border-color: #ccc; }
+body.theme-light .calc-item { background: rgba(0,0,0,0.05) !important; border-color: #ccc; }
+body.theme-light .calc-val { color: #111 !important; }
+body.theme-light .calc-label { color: #555 !important; }
+body.theme-light .calc-full-row { background: linear-gradient(90deg, rgba(225,6,0,0.10), rgba(225,6,0,0.03) 60%, transparent) !important; border-color: rgba(225,6,0,0.3); }
+body.theme-light #titleStatus { color: inherit; }
+body.theme-light #racesLeft { color: #444 !important; }
+
+/* ── TEMA AMOLED ── */
+body.theme-amoled {
+  --sticky-bg: #000000;
+  --glass-bg: rgba(255,255,255,0.03);
+  --glass-border: rgba(255,255,255,0.07);
+  --cell-border: rgba(255,255,255,0.07);
+  --dark-bg: #000000;
+  background: #000000 !important;
+  color: white;
+  color-scheme: dark;
+}
+body.theme-amoled .table-container { background: #0a0a0a !important; border-color: rgba(255,255,255,0.07); }
+body.theme-amoled thead th { background: #111111 !important; }
+body.theme-amoled th.sticky-col { background-color: #0d0d0d !important; }
+body.theme-amoled .sticky-col { background-color: #000000 !important; }
+body.theme-amoled .controls { background: rgba(255,255,255,0.03) !important; border-color: rgba(255,255,255,0.07) !important; }
+body.theme-amoled .chart-container { background: #080808 !important; border-color: rgba(255,255,255,0.07); }
+body.theme-amoled .h2h-card { background: #0d0d0d !important; border-color: rgba(255,255,255,0.07); }
+body.theme-amoled .calculator-panel-compact { background: #080808 !important; border-color: rgba(255,255,255,0.07); }
+body.theme-amoled .calc-item { background: #111111 !important; border-color: rgba(255,255,255,0.07); }
+body.theme-amoled .math-champion-row td { background-color: #1a1500 !important; }
+body.theme-amoled .math-champion-row .sticky-col { background-color: #1a1500 !important; }
+
+/* ── DROPDOWN TEMA ── */
+.theme-dropdown-wrapper { position: relative; display: inline-block; }
+.theme-dropdown-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  background: #1e1e2e;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  overflow: hidden;
+  z-index: 9999;
+  min-width: 180px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  animation: slideIn .18s ease-out;
+}
+body.theme-light .theme-dropdown-menu { background: #fff; border-color: #ccc; box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+body.theme-amoled .theme-dropdown-menu { background: #111; border-color: rgba(255,255,255,0.1); }
+.theme-dropdown-menu.open { display: block; }
+.theme-option {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 16px; cursor: pointer;
+  font-family: 'Titillium Web', sans-serif; font-size: .9em;
+  color: #ddd; transition: background .15s;
+}
+body.theme-light .theme-option { color: #222; }
+.theme-option:hover { background: rgba(255,255,255,0.08); }
+body.theme-light .theme-option:hover { background: rgba(0,0,0,0.06); }
+.theme-option.active { color: var(--f1-red); font-weight: 600; }
+.theme-option-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; border: 2px solid rgba(255,255,255,0.2); }
+body.theme-light .theme-option-dot { border-color: rgba(0,0,0,0.15); }
 
 .gold { background: rgba(255,215,0,0.4) !important; font-weight: bold; }
 .silver { background: rgba(192,192,192,0.4) !important; font-weight: bold; }
@@ -243,7 +312,20 @@ input[type="text"]:focus { border-bottom: 2px solid var(--f1-red); outline: none
 
 <div style="display:flex;gap:10px;margin-bottom:15px;">
   <button id="editToggle" onclick="toggleEdit()">🔒 Modo Edição: Desativado</button>
-  <button id="themeToggle" onclick="toggleTheme()">🌓 Alternar Tema Tabelas</button>
+  <div class="theme-dropdown-wrapper">
+    <button id="themeToggle" onclick="toggleThemeDropdown(event)">🎨 Alterar Tema ▾</button>
+    <div class="theme-dropdown-menu" id="themeDropdown">
+      <div class="theme-option" id="opt-dark" onclick="setTheme('dark')">
+        <span class="theme-option-dot" style="background:#15151e;"></span> Escuro
+      </div>
+      <div class="theme-option" id="opt-light" onclick="setTheme('light')">
+        <span class="theme-option-dot" style="background:#b8bec9;"></span> Claro
+      </div>
+      <div class="theme-option" id="opt-amoled" onclick="setTheme('amoled')">
+        <span class="theme-option-dot" style="background:#000000;border-color:rgba(255,255,255,0.4);"></span> AMOLED
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="controls" id="adminControls" style="display:none;">
@@ -597,9 +679,28 @@ async function captureTableHQ() {
   }
 }
 
-function toggleTheme() {
-  document.body.classList.toggle('light-tables');
-  localStorage.setItem('f1_table_theme', document.body.classList.contains('light-tables') ? 'light' : 'dark');
+function toggleThemeDropdown(e) {
+  e.stopPropagation();
+  document.getElementById('themeDropdown').classList.toggle('open');
+}
+
+document.addEventListener('click', function(e) {
+  const dd = document.getElementById('themeDropdown');
+  if (dd && !dd.closest('.theme-dropdown-wrapper').contains(e.target)) {
+    dd.classList.remove('open');
+  }
+});
+
+function setTheme(theme) {
+  document.body.classList.remove('theme-light', 'theme-amoled');
+  if (theme === 'light') document.body.classList.add('theme-light');
+  else if (theme === 'amoled') document.body.classList.add('theme-amoled');
+  localStorage.setItem('f1_table_theme', theme);
+  document.getElementById('themeDropdown').classList.remove('open');
+  ['dark','light','amoled'].forEach(t => {
+    const el = document.getElementById('opt-' + t);
+    if (el) el.classList.toggle('active', t === theme);
+  });
   requestAnimationFrame(render);
 }
 
@@ -756,7 +857,7 @@ function renderConstructorsAndH2H(teamsMap) {
   data.races.forEach(r => { if (!data.drivers.some(d => d.results && d.results[r.id])) remTeam += r.type==='GP'?43:15; });
   const isTeamChamp = sorted.length > 1 && sorted[0].points > sorted[1].points + remTeam;
 
-  const isLightMode = document.body.classList.contains('light-tables');
+  const isLightMode = document.body.classList.contains('theme-light');
   dom.construtoresBody.innerHTML = sorted.map((t,i) => {
     const tColor = t.drivers[0]?.color || 'var(--f1-red)';
     return `<tr${i===0&&isTeamChamp?' class="math-champion-row"':''}>
@@ -784,7 +885,7 @@ function renderConstructorsAndH2H(teamsMap) {
     const c2 = p2.color || teamColor;
     const op1 = s1 >= s2 ? 1 : 0.35;
     const op2 = s2 >= s1 ? 1 : 0.35;
-    const isLight = document.body.classList.contains('light-tables');
+    const isLight = document.body.classList.contains('theme-light');
     const emptyBarBg = isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)';
     const barHtml = total === 0
       ? `<div style="height:5px;border-radius:3px;background:${emptyBarBg};margin-top:8px;"></div>`
@@ -832,7 +933,7 @@ function renderChart(drivers) {
     hidden: hiddenDrivers.has(d.id), driverId: d.id
   }));
 
-  const isLight = document.body.classList.contains('light-tables');
+  const isLight = document.body.classList.contains('theme-light');
   const gridColor = isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)';
   const tickColor = isLight ? '#333' : '#aaa';
 
@@ -911,7 +1012,7 @@ function renderStatus(drivers) {
     dom.titleStatus.style.color = "#f1c40f";
   } else {
     dom.titleStatus.innerText = "EM ABERTO";
-    dom.titleStatus.style.color = document.body.classList.contains('light-tables') ? "#333" : "white";
+    dom.titleStatus.style.color = document.body.classList.contains('theme-light') ? "#333" : "white";
   }
   document.getElementById('racesLeft').innerText = `Faltam: ${data.races.filter(r => !drivers.some(d => d.results[r.id])).length} corridas`;
 }
@@ -1044,7 +1145,8 @@ function init() {
   populateCountrySelects();
   const saved = localStorage.getItem('f1_manager_data');
   if (saved) data = JSON.parse(saved);
-  if (localStorage.getItem('f1_table_theme') === 'light') document.body.classList.add('light-tables');
+  const savedTheme = localStorage.getItem('f1_table_theme') || 'dark';
+  setTheme(savedTheme);
   render();
   setupScrollLock();
 }
