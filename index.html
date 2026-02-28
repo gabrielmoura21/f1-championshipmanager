@@ -708,6 +708,19 @@ function renderConstructorsAndH2H(teamsMap) {
       const n2 = (v2===undefined||v2==="") ? null : (["NC","NP","DSQ"].includes(v2) ? 999 : parseInt(v2));
       if (n1!==null && n2!==null && n1!==n2) n1<n2 ? s1++ : s2++;
     });
+    const total = s1 + s2;
+    const pct1 = total > 0 ? (s1 / total * 100) : 50;
+    const pct2 = total > 0 ? (s2 / total * 100) : 50;
+    const c1 = p1.color || teamColor;
+    const c2 = p2.color || teamColor;
+    const op1 = s1 >= s2 ? 1 : 0.35;
+    const op2 = s2 >= s1 ? 1 : 0.35;
+    const barHtml = total === 0
+      ? `<div style="height:5px;border-radius:3px;background:rgba(255,255,255,0.1);margin-top:8px;"></div>`
+      : `<div style="display:flex;height:5px;border-radius:3px;overflow:hidden;margin-top:8px;gap:2px;">
+          <div style="width:${pct1}%;background:${c1};opacity:${op1};border-radius:3px 0 0 3px;transition:width .4s ease;"></div>
+          <div style="width:${pct2}%;background:${c2};opacity:${op2};border-radius:0 3px 3px 0;transition:width .4s ease;"></div>
+        </div>`;
     return `<div class="h2h-card" style="border-left-color:${teamColor};">
       <span class="h2h-team" style="color:${teamColor};">${teamName}</span>
       <div class="h2h-score">
@@ -715,6 +728,7 @@ function renderConstructorsAndH2H(teamsMap) {
         <span>${s1} <span style="color:var(--f1-red);margin:0 5px;">-</span> ${s2}</span>
         <strong>${p2.name.split(' ').pop().toUpperCase()}</strong>
       </div>
+      ${barHtml}
     </div>`;
   }).join('');
 }
