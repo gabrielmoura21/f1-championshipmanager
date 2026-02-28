@@ -688,15 +688,18 @@ function renderConstructorsAndH2H(teamsMap) {
   data.races.forEach(r => { if (!data.drivers.some(d => d.results && d.results[r.id])) remTeam += r.type==='GP'?43:15; });
   const isTeamChamp = sorted.length > 1 && sorted[0].points > sorted[1].points + remTeam;
 
-  dom.construtoresBody.innerHTML = sorted.map((t,i) => `
-    <tr${i===0&&isTeamChamp?' class="math-champion-row"':''}>
+  dom.construtoresBody.innerHTML = sorted.map((t,i) => {
+    const tColor = t.drivers[0]?.color || 'var(--f1-red)';
+    return `<tr${i===0&&isTeamChamp?' class="math-champion-row"':''}>
       <td style="font-family:'Oswald',sans-serif;">${i+1}</td>
-      <td style="text-align:left;text-transform:uppercase;font-size:.9em;color:#aaa;"><div class="team-content">${getTeamLogoHtml(t.name)}<span>${t.name}</span></div></td>
+      <td style="text-align:left;text-transform:uppercase;font-size:.9em;color:#aaa;"><div class="team-content"><div style="width:4px;min-width:4px;height:28px;border-radius:2px;background:${tColor};margin-right:4px;flex-shrink:0;"></div>${getTeamLogoHtml(t.name)}<span>${t.name}</span></div></td>
       <td style="font-family:'Oswald',sans-serif;font-weight:700;font-size:1.1em;">${t.points}</td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 
   dom.h2hContainer.innerHTML = Object.entries(teamsMap).filter(([,t]) => t.drivers.length >= 2).map(([teamName, team]) => {
     const [p1, p2] = team.drivers;
+    const teamColor = team.drivers[0]?.color || 'var(--f1-red)';
     let s1 = 0, s2 = 0;
     data.races.forEach(r => {
       if (r.type === 'Sprint') return;
@@ -705,8 +708,8 @@ function renderConstructorsAndH2H(teamsMap) {
       const n2 = (v2===undefined||v2==="") ? null : (["NC","NP","DSQ"].includes(v2) ? 999 : parseInt(v2));
       if (n1!==null && n2!==null && n1!==n2) n1<n2 ? s1++ : s2++;
     });
-    return `<div class="h2h-card">
-      <span class="h2h-team">${teamName}</span>
+    return `<div class="h2h-card" style="border-left-color:${teamColor};">
+      <span class="h2h-team" style="color:${teamColor};">${teamName}</span>
       <div class="h2h-score">
         <strong>${p1.name.split(' ').pop().toUpperCase()}</strong>
         <span>${s1} <span style="color:var(--f1-red);margin:0 5px;">-</span> ${s2}</span>
