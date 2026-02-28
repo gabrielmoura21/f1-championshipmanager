@@ -46,15 +46,65 @@ body.light-tables .math-champion-row td, body.light-tables .math-champion-row .s
 h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 2px; border-bottom: 3px solid var(--f1-red); padding-bottom: 5px; }
 
 .calculator-panel-compact {
-  background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border);
-  padding: 20px; border-radius: 12px; margin-top: 10px;
-  display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(15px);
+  border: 1px solid var(--glass-border);
+  padding: 16px;
+  border-radius: 12px;
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
-.calc-item { display: flex; flex-direction: column; background: var(--glass-bg); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); }
-.calc-label { font-size: .7rem; text-transform: uppercase; color: #aaa; letter-spacing: 1px; margin-bottom: 5px; }
-.calc-val { font-family: 'Oswald', sans-serif; font-size: 1.4rem; font-weight: 700; }
-.calc-full-row { grid-column: span 2; padding: 15px; background: linear-gradient(90deg, rgba(225,6,0,0.2), transparent); border-left: 4px solid var(--f1-red); border-radius: 4px; }
-#titleStatus { font-family: 'Oswald', sans-serif; font-size: 1.1rem; font-weight: 700; text-transform: uppercase; display: block; }
+.calc-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.3);
+  padding: 16px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+  border-top: 3px solid var(--f1-red);
+  gap: 4px;
+  transition: background .2s;
+}
+.calc-item:hover { background: rgba(255,255,255,0.05); }
+.calc-label {
+  font-size: .65rem;
+  text-transform: uppercase;
+  color: #888;
+  letter-spacing: 1.5px;
+  font-family: 'Titillium Web', sans-serif;
+  margin-bottom: 2px;
+  text-align: center;
+}
+.calc-val {
+  font-family: 'Oswald', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: white;
+  line-height: 1;
+}
+.calc-full-row {
+  grid-column: span 2;
+  padding: 14px 16px;
+  background: linear-gradient(90deg, rgba(225,6,0,0.18), rgba(225,6,0,0.04) 60%, transparent);
+  border: 1px solid rgba(225,6,0,0.25);
+  border-left: 4px solid var(--f1-red);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+#titleStatus {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  display: block;
+  letter-spacing: 1px;
+}
 
 .controls { margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; background: var(--glass-bg); backdrop-filter: blur(10px); padding: 15px; border-radius: 12px; border: 1px solid var(--glass-border); }
 button {
@@ -228,9 +278,18 @@ input[type="text"]:focus { border-bottom: 2px solid var(--f1-red); outline: none
     </div>
     <h2>Chances de Título</h2>
     <div class="calculator-panel-compact">
-      <div class="calc-item"><span class="calc-label">Pontos em jogo</span><span id="remainingPoints" class="calc-val">0</span></div>
-      <div class="calc-item"><span class="calc-label">Na disputa</span><span id="mathContenders" class="calc-val">0</span></div>
-      <div class="calc-full-row"><span class="calc-label">Status da Temporada</span><span id="titleStatus">Aguardando dados...</span></div>
+      <div class="calc-item">
+        <span class="calc-label">⚡ Pontos em jogo</span>
+        <span id="remainingPoints" class="calc-val">0</span>
+      </div>
+      <div class="calc-item">
+        <span class="calc-label">🏎️ Na disputa</span>
+        <span id="mathContenders" class="calc-val">0</span>
+      </div>
+      <div class="calc-full-row">
+        <span class="calc-label">🏆 Status da Temporada</span>
+        <span id="titleStatus">Aguardando dados...</span>
+      </div>
     </div>
   </div>
 </div>
