@@ -25,7 +25,7 @@ body {
   color: white; margin: 20px; min-height: 100vh; color-scheme: dark;
 }
 body.light-tables { --sticky-bg: #f2f2f2; color-scheme: light; }
-body.light-tables .table-container { background: white !important; backdrop-filter: none; color: black !important; border: 1px solid #ccc; }
+body.light-tables .table-container { background: var(--sticky-bg) !important; backdrop-filter: none; color: black !important; border: 1px solid #ccc; }
 body.light-tables table { color: black !important; }
 body.light-tables th, body.light-tables td { border: 0.5px solid #ccc !important; }
 body.light-tables .sticky-col { background-color: var(--sticky-bg) !important; }
@@ -35,6 +35,15 @@ body.light-tables .col-equipe { color: #555 !important; }
 body.light-tables thead th { background: #eee !important; color: black !important; }
 body.light-tables .sprint-col { background: rgba(0,123,255,0.1) !important; }
 body.light-tables .math-champion-row td, body.light-tables .math-champion-row .sticky-col { background-color: #fff9c4 !important; }
+body.light-tables .chart-container { background: #ffffff !important; border-color: #ddd; }
+body.light-tables .chart-legend-item:hover { border-color: rgba(0,0,0,0.2); background: rgba(0,0,0,0.04); }
+body.light-tables .h2h-card { background: #ffffff !important; border-color: #ddd; }
+body.light-tables .h2h-score strong, body.light-tables .h2h-score span { color: black !important; }
+body.light-tables .calculator-panel-compact { background: #ffffff !important; border-color: #ddd; }
+body.light-tables .calc-item { background: rgba(0,0,0,0.04) !important; border-color: #ddd; }
+body.light-tables .calc-val { color: black !important; }
+body.light-tables .calc-full-row { background: linear-gradient(90deg, rgba(225,6,0,0.10), rgba(225,6,0,0.03) 60%, transparent) !important; border-color: rgba(225,6,0,0.3); }
+body.light-tables #titleStatus { color: inherit; }
 
 .gold { background: rgba(255,215,0,0.4) !important; font-weight: bold; }
 .silver { background: rgba(192,192,192,0.4) !important; font-weight: bold; }
@@ -747,11 +756,12 @@ function renderConstructorsAndH2H(teamsMap) {
   data.races.forEach(r => { if (!data.drivers.some(d => d.results && d.results[r.id])) remTeam += r.type==='GP'?43:15; });
   const isTeamChamp = sorted.length > 1 && sorted[0].points > sorted[1].points + remTeam;
 
+  const isLightMode = document.body.classList.contains('light-tables');
   dom.construtoresBody.innerHTML = sorted.map((t,i) => {
     const tColor = t.drivers[0]?.color || 'var(--f1-red)';
     return `<tr${i===0&&isTeamChamp?' class="math-champion-row"':''}>
       <td style="font-family:'Oswald',sans-serif;">${i+1}</td>
-      <td style="text-align:left;text-transform:uppercase;font-size:.9em;color:#aaa;"><div class="team-content"><div style="width:4px;min-width:4px;height:28px;border-radius:2px;background:${tColor};margin-right:4px;flex-shrink:0;"></div>${getTeamLogoHtml(t.name)}<span>${t.name}</span></div></td>
+      <td style="text-align:left;text-transform:uppercase;font-size:.9em;color:${isLightMode?'#555':'#aaa'};"><div class="team-content"><div style="width:4px;min-width:4px;height:28px;border-radius:2px;background:${tColor};margin-right:4px;flex-shrink:0;"></div>${getTeamLogoHtml(t.name)}<span>${t.name}</span></div></td>
       <td style="font-family:'Oswald',sans-serif;font-weight:700;font-size:1.1em;">${t.points}</td>
     </tr>`;
   }).join('');
@@ -774,8 +784,10 @@ function renderConstructorsAndH2H(teamsMap) {
     const c2 = p2.color || teamColor;
     const op1 = s1 >= s2 ? 1 : 0.35;
     const op2 = s2 >= s1 ? 1 : 0.35;
+    const isLight = document.body.classList.contains('light-tables');
+    const emptyBarBg = isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)';
     const barHtml = total === 0
-      ? `<div style="height:5px;border-radius:3px;background:rgba(255,255,255,0.1);margin-top:8px;"></div>`
+      ? `<div style="height:5px;border-radius:3px;background:${emptyBarBg};margin-top:8px;"></div>`
       : `<div style="display:flex;height:5px;border-radius:3px;overflow:hidden;margin-top:8px;gap:2px;">
           <div style="width:${pct1}%;background:${c1};opacity:${op1};border-radius:3px 0 0 3px;transition:width .4s ease;"></div>
           <div style="width:${pct2}%;background:${c2};opacity:${op2};border-radius:0 3px 3px 0;transition:width .4s ease;"></div>
@@ -820,16 +832,27 @@ function renderChart(drivers) {
     hidden: hiddenDrivers.has(d.id), driverId: d.id
   }));
 
+  const isLight = document.body.classList.contains('light-tables');
+  const gridColor = isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)';
+  const tickColor = isLight ? '#333' : '#aaa';
+
   if (myChart) {
     myChart.data.labels = labels;
     myChart.data.datasets = datasets;
+    myChart.options.scales.y.grid.color = gridColor;
+    myChart.options.scales.x.grid.color = gridColor;
+    myChart.options.scales.y.ticks = { color: tickColor };
+    myChart.options.scales.x.ticks = { color: tickColor };
     myChart.update('none');
   } else {
     myChart = new Chart(document.getElementById('performanceChart').getContext('2d'), {
       type: 'line', data: { labels, datasets },
       options: {
         responsive: true, maintainAspectRatio: false, animation: false,
-        scales: { y: { grid: { color: 'rgba(255,255,255,0.1)' } }, x: { grid: { color: 'rgba(255,255,255,0.1)' } } },
+        scales: {
+          y: { grid: { color: gridColor }, ticks: { color: tickColor } },
+          x: { grid: { color: gridColor }, ticks: { color: tickColor } }
+        },
         plugins: { legend: { display: false } }
       }
     });
@@ -888,7 +911,7 @@ function renderStatus(drivers) {
     dom.titleStatus.style.color = "#f1c40f";
   } else {
     dom.titleStatus.innerText = "EM ABERTO";
-    dom.titleStatus.style.color = "white";
+    dom.titleStatus.style.color = document.body.classList.contains('light-tables') ? "#333" : "white";
   }
   document.getElementById('racesLeft').innerText = `Faltam: ${data.races.filter(r => !drivers.some(d => d.results[r.id])).length} corridas`;
 }
