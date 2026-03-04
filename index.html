@@ -340,6 +340,7 @@ input[type="text"]:focus { border-bottom: 2px solid var(--f1-red); outline: none
   <button class="btn-capture" onclick="captureHQ()">📸 EXPORTAR POSTER (HQ)</button>
   <button class="btn-capture" onclick="captureTableHQ()" style="background:#4a148c;">🏁 EXPORTAR TABELA (HQ)</button>
   <button id="btnCaptureOther" class="btn-capture" onclick="captureOtherTablesHQ()" style="background:#00695c;">📊 EXPORTAR SEM PILOTOS (HQ)</button>
+  <button id="btnCaptureDriversPoster" class="btn-capture" onclick="captureDriversPosterHQ()" style="background:#0277bd;">🖼️ POSTER PILOTOS (HQ)</button>
   <button style="background:#555" onclick="resetData()">🗑️ Limpar Tudo</button>
 </div>
 
@@ -726,6 +727,68 @@ async function captureOtherTablesHQ() {
       const el = document.getElementById(id);
       if (el) el.style.display = prevDisplay[id];
     });
+    btn.innerText = orig;
+  }
+}
+
+async function captureDriversPosterHQ() {
+  const btn = document.getElementById('btnCaptureDriversPoster');
+  const orig = btn.innerText;
+  btn.innerText = "⚡ PROCESSANDO...";
+  await new Promise(r => setTimeout(r, 300));
+
+  const isLight  = document.body.classList.contains('theme-light');
+  const isAmoled = document.body.classList.contains('theme-amoled');
+  const bgColor  = isLight ? '#b8bec9' : isAmoled ? '#000000' : '#0b0b10';
+
+  // Substituir inputs por spans para exibição correta
+  const tableEl = document.getElementById('pilotosTable');
+  const inputs = Array.from(tableEl.querySelectorAll('input[type="text"]'));
+  const replacements = inputs.map(inp => {
+    const span = document.createElement('span');
+    span.textContent = inp.value;
+    const isSpecial = ["NC","DSQ","NP"].includes(inp.value.trim().toUpperCase());
+    span.style.cssText = `display:block;width:100%;text-align:center;font-family:inherit;font-size:inherit;color:${isSpecial ? '#e10600' : 'inherit'};font-weight:${isSpecial ? 'bold' : 'inherit'};`;
+    inp.parentNode.replaceChild(span, inp);
+    return { span, inp };
+  });
+
+  // Ocultar tudo exceto mainTitle e pilotosSection
+  const keepIds = new Set(['mainTitle', 'pilotosSection']);
+  const toHide = [];
+  Array.from(document.body.children).forEach(el => {
+    if (keepIds.has(el.id)) return;
+    if (el.classList.contains('modal-overlay')) return;
+    if (el.id === 'colorPickerPopup') return;
+    toHide.push({ el, prev: el.style.display });
+    el.style.display = 'none';
+  });
+
+  await new Promise(r => requestAnimationFrame(r));
+
+  try {
+    const canvas = await html2canvas(document.getElementById('mainCaptureArea'), {
+      backgroundColor: bgColor,
+      scale: 4,
+      useCORS: true,
+      logging: false,
+      ignoreElements: el =>
+        el.tagName === "BUTTON" ||
+        el.classList.contains('modal-overlay') ||
+        el.id === "colorPickerPopup" ||
+        el.classList.contains('no-capture') ||
+        (el.tagName === "INPUT" && el.type !== "text")
+    });
+    const a = document.createElement('a');
+    a.download = `F1_Pilotos_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.png`;
+    a.href = canvas.toDataURL("image/png", 1.0);
+    a.click();
+  } catch(e) {
+    console.error(e);
+    alert("Erro ao capturar.");
+  } finally {
+    replacements.forEach(({ span, inp }) => span.parentNode.replaceChild(inp, span));
+    toHide.forEach(({ el, prev }) => el.style.display = prev);
     btn.innerText = orig;
   }
 }
