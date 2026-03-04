@@ -308,9 +308,9 @@ input[type="text"]:focus { border-bottom: 2px solid var(--f1-red); outline: none
 </head>
 <body id="mainCaptureArea">
 
-<h1><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/F1.svg/1280px-F1.svg.png" alt="F1 Logo" style="height:25px;margin-right:15px;vertical-align:middle;"> F1 Championship Manager</h1>
+<h1 id="mainTitle"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/F1.svg/1280px-F1.svg.png" alt="F1 Logo" style="height:25px;margin-right:15px;vertical-align:middle;"> F1 Championship Manager</h1>
 
-<div style="display:flex;gap:10px;margin-bottom:15px;">
+<div id="topControls" style="display:flex;gap:10px;margin-bottom:15px;">
   <button id="editToggle" onclick="toggleEdit()">🔒 Modo Edição: Desativado</button>
   <div class="theme-dropdown-wrapper">
     <button id="themeToggle" onclick="toggleThemeDropdown(event)">🎨 Alterar Tema ▾</button>
@@ -339,15 +339,18 @@ input[type="text"]:focus { border-bottom: 2px solid var(--f1-red); outline: none
   <input type="file" id="importFile" style="display:none" onchange="importData(event)">
   <button class="btn-capture" onclick="captureHQ()">📸 EXPORTAR POSTER (HQ)</button>
   <button class="btn-capture" onclick="captureTableHQ()" style="background:#4a148c;">🏁 EXPORTAR TABELA (HQ)</button>
+  <button id="btnCaptureOther" class="btn-capture" onclick="captureOtherTablesHQ()" style="background:#00695c;">📊 EXPORTAR SEM PILOTOS (HQ)</button>
   <button style="background:#555" onclick="resetData()">🗑️ Limpar Tudo</button>
 </div>
 
+<div id="pilotosSection">
 <h2 style="display:flex;justify-content:space-between;align-items:flex-end;">
   <span>Classificação de Pilotos</span>
   <span id="racesLeft" style="font-size:14px;color:#aaa;font-weight:normal;font-family:'Titillium Web',sans-serif;"></span>
 </h2>
 <div class="table-container">
   <table id="pilotosTable"><thead><tr id="headerRow"></tr></thead><tbody id="pilotosBody"></tbody></table>
+</div>
 </div>
 
 <h2>Evolução do Campeonato</h2>
@@ -675,6 +678,54 @@ async function captureTableHQ() {
     replacements.forEach(({ span, inp }) => span.parentNode.replaceChild(inp, span));
     container.style.overflowX = prevOverflow;
     container.style.width = prevWidth;
+    btn.innerText = orig;
+  }
+}
+
+async function captureOtherTablesHQ() {
+  const btn = document.getElementById('btnCaptureOther');
+  const orig = btn.innerText;
+  btn.innerText = "⚡ PROCESSANDO...";
+  await new Promise(r => setTimeout(r, 300));
+
+  const isLight  = document.body.classList.contains('theme-light');
+  const isAmoled = document.body.classList.contains('theme-amoled');
+  const bgColor  = isLight ? '#b8bec9' : isAmoled ? '#000000' : '#0b0b10';
+
+  const toHide = ['mainTitle', 'topControls', 'adminControls', 'pilotosSection'];
+  const prevDisplay = {};
+  toHide.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { prevDisplay[id] = el.style.display; el.style.display = 'none'; }
+  });
+
+  await new Promise(r => requestAnimationFrame(r));
+
+  try {
+    const canvas = await html2canvas(document.getElementById('mainCaptureArea'), {
+      backgroundColor: bgColor,
+      scale: 4,
+      useCORS: true,
+      logging: false,
+      ignoreElements: el =>
+        el.tagName === "BUTTON" ||
+        el.classList.contains('modal-overlay') ||
+        el.id === "colorPickerPopup" ||
+        el.classList.contains('no-capture') ||
+        (el.tagName === "INPUT" && el.type !== "text")
+    });
+    const a = document.createElement('a');
+    a.download = `F1_Tabelas_SemPilotos_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.png`;
+    a.href = canvas.toDataURL("image/png", 1.0);
+    a.click();
+  } catch(e) {
+    console.error(e);
+    alert("Erro ao capturar.");
+  } finally {
+    toHide.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = prevDisplay[id];
+    });
     btn.innerText = orig;
   }
 }
@@ -1329,4 +1380,3 @@ init();
 </script>
 </body>
 </html>
-
