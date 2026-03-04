@@ -613,7 +613,7 @@ async function captureHQ() {
   await new Promise(r => setTimeout(r, 500));
   try {
     const canvas = await html2canvas(document.getElementById('mainCaptureArea'), {
-      backgroundColor: "#0b0b10", scale: 6, useCORS: true, logging: false,
+      backgroundColor: "#0b0b10", scale: 4, useCORS: true, logging: false,
       ignoreElements: el => el.tagName === "BUTTON" || el.id === "adminControls" || (el.tagName === "INPUT" && el.type !== "text") || el.classList.contains('modal-overlay') || el.id === "colorPickerPopup" || el.classList.contains('no-capture')
     });
     const a = document.createElement('a');
@@ -653,7 +653,7 @@ async function captureTableHQ() {
   try {
     const canvas = await html2canvas(tableEl, {
       backgroundColor: "#0b0b10",
-      scale: 6,
+      scale: 4,
       useCORS: true,
       logging: false,
       scrollX: 0,
@@ -1329,3 +1329,4 @@ init();
 </script>
 </body>
 </html>
+
