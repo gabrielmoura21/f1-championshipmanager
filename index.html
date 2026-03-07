@@ -337,10 +337,10 @@ input[type="text"]:focus { border-bottom: 2px solid var(--f1-red); outline: none
   <button class="btn-export" onclick="exportData()">💾 Exportar Dados</button>
   <button onclick="document.getElementById('importFile').click()">📂 Importar Dados</button>
   <input type="file" id="importFile" style="display:none" onchange="importData(event)">
-  <button class="btn-capture" onclick="captureHQ()">📸 EXPORTAR POSTER (HQ)</button>
-  <button class="btn-capture" onclick="captureTableHQ()" style="background:#4a148c;">🏁 EXPORTAR TABELA (HQ)</button>
-  <button id="btnCaptureOther" class="btn-capture" onclick="captureOtherTablesHQ()" style="background:#00695c;">📊 EXPORTAR SEM PILOTOS (HQ)</button>
-  <button id="btnCaptureDriversPoster" class="btn-capture" onclick="captureDriversPosterHQ()" style="background:#0277bd;">🖼️ POSTER PILOTOS (HQ)</button>
+  <button class="btn-capture" onclick="captureHQ()">📸 PÁGINA COMPLETA (HQ)</button>
+  <button class="btn-capture" onclick="captureTableHQ()" style="background:#4a148c;">🏁 TABELA COMPLETA (HQ)</button>
+  <button id="btnCaptureOther" class="btn-capture" onclick="captureOtherTablesHQ()" style="background:#00695c;">📊 GRÁFICOS (HQ)</button>
+  <button id="btnCaptureDriversPoster" class="btn-capture" onclick="captureDriversPosterHQ()" style="background:#0277bd;">🖼️ TABELA PILOTOS (HQ)</button>
   <button style="background:#555" onclick="resetData()">🗑️ Limpar Tudo</button>
 </div>
 
@@ -1443,3 +1443,4 @@ init();
 </script>
 </body>
 </html>
+
