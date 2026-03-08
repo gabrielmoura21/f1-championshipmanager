@@ -82,6 +82,130 @@ body.theme-amoled .calc-item { background: #111111 !important; border-color: rgb
 body.theme-amoled .math-champion-row td { background-color: #1a1500 !important; }
 body.theme-amoled .math-champion-row .sticky-col { background-color: #1a1500 !important; }
 
+/* ── DROPDOWN CAMPEONATO ── */
+.champ-dropdown-wrapper { position: relative; display: inline-block; }
+#championshipBtn {
+  background: #1a472a; border: 1px solid #2d7a4f; min-width: 200px;
+}
+#championshipBtn:hover { background: #226033; }
+
+/* Modal de campeonatos */
+.champ-modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(6px); display: none; align-items: center;
+  justify-content: center; z-index: 10000;
+}
+.champ-modal-overlay.open { display: flex; }
+.champ-modal-box {
+  background: #12121c; border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px; width: 100%; max-width: 480px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+  animation: slideIn .25s ease-out;
+  overflow: hidden;
+}
+body.theme-light .champ-modal-box { background: #fff; border-color: #ddd; }
+body.theme-amoled .champ-modal-box { background: #0a0a0a; border-color: rgba(255,255,255,0.08); }
+
+.champ-modal-header {
+  background: linear-gradient(135deg, #1a472a, #0f2d1a);
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.champ-modal-header h2 {
+  font-family: 'Oswald', sans-serif; font-size: 1.3rem; margin: 0;
+  color: #fff; letter-spacing: 2px; text-transform: uppercase;
+  border: none; padding: 0;
+}
+.champ-modal-header p {
+  margin: 4px 0 0; font-size: .8em; color: rgba(255,255,255,0.5);
+  font-family: 'Titillium Web', sans-serif;
+}
+body.theme-light .champ-modal-header h2, body.theme-light .champ-modal-header p { color: #fff; }
+
+.champ-modal-body { padding: 20px 24px; max-height: 60vh; overflow-y: auto; }
+
+.champ-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+.champ-item {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px; padding: 10px 14px; transition: all .15s;
+}
+body.theme-light .champ-item { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1); }
+body.theme-amoled .champ-item { background: rgba(255,255,255,0.02); }
+.champ-item.active-champ {
+  border-color: #2d7a4f; background: rgba(45,122,79,0.15);
+  box-shadow: 0 0 0 1px rgba(45,122,79,0.3);
+}
+.champ-item-name {
+  flex: 1; font-family: 'Oswald', sans-serif; font-size: 1rem;
+  color: #ddd; text-transform: uppercase; letter-spacing: .5px;
+  cursor: pointer; padding: 2px 0; outline: none;
+  background: transparent; border: none; text-align: left;
+}
+body.theme-light .champ-item-name { color: #111; }
+.champ-item-name:focus { color: #fff; border-bottom: 1px solid #2d7a4f; }
+body.theme-light .champ-item-name:focus { color: #000; }
+.champ-badge-active {
+  font-size: .65em; background: #2d7a4f; color: #fff;
+  padding: 2px 8px; border-radius: 20px; white-space: nowrap;
+  font-family: 'Titillium Web', sans-serif; font-weight: 600; letter-spacing: .5px;
+}
+.champ-btn-select {
+  background: #2d7a4f !important; border: none !important;
+  font-size: .72em !important; padding: 5px 12px !important; height: 28px !important;
+  min-width: unset !important; border-radius: 6px !important;
+  white-space: nowrap;
+}
+.champ-btn-select:hover { background: #38965f !important; }
+.champ-btn-rename {
+  background: rgba(255,255,255,0.08) !important; border: 1px solid rgba(255,255,255,0.15) !important;
+  font-size: .72em !important; padding: 5px 10px !important; height: 28px !important;
+  min-width: unset !important; border-radius: 6px !important; color: #ccc !important;
+}
+body.theme-light .champ-btn-rename { background: rgba(0,0,0,0.07) !important; border-color: rgba(0,0,0,0.15) !important; color: #333 !important; }
+.champ-btn-rename:hover { background: rgba(255,255,255,0.15) !important; }
+.champ-btn-del {
+  background: rgba(225,6,0,0.15) !important; border: 1px solid rgba(225,6,0,0.3) !important;
+  font-size: .75em !important; padding: 5px 10px !important; height: 28px !important;
+  min-width: unset !important; border-radius: 6px !important; color: #ff6b6b !important;
+}
+.champ-btn-del:hover { background: rgba(225,6,0,0.3) !important; transform: none !important; }
+
+.champ-add-row {
+  display: flex; gap: 10px; align-items: center;
+  padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08);
+}
+body.theme-light .champ-add-row { border-top-color: rgba(0,0,0,0.1); }
+.champ-add-row input {
+  flex: 1; padding: 10px 14px; background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12); color: white;
+  border-radius: 8px; font-family: 'Titillium Web', sans-serif; font-size: .9em;
+}
+body.theme-light .champ-add-row input { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.15); color: #111; }
+.champ-add-row input:focus { border-color: #2d7a4f; outline: none; background: rgba(45,122,79,0.08); }
+.champ-add-row input::placeholder { color: #666; }
+.champ-btn-add {
+  background: #2d7a4f !important; border: none !important;
+  padding: 10px 18px !important; height: 40px !important;
+  border-radius: 8px !important; white-space: nowrap; font-size: .85em !important;
+}
+.champ-btn-add:hover { background: #38965f !important; }
+
+.champ-modal-footer {
+  padding: 14px 24px; border-top: 1px solid rgba(255,255,255,0.07);
+  display: flex; justify-content: flex-end;
+}
+body.theme-light .champ-modal-footer { border-top-color: rgba(0,0,0,0.08); }
+.champ-btn-close {
+  background: rgba(255,255,255,0.08) !important; border: 1px solid rgba(255,255,255,0.15) !important;
+  font-size: .8em !important; min-width: unset !important;
+}
+body.theme-light .champ-btn-close { background: rgba(0,0,0,0.07) !important; border-color: rgba(0,0,0,0.15) !important; color: #333 !important; }
+.champ-empty-state {
+  text-align: center; padding: 20px 0; color: #666;
+  font-family: 'Titillium Web', sans-serif; font-size: .9em;
+}
+
 /* ── DROPDOWN TEMA ── */
 .theme-dropdown-wrapper { position: relative; display: inline-block; }
 .theme-dropdown-menu {
@@ -312,6 +436,7 @@ input[type="text"]:focus { border-bottom: 2px solid var(--f1-red); outline: none
 
 <div id="topControls" style="display:flex;gap:10px;margin-bottom:15px;">
   <button id="editToggle" onclick="toggleEdit()">🔒 Modo Edição: Desativado</button>
+  <button id="championshipBtn" onclick="openChampionshipModal()">🏆 Campeonato ▾</button>
   <div class="theme-dropdown-wrapper">
     <button id="themeToggle" onclick="toggleThemeDropdown(event)">🎨 Alterar Tema ▾</button>
     <div class="theme-dropdown-menu" id="themeDropdown">
@@ -467,6 +592,26 @@ input[type="text"]:focus { border-bottom: 2px solid var(--f1-red); outline: none
   </div>
 </div>
 
+<!-- ── MODAL CAMPEONATOS ── -->
+<div id="championshipModal" class="champ-modal-overlay" onclick="handleChampModalOutsideClick(event)">
+  <div class="champ-modal-box" id="champModalBox">
+    <div class="champ-modal-header">
+      <h2>🏆 Gerenciar Campeonatos</h2>
+      <p>Selecione, crie, renomeie ou exclua campeonatos</p>
+    </div>
+    <div class="champ-modal-body">
+      <div id="champList" class="champ-list"></div>
+      <div class="champ-add-row">
+        <input type="text" id="newChampName" placeholder="Nome do novo campeonato..." onkeydown="if(event.key==='Enter')addChampionship()">
+        <button class="champ-btn-add" onclick="addChampionship()">＋ Criar</button>
+      </div>
+    </div>
+    <div class="champ-modal-footer">
+      <button class="champ-btn-close" onclick="closeChampionshipModal()">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 let data = { drivers: [], races: [] };
 let myChart = null, isEditEnabled = false, cachedTeamData = null;
@@ -474,6 +619,7 @@ let hiddenDrivers = new Set();
 let chartInitialized = false;
 let resultJustUpdated = false;
 let colorPickerDriverId = null, colorPickerPendingColor = null;
+let activeChampionshipId = null;
 
 const F1_PRESET_COLORS = [
   "#E8002D","#FF8000","#3671C6","#27F4D2","#229971",
@@ -1255,17 +1401,173 @@ function setupScrollLock() {
   });
 }
 
+// ── FUNÇÕES DE CAMPEONATO ──
+
+function getChampionships() {
+  try { return JSON.parse(localStorage.getItem('f1_championships') || '[]'); }
+  catch(e) { return []; }
+}
+
+function saveChampionships(list) {
+  localStorage.setItem('f1_championships', JSON.stringify(list));
+}
+
+function updateChampionshipButtonLabel() {
+  const championships = getChampionships();
+  const active = championships.find(c => c.id === activeChampionshipId);
+  const btn = document.getElementById('championshipBtn');
+  if (btn) btn.innerText = '🏆 ' + (active ? active.name : 'Campeonato') + ' ▾';
+}
+
+function openChampionshipModal() {
+  renderChampionshipList();
+  document.getElementById('championshipModal').classList.add('open');
+}
+
+function closeChampionshipModal() {
+  document.getElementById('championshipModal').classList.remove('open');
+}
+
+function handleChampModalOutsideClick(e) {
+  if (e.target === document.getElementById('championshipModal')) closeChampionshipModal();
+}
+
+function renderChampionshipList() {
+  const championships = getChampionships();
+  const container = document.getElementById('champList');
+  if (championships.length === 0) {
+    container.innerHTML = '<div class="champ-empty-state">Nenhum campeonato criado ainda.<br>Crie um abaixo! 👇</div>';
+    return;
+  }
+  container.innerHTML = championships.map(c => {
+    const isActive = c.id === activeChampionshipId;
+    return `<div class="champ-item${isActive ? ' active-champ' : ''}" id="champ-item-${c.id}">
+      <span style="font-size:1.1em;flex-shrink:0;">🏆</span>
+      <input
+        class="champ-item-name"
+        id="champ-name-input-${c.id}"
+        value="${escapeHtml(c.name)}"
+        onblur="renameChampionship('${c.id}', this.value)"
+        onkeydown="if(event.key==='Enter'){this.blur();}"
+        style="color:${isActive ? '#7dffb3' : ''};"
+        title="Clique duas vezes para renomear"
+      >
+      ${isActive ? '<span class="champ-badge-active">Ativo</span>' : `<button class="champ-btn-select" onclick="selectChampionship('${c.id}')">Selecionar</button>`}
+      <button class="champ-btn-rename" onclick="document.getElementById('champ-name-input-${c.id}').focus();document.getElementById('champ-name-input-${c.id}').select();" title="Renomear">✏️</button>
+      <button class="champ-btn-del" onclick="deleteChampionship('${c.id}')" title="Excluir campeonato">🗑️</button>
+    </div>`;
+  }).join('');
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function addChampionship() {
+  const input = document.getElementById('newChampName');
+  const name = input.value.trim();
+  if (!name) { input.focus(); return; }
+  const championships = getChampionships();
+  const newId = 'champ_' + Date.now();
+  championships.push({ id: newId, name });
+  saveChampionships(championships);
+  input.value = '';
+  renderChampionshipList();
+}
+
+function renameChampionship(id, newName) {
+  newName = newName.trim();
+  if (!newName) return;
+  const championships = getChampionships();
+  const c = championships.find(x => x.id === id);
+  if (c && c.name !== newName) {
+    c.name = newName;
+    saveChampionships(championships);
+    updateChampionshipButtonLabel();
+    renderChampionshipList();
+  }
+}
+
+function selectChampionship(id) {
+  if (id === activeChampionshipId) { closeChampionshipModal(); return; }
+  // Salva estado atual antes de trocar
+  saveData();
+  activeChampionshipId = id;
+  localStorage.setItem('f1_active_championship', id);
+  const saved = localStorage.getItem('f1_manager_data_' + id);
+  data = saved ? JSON.parse(saved) : { drivers: [], races: [] };
+  hiddenDrivers.clear();
+  chartInitialized = false;
+  if (myChart) { myChart.destroy(); myChart = null; }
+  updateChampionshipButtonLabel();
+  renderChampionshipList();
+  render();
+  closeChampionshipModal();
+}
+
+function deleteChampionship(id) {
+  const championships = getChampionships();
+  if (championships.length <= 1) {
+    alert('Você precisa ter ao menos um campeonato.');
+    return;
+  }
+  const c = championships.find(x => x.id === id);
+  if (!confirm(`Excluir o campeonato "${c ? c.name : ''}"?\nTodos os dados serão apagados.`)) return;
+  const updated = championships.filter(x => x.id !== id);
+  saveChampionships(updated);
+  localStorage.removeItem('f1_manager_data_' + id);
+  // Se excluiu o ativo, troca para o primeiro disponível
+  if (id === activeChampionshipId) {
+    activeChampionshipId = updated[0].id;
+    localStorage.setItem('f1_active_championship', activeChampionshipId);
+    const saved = localStorage.getItem('f1_manager_data_' + activeChampionshipId);
+    data = saved ? JSON.parse(saved) : { drivers: [], races: [] };
+    hiddenDrivers.clear();
+    chartInitialized = false;
+    if (myChart) { myChart.destroy(); myChart = null; }
+    updateChampionshipButtonLabel();
+    render();
+  }
+  renderChampionshipList();
+}
+
 function init() {
   populateCountrySelects();
-  const saved = localStorage.getItem('f1_manager_data');
-  if (saved) data = JSON.parse(saved);
+
+  // ── Bootstrap sistema de campeonatos ──
+  let championships = getChampionships();
+  if (championships.length === 0) {
+    // Migrar dado legado para o primeiro campeonato
+    const defaultId = 'champ_' + Date.now();
+    championships = [{ id: defaultId, name: 'F1 2025' }];
+    saveChampionships(championships);
+    const oldData = localStorage.getItem('f1_manager_data');
+    if (oldData) localStorage.setItem('f1_manager_data_' + defaultId, oldData);
+    activeChampionshipId = defaultId;
+    localStorage.setItem('f1_active_championship', defaultId);
+  } else {
+    activeChampionshipId = localStorage.getItem('f1_active_championship') || championships[0].id;
+    if (!championships.find(c => c.id === activeChampionshipId))
+      activeChampionshipId = championships[0].id;
+    localStorage.setItem('f1_active_championship', activeChampionshipId);
+  }
+
+  // Carrega dados do campeonato ativo
+  const saved = localStorage.getItem('f1_manager_data_' + activeChampionshipId);
+  data = saved ? JSON.parse(saved) : { drivers: [], races: [] };
+
+  updateChampionshipButtonLabel();
+
   const savedTheme = localStorage.getItem('f1_table_theme') || 'dark';
   setTheme(savedTheme);
   render();
   setupScrollLock();
 }
 
-const saveData = () => localStorage.setItem('f1_manager_data', JSON.stringify(data));
+const saveData = () => {
+  const key = activeChampionshipId ? 'f1_manager_data_' + activeChampionshipId : 'f1_manager_data';
+  localStorage.setItem(key, JSON.stringify(data));
+};
 
 function toggleEdit() {
   isEditEnabled = !isEditEnabled;
@@ -1443,4 +1745,3 @@ init();
 </script>
 </body>
 </html>
-
