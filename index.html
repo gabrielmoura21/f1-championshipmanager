@@ -1007,13 +1007,16 @@ let currentPhotoDriverId = null;
 let pendingPhotoDataUrl  = null;
 
 function getDriverPhoto(driverId, driverName) {
-  // 1) Foto customizada salva no localStorage
+  // 1) Remoção manual explícita — respeita mesmo que haja foto no mapa
+  const removed = localStorage.getItem('f1_photo_removed_' + driverId);
+  if (removed === '1') return PHOTO_PLACEHOLDER;
+  // 2) Foto customizada salva no localStorage
   const custom = localStorage.getItem('f1_photo_' + driverId);
   if (custom) return custom;
-  // 2) Mapa automático pelo nome normalizado
+  // 3) Mapa automático pelo nome normalizado (exato)
   const key = driverName.trim().toLowerCase();
   if (driverPhotoMap[key]) return driverPhotoMap[key];
-  // 3) Fallback: tenta pelo sobrenome
+  // 4) Fallback: tenta pelo sobrenome
   const last = key.split(' ').pop();
   for (const k in driverPhotoMap) {
     if (k.includes(last)) return driverPhotoMap[k];
@@ -1467,22 +1470,22 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-function confirmPhotoUpload() {
-  if (!currentPhotoDriverId || !pendingPhotoDataUrl) { closePhotoUpload(); return; }
-  localStorage.setItem('f1_photo_' + currentPhotoDriverId, pendingPhotoDataUrl);
-  // Atualiza portrait no cartão aberto
-  document.getElementById('dcPortraitImg').src = pendingPhotoDataUrl;
-  closePhotoUpload();
-}
-
 function removeDriverPhoto() {
   if (!currentPhotoDriverId) return;
   localStorage.removeItem('f1_photo_' + currentPhotoDriverId);
-  const d = data.drivers.find(x => x.id == currentPhotoDriverId);
-  const fallback = d ? getDriverPhoto(currentPhotoDriverId, d.name) : PHOTO_PLACEHOLDER;
-  document.getElementById('dcPortraitImg').src = fallback;
-  document.getElementById('photoUploadPreview').src = fallback;
+  localStorage.setItem('f1_photo_removed_' + currentPhotoDriverId, '1');
+  document.getElementById('dcPortraitImg').src = PHOTO_PLACEHOLDER;
+  document.getElementById('photoUploadPreview').src = PHOTO_PLACEHOLDER;
   pendingPhotoDataUrl = null;
+  closePhotoUpload();
+}
+
+function confirmPhotoUpload() {
+  if (!currentPhotoDriverId || !pendingPhotoDataUrl) { closePhotoUpload(); return; }
+  localStorage.setItem('f1_photo_' + currentPhotoDriverId, pendingPhotoDataUrl);
+  localStorage.removeItem('f1_photo_removed_' + currentPhotoDriverId);
+  // Atualiza portrait no cartão aberto
+  document.getElementById('dcPortraitImg').src = pendingPhotoDataUrl;
   closePhotoUpload();
 }
 
