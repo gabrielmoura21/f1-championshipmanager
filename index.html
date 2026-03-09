@@ -407,6 +407,249 @@ input[type="text"]:focus { border-bottom: 2px solid var(--f1-red); outline: none
 /* ── Emoji lápis: oculto no poster HQ ── */
 .legend-edit-icon { font-size: .7em; color: #f1c40f; margin-left: 1px; }
 
+/* ── CARTÃO EXPANDIDO DO PILOTO (POPUP) ── */
+.driver-card-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 10001;
+  display: none;
+}
+.driver-card-overlay.open { display: block; }
+
+.driver-card-panel {
+  position: fixed;
+  width: 360px; max-width: calc(100vw - 20px);
+  max-height: calc(100vh - 30px);
+  background: #14141f;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 18px;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.05);
+  opacity: 0; transform: scale(0.93) translateY(8px);
+  transition: opacity .22s ease, transform .22s cubic-bezier(.34,1.3,.64,1);
+  pointer-events: none;
+}
+.driver-card-overlay.open .driver-card-panel {
+  opacity: 1; transform: scale(1) translateY(0);
+  pointer-events: auto;
+}
+body.theme-light .driver-card-panel {
+  background: #f2f4f8;
+  border-color: rgba(0,0,0,0.1);
+  box-shadow: 0 24px 64px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.06);
+}
+body.theme-amoled .driver-card-panel {
+  background: #040408;
+  border-color: rgba(255,255,255,0.07);
+}
+
+/* Header do cartão */
+.dc-header {
+  position: relative; padding: 20px 18px 16px;
+  overflow: hidden; flex-shrink: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+body.theme-light .dc-header { border-bottom-color: rgba(0,0,0,0.07); }
+.dc-header-bg {
+  position: absolute; inset: 0; opacity: .2;
+  transition: background .3s;
+}
+.dc-header-close {
+  position: absolute; top: 12px; right: 12px;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: rgba(255,255,255,0.1); border: none;
+  color: #fff; font-size: 1rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s; z-index: 5; min-width: unset; padding: 0;
+}
+.dc-header-close:hover { background: rgba(255,255,255,0.22); transform: none; }
+body.theme-light .dc-header-close { color: #222; background: rgba(0,0,0,0.08); }
+body.theme-light .dc-header-close:hover { background: rgba(0,0,0,0.15); }
+
+.dc-position-badge {
+  font-family: 'Oswald', sans-serif; font-size: 5rem; font-weight: 700;
+  line-height: 1; color: rgba(255,255,255,0.07); position: absolute;
+  right: 12px; bottom: 4px; z-index: 1; user-select: none; letter-spacing: -2px;
+}
+body.theme-light .dc-position-badge { color: rgba(0,0,0,0.06); }
+
+/* Portrait do piloto */
+.dc-portrait-wrap {
+  position: relative; z-index: 3;
+  display: flex; align-items: flex-end; gap: 14px;
+}
+.dc-portrait-ring {
+  width: 80px; height: 80px; border-radius: 50%; flex-shrink: 0;
+  padding: 3px; cursor: pointer;
+  background: conic-gradient(var(--portrait-color, #e10600) 0%, rgba(255,255,255,0.1) 100%);
+  transition: transform .2s, box-shadow .2s;
+  position: relative;
+}
+.dc-portrait-ring:hover { transform: scale(1.05); box-shadow: 0 0 0 3px rgba(255,255,255,0.15); }
+.dc-portrait-ring:hover .dc-portrait-edit-hint { opacity: 1; }
+.dc-portrait-img {
+  width: 100%; height: 100%; border-radius: 50%;
+  object-fit: cover; object-position: top center;
+  display: block;
+  background: #1e1e2e;
+}
+.dc-portrait-edit-hint {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: rgba(0,0,0,0.55);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .65rem; color: #fff; font-family: 'Titillium Web', sans-serif;
+  letter-spacing: .5px; opacity: 0; transition: opacity .18s;
+  text-align: center; padding: 4px;
+}
+
+.dc-name-block { flex: 1; min-width: 0; position: relative; z-index: 3; }
+.dc-flag-name { display: flex; align-items: center; gap: 8px; }
+.dc-flag { width: 28px; height: 20px; border-radius: 2px; object-fit: cover; box-shadow: 0 1px 6px rgba(0,0,0,0.4); flex-shrink: 0; }
+.dc-name {
+  font-family: 'Oswald', sans-serif; font-size: 1.25rem; font-weight: 700;
+  color: #fff; line-height: 1.1; text-transform: uppercase;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+body.theme-light .dc-name { color: #111; }
+.dc-team-row {
+  display: flex; align-items: center; gap: 7px; margin-top: 6px;
+}
+.dc-team-logo { width: 18px; height: 18px; object-fit: contain; }
+.dc-team-name {
+  font-size: .75rem; text-transform: uppercase; letter-spacing: 1.5px;
+  color: rgba(255,255,255,0.5); font-family: 'Titillium Web', sans-serif;
+}
+body.theme-light .dc-team-name { color: rgba(0,0,0,0.42); }
+.dc-color-dot {
+  width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+}
+
+/* Body do cartão */
+.dc-body {
+  flex: 1; overflow-y: auto; padding: 14px 16px 20px;
+  scrollbar-width: thin;
+}
+.dc-body::-webkit-scrollbar { width: 3px; }
+.dc-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
+
+.dc-section-title {
+  font-family: 'Oswald', sans-serif; font-size: .65rem; letter-spacing: 2px;
+  text-transform: uppercase; color: #555; margin: 14px 0 8px;
+}
+body.theme-light .dc-section-title { color: #aaa; }
+
+.dc-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.dc-stat-card {
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px; padding: 10px 12px;
+  display: flex; flex-direction: column; gap: 2px; transition: background .15s;
+}
+.dc-stat-card:hover { background: rgba(255,255,255,0.07); }
+body.theme-light .dc-stat-card { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.08); }
+body.theme-light .dc-stat-card:hover { background: rgba(0,0,0,0.07); }
+body.theme-amoled .dc-stat-card { background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.04); }
+.dc-stat-label {
+  font-size: .6rem; text-transform: uppercase; letter-spacing: 1.5px;
+  color: #666; font-family: 'Titillium Web', sans-serif;
+}
+body.theme-light .dc-stat-label { color: #999; }
+.dc-stat-val {
+  font-family: 'Oswald', sans-serif; font-size: 1.5rem; font-weight: 700;
+  line-height: 1; color: #fff;
+}
+body.theme-light .dc-stat-val { color: #111; }
+.dc-stat-sub { font-size: .68rem; color: #555; margin-top: 1px; }
+body.theme-light .dc-stat-sub { color: #888; }
+.dc-stat-card.dc-highlight { border-top: 3px solid var(--f1-red); }
+
+/* Race results strip */
+.dc-results-strip { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+.dc-res-bubble {
+  width: 28px; height: 28px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Oswald', sans-serif; font-size: .7rem; font-weight: 700;
+  border: 1px solid rgba(255,255,255,0.08); transition: transform .1s;
+  cursor: default; color: #fff; flex-shrink: 0;
+}
+.dc-res-bubble:hover { transform: scale(1.2); }
+.dc-res-bubble.res-gold { background: rgba(255,215,0,0.35); border-color: rgba(255,215,0,0.5); }
+.dc-res-bubble.res-silver { background: rgba(192,192,192,0.3); border-color: rgba(192,192,192,0.5); }
+.dc-res-bubble.res-bronze { background: rgba(205,127,50,0.3); border-color: rgba(205,127,50,0.5); }
+.dc-res-bubble.res-points { background: rgba(255,255,255,0.07); }
+.dc-res-bubble.res-out { background: rgba(225,6,0,0.2); border-color: rgba(225,6,0,0.4); color: #ff6b6b; font-size: .55rem; }
+.dc-res-bubble.res-empty { background: rgba(255,255,255,0.03); color: #444; }
+.dc-res-sprint { outline: 2px solid rgba(0,123,255,0.5); outline-offset: -1px; }
+
+/* Séries de corridas */
+.dc-streak-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.dc-streak-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; transition: transform .15s; cursor: default; }
+.dc-streak-dot:hover { transform: scale(1.4); }
+
+/* Streak badge */
+.dc-streak-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px; padding: 3px 10px 3px 6px;
+  font-family: 'Titillium Web', sans-serif; font-size: .7rem; color: #aaa;
+  margin-left: 4px;
+}
+.dc-streak-badge strong { font-family: 'Oswald', sans-serif; font-size: .9rem; color: #fff; }
+body.theme-light .dc-streak-badge { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.1); color: #666; }
+body.theme-light .dc-streak-badge strong { color: #111; }
+
+/* Radar chart */
+.dc-radar-wrap {
+  display: flex; justify-content: center; align-items: center;
+  padding: 6px 0 2px;
+}
+#dcRadarChart { display: block; }
+
+/* ── MODAL DE FOTO DO PILOTO ── */
+.photo-upload-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(4px); z-index: 11000;
+  display: none; align-items: center; justify-content: center;
+}
+.photo-upload-overlay.open { display: flex; }
+.photo-upload-box {
+  background: #14141f; border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px; padding: 28px; width: 320px; max-width: calc(100vw - 32px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  animation: slideIn .22s ease-out;
+}
+body.theme-light .photo-upload-box { background: #fff; border-color: rgba(0,0,0,0.1); }
+body.theme-amoled .photo-upload-box { background: #070710; }
+.photo-upload-title {
+  font-family: 'Oswald', sans-serif; font-size: 1.1rem; text-transform: uppercase;
+  letter-spacing: 1.5px; margin-bottom: 18px; color: #fff;
+  border-bottom: 2px solid var(--f1-red); padding-bottom: 8px;
+}
+body.theme-light .photo-upload-title { color: #111; }
+.photo-upload-preview-wrap {
+  display: flex; justify-content: center; margin-bottom: 16px;
+}
+.photo-upload-preview {
+  width: 90px; height: 90px; border-radius: 50%;
+  object-fit: cover; object-position: top center;
+  border: 3px solid rgba(255,255,255,0.15);
+  background: #1e1e2e;
+}
+body.theme-light .photo-upload-preview { border-color: rgba(0,0,0,0.12); background: #ddd; }
+.photo-upload-drop {
+  border: 2px dashed rgba(255,255,255,0.15); border-radius: 10px;
+  padding: 18px; text-align: center; cursor: pointer;
+  color: #666; font-size: .85rem; font-family: 'Titillium Web', sans-serif;
+  transition: border-color .15s, background .15s; margin-bottom: 14px;
+}
+.photo-upload-drop:hover { border-color: var(--f1-red); background: rgba(225,6,0,0.05); color: #aaa; }
+body.theme-light .photo-upload-drop { border-color: rgba(0,0,0,0.15); color: #999; }
+.photo-upload-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.photo-upload-actions button { font-size: .78em; min-width: unset; }
+.btn-photo-remove { background: rgba(225,6,0,0.2) !important; border: 1px solid rgba(225,6,0,0.3) !important; color: #ff7070 !important; }
+
 /* ── Color Picker Popup ── */
 .color-picker-popup {
   position: fixed; z-index: 10000;
@@ -510,6 +753,55 @@ input[type="text"]:focus { border-bottom: 2px solid var(--f1-red); outline: none
         <span class="calc-label">🏆 Status da Temporada</span>
         <span id="titleStatus">Aguardando dados...</span>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── CARTÃO EXPANDIDO DO PILOTO ── -->
+<div id="driverCardOverlay" class="driver-card-overlay" onclick="handleDriverCardOutsideClick(event)">
+  <div class="driver-card-panel" id="driverCardPanel">
+    <div class="dc-header" id="dcHeader">
+      <div class="dc-header-bg" id="dcHeaderBg"></div>
+      <button class="dc-header-close" onclick="closeDriverCard()">✕</button>
+      <div class="dc-position-badge" id="dcPosBadge"></div>
+      <div class="dc-portrait-wrap">
+        <div class="dc-portrait-ring" id="dcPortraitRing" onclick="openPhotoUpload()" title="Clique para alterar a foto">
+          <img class="dc-portrait-img" id="dcPortraitImg" src="" alt="">
+          <div class="dc-portrait-edit-hint">📷 Trocar foto</div>
+        </div>
+        <div class="dc-name-block">
+          <div class="dc-flag-name">
+            <img class="dc-flag" id="dcFlag" src="" alt="">
+            <div class="dc-name" id="dcName"></div>
+          </div>
+          <div class="dc-team-row">
+            <div class="dc-color-dot" id="dcColorDot"></div>
+            <img class="dc-team-logo" id="dcTeamLogo" src="" alt="" style="display:none;">
+            <span class="dc-team-name" id="dcTeamName"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dc-body" id="dcBody"></div>
+  </div>
+</div>
+
+<!-- ── MODAL FOTO DO PILOTO ── -->
+<div id="photoUploadOverlay" class="photo-upload-overlay" onclick="if(event.target===this)closePhotoUpload()">
+  <div class="photo-upload-box">
+    <div class="photo-upload-title">📷 Foto do Piloto</div>
+    <div class="photo-upload-preview-wrap">
+      <img id="photoUploadPreview" class="photo-upload-preview" src="" alt="">
+    </div>
+    <div class="photo-upload-drop" id="photoUploadDrop" onclick="document.getElementById('photoFileInput').click()">
+      Clique ou arraste uma foto aqui<br>
+      <span style="font-size:.75rem;color:#555;">JPG, PNG, WebP</span>
+    </div>
+    <input type="file" id="photoFileInput" accept="image/*" style="display:none" onchange="handlePhotoFile(event)">
+    <div class="photo-upload-actions">
+      <button class="btn-photo-remove" onclick="removeDriverPhoto()" title="Remover foto">🗑️ Remover</button>
+      <button class="btn-cancel" onclick="closePhotoUpload()">Cancelar</button>
+      <button onclick="confirmPhotoUpload()">✔ Salvar</button>
     </div>
   </div>
 </div>
@@ -678,6 +970,520 @@ function confirmColorChange() {
 function closeColorPicker() {
   document.getElementById('colorPickerPopup').classList.remove('visible');
   colorPickerDriverId = null; colorPickerPendingColor = null;
+}
+
+// ── CARTÃO EXPANDIDO DO PILOTO ──
+
+// Fotos automáticas dos pilotos da F1 2025 (oficial F1 media)
+const driverPhotoMap = {
+  'max verstappen':      'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/M/MAXVER01_Max_Verstappen/maxver01.png',
+  'liam lawson':         'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LIALAW01_Liam_Lawson/lialaw01.png',
+  'lewis hamilton':      'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LEWHAM01_Lewis_Hamilton/lewham01.png',
+  'charles leclerc':     'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/C/CHALEC01_Charles_Leclerc/chalec01.png',
+  'lando norris':        'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LANNOR01_Lando_Norris/lannor01.png',
+  'oscar piastri':       'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/O/OSCPIA01_Oscar_Piastri/oscpia01.png',
+  'george russell':      'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GEORUS01_George_Russell/georus01.png',
+  'kimi antonelli':      'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/K/ANDANT01_Kimi_Antonelli/andant01.png',
+  'andrea kimi antonelli':'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/K/ANDANT01_Kimi_Antonelli/andant01.png',
+  'fernando alonso':     'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/F/FERALO01_Fernando_Alonso/feralo01.png',
+  'lance stroll':        'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LANSTR01_Lance_Stroll/lanstr01.png',
+  'pierre gasly':        'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/P/PIEGAS01_Pierre_Gasly/piegas01.png',
+  'jack doohan':         'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/J/JACDOO01_Jack_Doohan/jacdoo01.png',
+  'yuki tsunoda':        'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/Y/YUKTSU01_Yuki_Tsunoda/yuktsu01.png',
+  'isack hadjar':        'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/I/ISAHAD01_Isack_Hadjar/isahad01.png',
+  'nico hulkenberg':     'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/N/NICHUL01_Nico_Hulkenberg/nichul01.png',
+  'gabriel bortoleto':   'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GABBOR01_Gabriel_Bortoleto/gabbor01.png',
+  'alex albon':          'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/A/ALXALB01_Alex_Albon/alxalb01.png',
+  'carlos sainz':        'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/C/CARSAI01_Carlos_Sainz/carsai01.png',
+  'esteban ocon':        'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/E/ESTOCO01_Esteban_Ocon/estoco01.png',
+  'oliver bearman':      'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/O/OLIBEA01_Oliver_Bearman/olibea01.png',
+  'sergio perez':        'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/S/SERPER01_Sergio_Perez/serper01.png',
+};
+
+// Placeholder SVG para pilotos sem foto
+const PHOTO_PLACEHOLDER = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Crect width='80' height='80' fill='%23232330'/%3E%3Ccircle cx='40' cy='30' r='16' fill='%23383848'/%3E%3Cellipse cx='40' cy='72' rx='24' ry='16' fill='%23383848'/%3E%3C/svg%3E`;
+
+let currentPhotoDriverId = null;
+let pendingPhotoDataUrl  = null;
+
+function getDriverPhoto(driverId, driverName) {
+  // 1) Foto customizada salva no localStorage
+  const custom = localStorage.getItem('f1_photo_' + driverId);
+  if (custom) return custom;
+  // 2) Mapa automático pelo nome normalizado
+  const key = driverName.trim().toLowerCase();
+  if (driverPhotoMap[key]) return driverPhotoMap[key];
+  // 3) Fallback: tenta pelo sobrenome
+  const last = key.split(' ').pop();
+  for (const k in driverPhotoMap) {
+    if (k.includes(last)) return driverPhotoMap[k];
+  }
+  return PHOTO_PLACEHOLDER;
+}
+
+function openDriverCard(driverId, event) {
+  if (isEditEnabled) return;
+
+  const allDrivers = data.drivers.map(d => ({ ...d, stats: calculateDriverStats(d) })).sort(tieBreak);
+  const d = allDrivers.find(x => x.id == driverId);
+  if (!d) return;
+  const pos = allDrivers.findIndex(x => x.id == driverId) + 1;
+  const color = d.color || '#e10600';
+
+  // Header
+  document.getElementById('dcHeaderBg').style.background = `linear-gradient(135deg, ${color}55, transparent)`;
+  document.getElementById('dcPosBadge').innerText = pos + 'º';
+  document.getElementById('dcFlag').src = d.country ? getFlagUrl(d.country) : '';
+  document.getElementById('dcFlag').style.display = d.country ? '' : 'none';
+  document.getElementById('dcName').innerHTML = formatDriverDisplayName(d.name);
+  document.getElementById('dcColorDot').style.background = color;
+
+  // Portrait
+  const ring = document.getElementById('dcPortraitRing');
+  ring.style.setProperty('--portrait-color', color);
+  ring.style.background = `conic-gradient(${color} 0%, ${color}33 100%)`;
+  const photoSrc = getDriverPhoto(driverId, d.name);
+  const portraitImg = document.getElementById('dcPortraitImg');
+  portraitImg.src = photoSrc;
+  portraitImg.onerror = function() { this.src = PHOTO_PLACEHOLDER; };
+
+  const logoSrc = (() => { const n = d.team.toLowerCase(); for (let k in logoMap) if (n.includes(k)) return logoMap[k]; return ''; })();
+  const logoEl = document.getElementById('dcTeamLogo');
+  if (logoSrc) { logoEl.src = logoSrc; logoEl.style.display = ''; }
+  else { logoEl.style.display = 'none'; }
+  document.getElementById('dcTeamName').innerText = d.team;
+
+  // Store current driver id for photo upload
+  currentPhotoDriverId = driverId;
+
+  // Body
+  document.getElementById('dcBody').innerHTML = buildDriverCardBody(d, allDrivers, pos);
+  requestAnimationFrame(() => initDriverCardRadar(d, allDrivers));
+
+  // Posicionar popup perto do clique
+  const overlay = document.getElementById('driverCardOverlay');
+  const panel   = document.getElementById('driverCardPanel');
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  // Aguarda render para calcular dimensões
+  requestAnimationFrame(() => {
+    const pw = panel.offsetWidth  || 360;
+    const ph = panel.offsetHeight || 560;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const cx = event ? event.clientX : vw / 2;
+    const cy = event ? event.clientY : vh / 2;
+    const margin = 12;
+
+    let left = cx - pw / 2;
+    let top  = cy - 40;
+
+    left = Math.max(margin, Math.min(left, vw - pw - margin));
+    top  = Math.max(margin, Math.min(top,  vh - ph - margin));
+
+    panel.style.left = left + 'px';
+    panel.style.top  = top  + 'px';
+  });
+}
+
+function buildDriverCardBody(d, allDrivers, pos) {
+  const stats   = d.stats;
+  const gpRaces = data.races.filter(r => r.type === 'GP');
+  const spRaces = data.races.filter(r => r.type === 'Sprint');
+
+  let podiums = 0, dnfs = 0, avgPosSum = 0, avgPosCount = 0;
+  let bestPos = Infinity, worstPos = 0;
+  let sprintWins = 0, sprintPodiums = 0;
+  let pointsPerGP = 0, gpCount = 0;
+
+  gpRaces.forEach(r => {
+    const val = d.results[r.id];
+    if (val === undefined || val === '') return;
+    if (['NC','DSQ','NP'].includes(String(val).toUpperCase())) { dnfs++; return; }
+    const n = parseInt(val);
+    if (isNaN(n)) return;
+    if (n <= 3) podiums++;
+    if (n < bestPos) bestPos = n;
+    if (n > worstPos) worstPos = n;
+    avgPosSum += n; avgPosCount++;
+    pointsPerGP += (GP_POINTS[n] || 0); gpCount++;
+  });
+  spRaces.forEach(r => {
+    const val = d.results[r.id];
+    if (!val || ['NC','DSQ','NP'].includes(String(val).toUpperCase())) return;
+    const n = parseInt(val);
+    if (isNaN(n)) return;
+    if (n === 1) sprintWins++;
+    if (n <= 3) sprintPodiums++;
+  });
+
+  const avgPos = avgPosCount > 0 ? (avgPosSum / avgPosCount).toFixed(1) : '—';
+  const avgPts = gpCount > 0 ? (pointsPerGP / gpCount).toFixed(1) : '—';
+  const best  = bestPos === Infinity ? '—' : bestPos + 'º';
+  const worst = worstPos === 0      ? '—' : worstPos + 'º';
+
+  const gapToLeader = pos > 1
+    ? `<span style="color:#f44336;font-size:.72rem;">-${allDrivers[0].stats.total - stats.total} pts</span>`
+    : `<span style="color:#4caf50;font-size:.72rem;">Líder</span>`;
+
+  const statsHtml = `
+  <div class="dc-section-title">Estatísticas</div>
+  <div class="dc-stats-grid">
+    <div class="dc-stat-card dc-highlight">
+      <span class="dc-stat-label">🏆 Pontos</span>
+      <span class="dc-stat-val">${stats.total}</span>
+      <span class="dc-stat-sub">${gapToLeader}</span>
+    </div>
+    <div class="dc-stat-card dc-highlight">
+      <span class="dc-stat-label">🥇 Vitórias GP</span>
+      <span class="dc-stat-val">${stats.wins}</span>
+      <span class="dc-stat-sub">${sprintWins > 0 ? sprintWins + ' sprint' : 'sem sprints'}</span>
+    </div>
+    <div class="dc-stat-card">
+      <span class="dc-stat-label">🥈 Pódios</span>
+      <span class="dc-stat-val">${podiums}</span>
+      <span class="dc-stat-sub">${sprintPodiums > 0 ? sprintPodiums + ' pódios sprint' : ''}</span>
+    </div>
+    <div class="dc-stat-card">
+      <span class="dc-stat-label">📍 Pos. Média</span>
+      <span class="dc-stat-val">${avgPos}</span>
+      <span class="dc-stat-sub">${avgPts} pts/corrida</span>
+    </div>
+    <div class="dc-stat-card">
+      <span class="dc-stat-label">⬆️ Melhor</span>
+      <span class="dc-stat-val" style="color:#4caf50;">${best}</span>
+      <span class="dc-stat-sub">⬇️ Pior: ${worst}</span>
+    </div>
+    <div class="dc-stat-card">
+      <span class="dc-stat-label">❌ Não Concluiu</span>
+      <span class="dc-stat-val" style="color:${dnfs > 0 ? '#f44336' : '#4caf50'};">${dnfs}</span>
+      <span class="dc-stat-sub">NC / DSQ / NP</span>
+    </div>
+  </div>`;
+
+  // Resultados por corrida (bolhas)
+  const allRaceResults = data.races.map(r => {
+    const val = d.results[r.id];
+    const isSprint = r.type === 'Sprint';
+    const name = r.name.slice(0, 3);
+    if (val === undefined || val === '') return { val: '·', cls: 'res-empty', isSprint, name };
+    const up = String(val).toUpperCase();
+    if (['NC','DSQ','NP'].includes(up)) return { val: up.slice(0,2), cls: 'res-out', isSprint, name };
+    const n = parseInt(val);
+    if (isNaN(n)) return { val, cls: 'res-empty', isSprint, name };
+    const cls = n===1?'res-gold':n===2?'res-silver':n===3?'res-bronze':n<=10?'res-points':'res-empty';
+    return { val: n, cls, isSprint, name };
+  });
+
+  const bubblesHtml = allRaceResults.length > 0 ? `
+  <div class="dc-section-title">Resultados por Corrida</div>
+  <div class="dc-results-strip">
+    ${allRaceResults.map(r =>
+      `<div class="dc-res-bubble ${r.cls}${r.isSprint?' dc-res-sprint':''}" title="${r.name}${r.isSprint?' (Sprint)':''}">${r.val}</div>`
+    ).join('')}
+  </div>
+  <div style="margin-top:5px;font-size:.65rem;color:#555;">
+    <span style="outline:2px solid rgba(0,123,255,0.5);outline-offset:1px;padding:1px 4px;border-radius:3px;margin-right:5px;">S</span>Sprint
+  </div>` : '';
+
+  // H2H com companheiro
+  const teammate = allDrivers.find(x => x.id !== d.id && x.team.trim().toLowerCase() === d.team.trim().toLowerCase());
+  let h2hHtml = '';
+  if (teammate) {
+    let myW = 0, tmW = 0;
+    gpRaces.forEach(r => {
+      const v1 = d.results[r.id], v2 = teammate.results[r.id];
+      const n1 = (!v1||['NC','DSQ','NP'].includes(String(v1).toUpperCase())) ? null : parseInt(v1);
+      const n2 = (!v2||['NC','DSQ','NP'].includes(String(v2).toUpperCase())) ? null : parseInt(v2);
+      if (n1!==null&&n2!==null&&!isNaN(n1)&&!isNaN(n2)&&n1!==n2) n1<n2 ? myW++ : tmW++;
+    });
+    const total = myW + tmW;
+    const pct = total > 0 ? Math.round(myW / total * 100) : 50;
+    h2hHtml = `
+    <div class="dc-section-title">Duelo com Companheiro</div>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:12px 14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-family:'Oswald',sans-serif;font-size:.95rem;color:${d.color};">${d.name.trim().split(' ').pop().toUpperCase()}</span>
+        <span style="font-size:.78rem;color:#666;">${myW} — ${tmW}</span>
+        <span style="font-family:'Oswald',sans-serif;font-size:.95rem;color:${teammate.color};">${teammate.name.trim().split(' ').pop().toUpperCase()}</span>
+      </div>
+      <div style="display:flex;height:6px;border-radius:4px;overflow:hidden;gap:2px;">
+        <div style="width:${pct}%;background:${d.color};border-radius:4px 0 0 4px;transition:width .5s;"></div>
+        <div style="width:${100-pct}%;background:${teammate.color};border-radius:0 4px 4px 0;transition:width .5s;"></div>
+      </div>
+      <div style="margin-top:6px;font-size:.68rem;color:#555;">
+        Pts: ${stats.total} vs ${teammate.stats.total} &nbsp;·&nbsp; Gap: ${Math.abs(stats.total - teammate.stats.total)} pts
+      </div>
+    </div>`;
+  }
+
+  // ── SEQUÊNCIA ATUAL (STREAK) ──
+  // Calcula streak: corridas consecutivas pontuando/pódio/vencendo (do fim para trás)
+  const completedGP = data.races.filter(r => {
+    const val = d.results[r.id];
+    return val !== undefined && val !== '';
+  });
+
+  let currentStreak = 0;
+  let streakLabel = '';
+  let streakColor = '';
+  for (let i = completedGP.length - 1; i >= 0; i--) {
+    const r = completedGP[i];
+    const val = d.results[r.id];
+    const up = String(val).toUpperCase();
+    if (['NC','DSQ','NP'].includes(up)) break;
+    const n = parseInt(val);
+    if (isNaN(n) || n > 10) break;
+    currentStreak++;
+    if (streakLabel === '') {
+      if (n === 1)     { streakLabel = 'vencendo';  streakColor = 'rgba(255,215,0,0.9)'; }
+      else if (n <= 3) { streakLabel = 'no pódio';  streakColor = 'rgba(192,192,192,0.9)'; }
+      else             { streakLabel = 'pontuando'; streakColor = '#4caf50'; }
+    }
+  }
+
+  // Bolinhas das últimas 10 corridas com resultado
+  const recentRaces = completedGP.slice(-10);
+  const streakDots = recentRaces.map(r => {
+    const val = d.results[r.id];
+    const up = String(val).toUpperCase();
+    const rname = r.name.slice(0,3) + (r.type==='Sprint'?' S':'');
+    if (['NC','DSQ','NP'].includes(up))
+      return `<div class="dc-streak-dot" style="background:#e10600;box-shadow:0 0 4px rgba(225,6,0,0.5);" title="${rname}: ${val}"></div>`;
+    const n = parseInt(val);
+    if (isNaN(n))
+      return `<div class="dc-streak-dot" style="background:#333;" title="${rname}"></div>`;
+    if (n === 1)
+      return `<div class="dc-streak-dot" style="background:rgba(255,215,0,0.95);box-shadow:0 0 5px rgba(255,215,0,0.6);" title="${rname}: 1º 🏆"></div>`;
+    if (n <= 3)
+      return `<div class="dc-streak-dot" style="background:rgba(200,200,200,0.9);" title="${rname}: ${n}º 🥈"></div>`;
+    if (n <= 10)
+      return `<div class="dc-streak-dot" style="background:#4caf50;" title="${rname}: ${n}º"></div>`;
+    return `<div class="dc-streak-dot" style="background:#2a2a2a;border:1px solid #444;" title="${rname}: ${n}º"></div>`;
+  }).join('');
+
+  const streakBadge = currentStreak > 0
+    ? `<span class="dc-streak-badge" style="border-color:${streakColor}55;">
+        <span style="width:8px;height:8px;border-radius:50%;background:${streakColor};display:inline-block;flex-shrink:0;"></span>
+        <strong>${currentStreak}</strong>&nbsp;corrida${currentStreak!==1?'s':''} ${streakLabel}
+       </span>`
+    : '';
+
+  const streakHtml = recentRaces.length > 0 ? `
+  <div class="dc-section-title">Sequência Atual ${streakBadge}</div>
+  <div class="dc-streak-row">
+    ${streakDots}
+    <span style="font-size:.6rem;color:#555;margin-left:2px;">← mais antiga &nbsp; mais recente →</span>
+  </div>` : '';
+
+  // ── RADAR DE PERFIL ──
+  const radarHtml = `
+  <div class="dc-section-title">Radar de Perfil</div>
+  <div class="dc-radar-wrap">
+    <canvas id="dcRadarChart" width="220" height="220"></canvas>
+  </div>`;
+
+  return statsHtml + bubblesHtml + streakHtml + radarHtml + h2hHtml;
+}
+
+function closeDriverCard() {
+  document.getElementById('driverCardOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function initDriverCardRadar(d, allDrivers) {
+  const canvas = document.getElementById('dcRadarChart');
+  if (!canvas) return;
+
+  const gpRaces = data.races.filter(r => r.type === 'GP');
+
+  function driverRadarRaw(driver) {
+    let wins=0, podiums=0, dnfs=0, totalRaced=0, avgPosSum=0, avgPosCount=0, pts=0;
+    gpRaces.forEach(r => {
+      const val = driver.results[r.id];
+      if (val === undefined || val === '') return;
+      totalRaced++;
+      const up = String(val).toUpperCase();
+      if (['NC','DSQ','NP'].includes(up)) { dnfs++; return; }
+      const n = parseInt(val);
+      if (isNaN(n)) return;
+      if (n === 1) wins++;
+      if (n <= 3) podiums++;
+      pts += (GP_POINTS[n] || 0);
+      avgPosSum += n; avgPosCount++;
+    });
+    const avgPos = avgPosCount > 0 ? avgPosSum / avgPosCount : 20;
+    const consistency = totalRaced > 0 ? (totalRaced - dnfs) / totalRaced : 0;
+    return { wins, podiums, consistency, avgPos, pts, totalRaced };
+  }
+
+  // H2H pct
+  const teammate = allDrivers.find(x => x.id !== d.id && x.team.trim().toLowerCase() === d.team.trim().toLowerCase());
+  let h2hPct = 50;
+  if (teammate) {
+    let myW = 0, tmW = 0;
+    gpRaces.forEach(r => {
+      const v1 = d.results[r.id], v2 = teammate.results[r.id];
+      const n1 = (!v1||['NC','DSQ','NP'].includes(String(v1).toUpperCase())) ? null : parseInt(v1);
+      const n2 = (!v2||['NC','DSQ','NP'].includes(String(v2).toUpperCase())) ? null : parseInt(v2);
+      if (n1!==null&&n2!==null&&!isNaN(n1)&&!isNaN(n2)&&n1!==n2) n1<n2 ? myW++ : tmW++;
+    });
+    const tot = myW + tmW;
+    if (tot > 0) h2hPct = myW / tot * 100;
+  }
+
+  const myRaw = driverRadarRaw(d);
+  const activeDrivers = allDrivers.filter(x => !hiddenDrivers.has(x.id));
+  const allRaw = activeDrivers.map(driverRadarRaw);
+
+  const maxWins     = Math.max(1, ...allRaw.map(s => s.wins));
+  const maxPodiums  = Math.max(1, ...allRaw.map(s => s.podiums));
+  const maxPts      = Math.max(1, ...allRaw.map(s => s.pts));
+  const validAvg    = allRaw.filter(s => s.avgPosCount > 0 || s.totalRaced > 0).map(s => s.avgPos < 20 ? s.avgPos : 20);
+  const minAvgPos   = Math.max(1,  Math.min(20, ...validAvg));
+  const maxAvgPos   = Math.min(20, Math.max(1,  ...validAvg, 1));
+
+  const winsScore        = (myRaw.wins     / maxWins)    * 100;
+  const podiumsScore     = (myRaw.podiums  / maxPodiums) * 100;
+  const consistencyScore = myRaw.consistency * 100;
+  const avgPosRange      = maxAvgPos - minAvgPos;
+  const avgPosScore      = avgPosRange > 0
+    ? Math.max(0, ((maxAvgPos - myRaw.avgPos) / avgPosRange) * 100)
+    : (myRaw.avgPos <= 10 ? 70 : 30);
+  const ptsScore         = (myRaw.pts / maxPts) * 100;
+  const h2hScore         = h2hPct;
+
+  const isLight  = document.body.classList.contains('theme-light');
+  const gridClr  = isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.1)';
+  const labelClr = isLight ? 'rgba(0,0,0,0.55)'  : 'rgba(255,255,255,0.6)';
+  const color    = d.color || '#e10600';
+
+  new Chart(canvas.getContext('2d'), {
+    type: 'radar',
+    data: {
+      labels: ['Vitórias', 'Pódios', 'Consistência', 'Pos. Média', 'H2H', 'Pontos'],
+      datasets: [{
+        data: [
+          parseFloat(winsScore.toFixed(1)),
+          parseFloat(podiumsScore.toFixed(1)),
+          parseFloat(consistencyScore.toFixed(1)),
+          parseFloat(avgPosScore.toFixed(1)),
+          parseFloat(h2hScore.toFixed(1)),
+          parseFloat(ptsScore.toFixed(1))
+        ],
+        backgroundColor: color + '2a',
+        borderColor: color,
+        borderWidth: 2,
+        pointBackgroundColor: color,
+        pointBorderColor: isLight ? '#fff' : '#111',
+        pointBorderWidth: 1.5,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+      }]
+    },
+    options: {
+      responsive: false,
+      animation: { duration: 500, easing: 'easeOutQuart' },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.raw.toFixed(0)}%`
+          },
+          backgroundColor: 'rgba(0,0,0,0.75)',
+          titleFont: { family: "'Oswald', sans-serif", size: 11 },
+          bodyFont: { family: "'Titillium Web', sans-serif", size: 11 },
+          padding: 8
+        }
+      },
+      scales: {
+        r: {
+          min: 0, max: 100,
+          ticks: { display: false, stepSize: 25 },
+          grid: { color: gridClr },
+          angleLines: { color: gridClr },
+          pointLabels: {
+            color: labelClr,
+            font: { family: "'Titillium Web', sans-serif", size: 10 }
+          }
+        }
+      }
+    }
+  });
+}
+
+function handleDriverCardOutsideClick(e) {
+  if (e.target === document.getElementById('driverCardOverlay')) closeDriverCard();
+}
+
+// ── FOTO DO PILOTO ──
+
+function openPhotoUpload() {
+  if (!currentPhotoDriverId) return;
+  pendingPhotoDataUrl = null;
+  const d = data.drivers.find(x => x.id == currentPhotoDriverId);
+  if (!d) return;
+  const current = getDriverPhoto(currentPhotoDriverId, d.name);
+  document.getElementById('photoUploadPreview').src = current;
+  document.getElementById('photoUploadPreview').onerror = function() { this.src = PHOTO_PLACEHOLDER; };
+  document.getElementById('photoFileInput').value = '';
+  document.getElementById('photoUploadOverlay').classList.add('open');
+}
+
+function closePhotoUpload() {
+  document.getElementById('photoUploadOverlay').classList.remove('open');
+  pendingPhotoDataUrl = null;
+}
+
+function handlePhotoFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    pendingPhotoDataUrl = e.target.result;
+    document.getElementById('photoUploadPreview').src = pendingPhotoDataUrl;
+  };
+  reader.readAsDataURL(file);
+}
+
+// Suporte a drag-and-drop na área de upload
+document.addEventListener('DOMContentLoaded', () => {
+  const drop = document.getElementById('photoUploadDrop');
+  if (!drop) return;
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.style.borderColor = 'var(--f1-red)'; });
+  drop.addEventListener('dragleave', () => { drop.style.borderColor = ''; });
+  drop.addEventListener('drop', e => {
+    e.preventDefault(); drop.style.borderColor = '';
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        pendingPhotoDataUrl = ev.target.result;
+        document.getElementById('photoUploadPreview').src = pendingPhotoDataUrl;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+});
+
+function confirmPhotoUpload() {
+  if (!currentPhotoDriverId || !pendingPhotoDataUrl) { closePhotoUpload(); return; }
+  localStorage.setItem('f1_photo_' + currentPhotoDriverId, pendingPhotoDataUrl);
+  // Atualiza portrait no cartão aberto
+  document.getElementById('dcPortraitImg').src = pendingPhotoDataUrl;
+  closePhotoUpload();
+}
+
+function removeDriverPhoto() {
+  if (!currentPhotoDriverId) return;
+  localStorage.removeItem('f1_photo_' + currentPhotoDriverId);
+  const d = data.drivers.find(x => x.id == currentPhotoDriverId);
+  const fallback = d ? getDriverPhoto(currentPhotoDriverId, d.name) : PHOTO_PLACEHOLDER;
+  document.getElementById('dcPortraitImg').src = fallback;
+  document.getElementById('photoUploadPreview').src = fallback;
+  pendingPhotoDataUrl = null;
+  closePhotoUpload();
 }
 
 document.addEventListener('click', function(e) {
@@ -1099,9 +1905,9 @@ function renderDriversTable(drivers) {
       <td class="sticky-col col-pos"${isEditEnabled?` onclick="deleteDriver(${d.id})"`:''}>
         <div class="pos-wrapper">${trendIcon}<span>${i+1}º</span></div>
       </td>
-      <td class="sticky-col col-piloto" style="border-left:4px solid ${d.color} !important;">
+      <td class="sticky-col col-piloto" style="border-left:4px solid ${d.color} !important;${!isEditEnabled ? 'cursor:pointer;' : ''}">
         <div class="glow-layer" style="background:linear-gradient(90deg,${d.color}33,transparent);"></div>
-        <div class="pilot-cell-wrapper">${flag}<span contenteditable="${isEditEnabled}" onblur="editDriverName(${d.id},this.innerText)">${formatDriverDisplayName(d.name)}</span></div>
+        <div class="pilot-cell-wrapper" ${!isEditEnabled ? `onclick="openDriverCard(${d.id}, event)"` : ''}>${flag}<span contenteditable="${isEditEnabled}" onblur="editDriverName(${d.id},this.innerText)">${formatDriverDisplayName(d.name)}</span></div>
       </td>
       <td class="sticky-col col-equipe"><div class="team-content">${getTeamLogoHtml(d.team)}<span contenteditable="${isEditEnabled}" onblur="editDriverTeam(${d.id},this.innerText)">${d.team}</span></div></td>
       <td class="sticky-col col-pontos"><div class="pts-container"><span>${d.stats.total}</span>${diffDisplay}</div></td>
@@ -1576,6 +2382,7 @@ function toggleEdit() {
   btn.innerText = isEditEnabled ? "🔓 Modo Edição: Ativado" : "🔒 Modo Edição: Desativado";
   document.getElementById('adminControls').style.display = isEditEnabled ? 'flex' : 'none';
   closeColorPicker();
+  closeDriverCard();
   render();
 }
 
