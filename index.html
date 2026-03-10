@@ -1232,18 +1232,31 @@ function buildDriverCardBody(d, allDrivers, pos) {
   let currentStreak = 0;
   let streakLabel = '';
   let streakColor = '';
-  for (let i = completedGP.length - 1; i >= 0; i--) {
-    const r = completedGP[i];
-    const val = d.results[r.id];
-    const up = String(val).toUpperCase();
-    if (['NC','DSQ','NP'].includes(up)) break;
-    const n = parseInt(val);
-    if (isNaN(n) || n > 10) break;
-    currentStreak++;
-    if (streakLabel === '') {
-      if (n === 1)     { streakLabel = 'vencendo';  streakColor = 'rgba(255,215,0,0.9)'; }
-      else if (n <= 3) { streakLabel = 'no pódio';  streakColor = 'rgba(192,192,192,0.9)'; }
-      else             { streakLabel = 'pontuando'; streakColor = '#4caf50'; }
+  if (completedGP.length > 0) {
+    const lastRace = completedGP[completedGP.length - 1];
+    const lastVal = d.results[lastRace.id];
+    const lastUp = String(lastVal).toUpperCase();
+    if (!['NC','DSQ','NP'].includes(lastUp)) {
+      const lastN = parseInt(lastVal);
+      if (!isNaN(lastN) && lastN <= 10) {
+        if (lastN === 1)     { streakLabel = 'vencendo';  streakColor = 'rgba(255,215,0,0.9)'; }
+        else if (lastN <= 3) { streakLabel = 'no pódio';  streakColor = 'rgba(192,192,192,0.9)'; }
+        else                 { streakLabel = 'pontuando'; streakColor = '#4caf50'; }
+      }
+    }
+  }
+  if (streakLabel !== '') {
+    for (let i = completedGP.length - 1; i >= 0; i--) {
+      const r = completedGP[i];
+      const val = d.results[r.id];
+      const up = String(val).toUpperCase();
+      if (['NC','DSQ','NP'].includes(up)) break;
+      const n = parseInt(val);
+      if (isNaN(n)) break;
+      if (streakLabel === 'vencendo'  && n !== 1) break;
+      if (streakLabel === 'no pódio'  && n > 3)   break;
+      if (streakLabel === 'pontuando' && n > 10)   break;
+      currentStreak++;
     }
   }
 
