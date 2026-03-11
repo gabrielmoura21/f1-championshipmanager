@@ -351,6 +351,7 @@ th.sticky-col { z-index: 30 !important; background-color: #20202a !important; }
 
 .glow-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
 .pilot-cell-wrapper { position: relative; display: flex; align-items: center; gap: 8px; z-index: 1; }
+.h2h-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; object-position: top; flex-shrink: 0; border: 2px solid rgba(255,255,255,0.15); background: #232330; }
 .team-content { display: flex; align-items: center; gap: 8px; }
 .team-logo { width: 22px; height: 22px; object-fit: contain; filter: drop-shadow(0 0 2px rgba(255,255,255,0.2)); }
 .flag-icon { width: 20px; height: 15px; border-radius: 2px; box-shadow: 0 0 2px rgba(0,0,0,0.5); vertical-align: middle; object-fit: cover; display: inline-block; }
@@ -800,6 +801,7 @@ body.theme-light .photo-upload-drop { border-color: rgba(0,0,0,0.15); color: #99
     <input type="file" id="photoFileInput" accept="image/*" style="display:none" onchange="handlePhotoFile(event)">
     <div class="photo-upload-actions">
       <button class="btn-photo-remove" onclick="removeDriverPhoto()" title="Remover foto">🗑️ Remover</button>
+      <button id="btnRestoreOfficial" style="display:none;background:#1976d2;" onclick="restoreOfficialPhoto()" title="Restaurar foto oficial">↩ Restaurar oficial</button>
       <button class="btn-cancel" onclick="closePhotoUpload()">Cancelar</button>
       <button onclick="confirmPhotoUpload()">✔ Salvar</button>
     </div>
@@ -993,7 +995,7 @@ const driverPhotoMap = {
   'isack hadjar':        'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/I/ISAHAD01_Isack_Hadjar/isahad01.png',
   'nico hulkenberg':     'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/N/NICHUL01_Nico_Hulkenberg/nichul01.png',
   'gabriel bortoleto':   'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GABBOR01_Gabriel_Bortoleto/gabbor01.png',
-  'alex albon':          'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/A/ALXALB01_Alex_Albon/alxalb01.png',
+  'alex albon':          'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/A/ALEALB01_Alex_Albon/alealb01.png',
   'carlos sainz':        'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/C/CARSAI01_Carlos_Sainz/carsai01.png',
   'esteban ocon':        'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/E/ESTOCO01_Esteban_Ocon/estoco01.png',
   'oliver bearman':      'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/O/OLIBEA01_Oliver_Bearman/olibea01.png',
@@ -1007,10 +1009,13 @@ let currentPhotoDriverId = null;
 let pendingPhotoDataUrl  = null;
 
 function getDriverPhoto(driverId, driverName) {
-  // 1) Remoção manual explícita — respeita mesmo que haja foto no mapa
+  // 1) Foto salva direto no objeto do piloto (fonte principal — exporta com JSON)
+  const driver = data.drivers.find(d => d.id == driverId);
+  if (driver && driver.photoRemoved) return PHOTO_PLACEHOLDER;
+  if (driver && driver.photo) return driver.photo;
+  // 2) Fallback legado: localStorage (compatibilidade com dados antigos)
   const removed = localStorage.getItem('f1_photo_removed_' + driverId);
   if (removed === '1') return PHOTO_PLACEHOLDER;
-  // 2) Foto customizada salva no localStorage
   const custom = localStorage.getItem('f1_photo_' + driverId);
   if (custom) return custom;
   // 3) Mapa automático pelo nome normalizado (exato)
@@ -1445,7 +1450,33 @@ function openPhotoUpload() {
   document.getElementById('photoUploadPreview').src = current;
   document.getElementById('photoUploadPreview').onerror = function() { this.src = PHOTO_PLACEHOLDER; };
   document.getElementById('photoFileInput').value = '';
+  // Mostra botão de restaurar apenas se o piloto tem foto oficial no mapa
+  const key = d.name.trim().toLowerCase();
+  const last = key.split(' ').pop();
+  const hasOfficial = driverPhotoMap[key] || Object.keys(driverPhotoMap).some(k => k.includes(last));
+  document.getElementById('btnRestoreOfficial').style.display = hasOfficial ? '' : 'none';
   document.getElementById('photoUploadOverlay').classList.add('open');
+}
+
+function restoreOfficialPhoto() {
+  if (!currentPhotoDriverId) return;
+  const d = data.drivers.find(x => x.id == currentPhotoDriverId);
+  if (!d) return;
+  // Limpa foto customizada e flag de remoção
+  d.photo = null;
+  d.photoRemoved = false;
+  localStorage.removeItem('f1_photo_' + currentPhotoDriverId);
+  localStorage.removeItem('f1_photo_removed_' + currentPhotoDriverId);
+  // Obtém a URL oficial do mapa
+  const key = d.name.trim().toLowerCase();
+  const last = key.split(' ').pop();
+  const officialUrl = driverPhotoMap[key] || Object.values(driverPhotoMap).find((v, i) => Object.keys(driverPhotoMap)[i].includes(last));
+  const src = officialUrl || PHOTO_PLACEHOLDER;
+  document.getElementById('dcPortraitImg').src = src;
+  document.getElementById('photoUploadPreview').src = src;
+  saveData();
+  closePhotoUpload();
+  render();
 }
 
 function closePhotoUpload() {
@@ -1486,21 +1517,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function removeDriverPhoto() {
   if (!currentPhotoDriverId) return;
+  const driver = data.drivers.find(d => d.id == currentPhotoDriverId);
+  if (driver) { driver.photo = null; driver.photoRemoved = true; }
   localStorage.removeItem('f1_photo_' + currentPhotoDriverId);
   localStorage.setItem('f1_photo_removed_' + currentPhotoDriverId, '1');
   document.getElementById('dcPortraitImg').src = PHOTO_PLACEHOLDER;
   document.getElementById('photoUploadPreview').src = PHOTO_PLACEHOLDER;
   pendingPhotoDataUrl = null;
+  saveData();
   closePhotoUpload();
+  render();
 }
 
 function confirmPhotoUpload() {
   if (!currentPhotoDriverId || !pendingPhotoDataUrl) { closePhotoUpload(); return; }
+  // Salva foto no objeto do piloto (garante export no JSON)
+  const driver = data.drivers.find(d => d.id == currentPhotoDriverId);
+  if (driver) { driver.photo = pendingPhotoDataUrl; driver.photoRemoved = false; }
+  // Mantém localStorage como fallback legado
   localStorage.setItem('f1_photo_' + currentPhotoDriverId, pendingPhotoDataUrl);
   localStorage.removeItem('f1_photo_removed_' + currentPhotoDriverId);
   // Atualiza portrait no cartão aberto
   document.getElementById('dcPortraitImg').src = pendingPhotoDataUrl;
+  saveData();
   closePhotoUpload();
+  render();
 }
 
 document.addEventListener('click', function(e) {
@@ -1979,9 +2020,9 @@ function renderConstructorsAndH2H(teamsMap) {
     return `<div class="h2h-card" style="border-left-color:${teamColor};">
       <span class="h2h-team" style="color:${teamColor};">${teamName}</span>
       <div class="h2h-score">
-        <strong>${p1.name.split(' ').pop().toUpperCase()}</strong>
+        <strong style="display:flex;align-items:center;gap:6px;"><img class="h2h-avatar" src="${getDriverPhoto(p1.id, p1.name)}" alt="">${p1.name.split(' ').pop().toUpperCase()}</strong>
         <span>${s1} <span style="color:var(--f1-red);margin:0 5px;">-</span> ${s2}</span>
-        <strong>${p2.name.split(' ').pop().toUpperCase()}</strong>
+        <strong style="display:flex;align-items:center;justify-content:flex-end;gap:6px;">${p2.name.split(' ').pop().toUpperCase()}<img class="h2h-avatar" src="${getDriverPhoto(p2.id, p2.name)}" alt=""></strong>
       </div>
       ${barHtml}
     </div>`;
