@@ -1642,7 +1642,7 @@ function initDriverCardRadar(d, allDrivers) {
   new Chart(canvas.getContext('2d'), {
     type: 'radar',
     data: {
-      labels: ['Vitórias', 'Pódios', 'Consistência', 'Pos. Média', 'D. Comp.', 'Pontos'],
+      labels: ['Vitórias', 'Pódios', 'Consistência', 'Pos. Média', 'Duelo Comp.', 'Pontos'],
       datasets: [{
         data: [
           parseFloat(winsScore.toFixed(1)),
@@ -2982,9 +2982,9 @@ function renderLeaderDuel(drivers) {
   if (p1 && p2) {
     gpRaces.forEach(r => {
       const v1 = p1.results[r.id], v2 = p2.results[r.id];
-      const n1 = (!v1||['NC','DSQ','NP'].includes(String(v1).toUpperCase())) ? null : parseInt(v1);
-      const n2 = (!v2||['NC','DSQ','NP'].includes(String(v2).toUpperCase())) ? null : parseInt(v2);
-      if (n1!==null && n2!==null && !isNaN(n1) && !isNaN(n2) && n1!==n2) n1<n2 ? h2h1++ : h2h2++;
+      const n1 = (v1===undefined||v1==='') ? null : (['NC','NP','DSQ'].includes(String(v1).toUpperCase()) ? 999 : parseInt(v1));
+      const n2 = (v2===undefined||v2==='') ? null : (['NC','NP','DSQ'].includes(String(v2).toUpperCase()) ? 999 : parseInt(v2));
+      if (n1!==null && n2!==null && n1!==n2) n1<n2 ? h2h1++ : h2h2++;
     });
   }
 
@@ -3058,7 +3058,7 @@ function renderLeaderDuel(drivers) {
         </div>
 
         <div class="duel-stat-row">
-          <div class="duel-stat-key">D. Comp.</div>
+          <div class="duel-stat-key">Duelo Comp.</div>
           <div class="duel-stat-nums"><span style="${nameTxt(c1)}">${h2h1}</span><span style="${nameTxt(c2)}">${h2h2}</span></div>
           <div class="duel-stat-bar-wrap">
             <div style="width:${pctH2H1}%;background:${c1};border-radius:3px 0 0 3px;opacity:${h2h1>=h2h2?1:0.35};transition:width .4s;"></div>
