@@ -672,6 +672,163 @@ body.theme-light .photo-upload-drop { border-color: rgba(0,0,0,0.15); color: #99
 .color-custom-row input[type="color"] { width: 48px; height: 34px; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; cursor: pointer; background: none; padding: 2px; }
 .color-picker-actions { display: flex; gap: 8px; justify-content: flex-end; }
 .color-picker-actions button { font-size: .75em; padding: 5px 14px; height: 30px; min-width: unset; }
+
+/* ── CONFRONTO LÍDER vs VICE ── */
+.duel-wrapper {
+  background: var(--glass-bg);
+  backdrop-filter: blur(15px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+body.theme-light .duel-wrapper { background: rgba(255,255,255,0.65); border-color: #ccc; }
+body.theme-amoled .duel-wrapper { background: #080808; border-color: rgba(255,255,255,0.07); }
+
+.duel-header-bar {
+  background: linear-gradient(90deg, rgba(225,6,0,0.18) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0) 60%, rgba(225,6,0,0.06) 100%);
+  border-bottom: 1px solid var(--glass-border);
+  padding: 10px 20px;
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px;
+}
+.duel-title-label {
+  font-family: 'Oswald', sans-serif;
+  font-size: .75rem; letter-spacing: 2.5px;
+  text-transform: uppercase; color: #888;
+}
+body.theme-light .duel-title-label { color: #666; }
+.duel-vs-badge {
+  font-family: 'Oswald', sans-serif;
+  font-size: .8rem; font-weight: 700; letter-spacing: 1px;
+  color: var(--f1-red);
+  background: rgba(225,6,0,0.12);
+  border: 1px solid rgba(225,6,0,0.3);
+  border-radius: 20px; padding: 2px 12px;
+}
+
+.duel-body {
+  display: flex; align-items: stretch; gap: 0;
+  min-height: 220px;
+}
+
+/* Card de cada piloto */
+.duel-driver-card {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: flex-start;
+  padding: 20px 16px 16px;
+  position: relative; overflow: hidden;
+}
+.duel-driver-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  opacity: .12;
+  transition: opacity .3s;
+}
+.duel-driver-card:first-child::before { background: var(--duel-c1, #e10600); }
+.duel-driver-card:last-child::before  { background: var(--duel-c2, #e10600); }
+
+.duel-pos-label {
+  font-family: 'Oswald', sans-serif; font-size: .65rem;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: #888; margin-bottom: 8px; position: relative; z-index: 2;
+}
+body.theme-light .duel-pos-label { color: #666; }
+.duel-pos-label.leader { color: #f1c40f; }
+
+.duel-photo-ring {
+  width: 100px; height: 100px; border-radius: 50%; flex-shrink: 0;
+  padding: 3px; position: relative; z-index: 2;
+  background: conic-gradient(var(--ring-color, #e10600) 0%, rgba(255,255,255,0.08) 100%);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+.duel-photo-img {
+  width: 100%; height: 100%; border-radius: 50%;
+  object-fit: cover; object-position: top center;
+  display: block; background: #1e1e2e;
+}
+.duel-driver-name {
+  font-family: 'Oswald', sans-serif; font-size: 1.05rem; font-weight: 700;
+  text-transform: uppercase; margin-top: 10px;
+  text-align: center; line-height: 1.15; position: relative; z-index: 2;
+}
+body.theme-light .duel-driver-name { color: #111; }
+.duel-driver-team {
+  font-size: .68rem; text-transform: uppercase; letter-spacing: 1.2px;
+  color: #666; margin-top: 3px; text-align: center; position: relative; z-index: 2;
+}
+.duel-driver-pts {
+  font-family: 'Oswald', sans-serif; font-size: 2rem; font-weight: 700;
+  line-height: 1; margin-top: 10px; position: relative; z-index: 2;
+}
+.duel-driver-pts-label {
+  font-size: .6rem; text-transform: uppercase; letter-spacing: 1.5px;
+  color: #666; margin-top: 1px; position: relative; z-index: 2;
+}
+body.theme-light .duel-driver-pts-label { color: #888; }
+
+/* Coluna central com comparação */
+.duel-center {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 16px 10px; gap: 10px; min-width: 130px;
+  border-left: 1px solid var(--glass-border);
+  border-right: 1px solid var(--glass-border);
+  position: relative; z-index: 2;
+}
+body.theme-light .duel-center { border-color: #ddd; }
+
+.duel-gap-badge {
+  display: flex; flex-direction: column; align-items: center;
+  background: rgba(225,6,0,0.12); border: 1px solid rgba(225,6,0,0.3);
+  border-radius: 10px; padding: 8px 14px;
+}
+.duel-gap-val {
+  font-family: 'Oswald', sans-serif; font-size: 1.6rem; font-weight: 700;
+  color: var(--f1-red); line-height: 1;
+}
+.duel-gap-label {
+  font-size: .58rem; text-transform: uppercase; letter-spacing: 1.5px; color: #888; margin-top: 2px;
+}
+
+.duel-stat-row {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  width: 100%;
+}
+.duel-stat-bar-wrap {
+  display: flex; height: 5px; border-radius: 3px; overflow: hidden; width: 100%; gap: 2px;
+}
+.duel-stat-label-row {
+  display: flex; justify-content: space-between; width: 100%; margin-bottom: 2px;
+}
+.duel-stat-key {
+  font-size: .58rem; text-transform: uppercase; letter-spacing: 1px; color: #666;
+  text-align: center; width: 100%;
+}
+.duel-stat-nums {
+  display: flex; justify-content: space-between; width: 100%;
+  font-family: 'Oswald', sans-serif; font-size: .82rem; font-weight: 700;
+}
+body.theme-light .duel-stat-key { color: #999; }
+
+/* Barra de pontos total na parte de baixo */
+.duel-points-bar-section {
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--glass-border);
+}
+body.theme-light .duel-points-bar-section { border-top-color: #ddd; }
+.duel-bar-label-row {
+  display: flex; justify-content: space-between; margin-bottom: 5px;
+  font-family: 'Titillium Web', sans-serif; font-size: .72rem; color: #888;
+}
+body.theme-light .duel-bar-label-row { color: #666; }
+.duel-bar-label-row span:first-child { color: var(--c1-label, #fff); font-weight: 600; }
+.duel-bar-label-row span:last-child  { color: var(--c2-label, #fff); font-weight: 600; }
+body.theme-light .duel-bar-label-row span:first-child,
+body.theme-light .duel-bar-label-row span:last-child { color: #111; }
+.duel-total-bar {
+  display: flex; height: 8px; border-radius: 5px; overflow: hidden; gap: 3px;
+}
 </style>
 </head>
 <body id="mainCaptureArea">
@@ -728,10 +885,6 @@ body.theme-light .photo-upload-drop { border-color: rgba(0,0,0,0.15); color: #99
 <div class="chart-container"><canvas id="performanceChart"></canvas></div>
 
 <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;">
-  <div style="flex:1;min-width:300px;">
-    <h2>Duelo de Companheiros <span style="font-size:.5em;vertical-align:middle;color:#888;">CORRIDA</span></h2>
-    <div id="h2hContainer" class="h2h-list"></div>
-  </div>
   <div class="constructors-wrapper">
     <h2>Construtores</h2>
     <div class="table-container" style="width:100%;margin-bottom:10px;">
@@ -755,6 +908,15 @@ body.theme-light .photo-upload-drop { border-color: rgba(0,0,0,0.15); color: #99
         <span id="titleStatus">Aguardando dados...</span>
       </div>
     </div>
+    <!-- ── CONFRONTO LÍDER vs VICE-LÍDER ── -->
+    <div id="leaderDuelSection" style="display:none;">
+      <h2>Confronto Direto</h2>
+      <div id="leaderDuelContainer"></div>
+    </div>
+  </div>
+  <div style="flex:1;min-width:300px;">
+    <h2>Duelo de Companheiros <span style="font-size:.5em;vertical-align:middle;color:#888;">CORRIDA</span></h2>
+    <div id="h2hContainer" class="h2h-list"></div>
   </div>
 </div>
 
@@ -1876,6 +2038,7 @@ function render() {
     renderConstructorsAndH2H(teams);
     renderChart(drivers);
     renderStatus(drivers);
+    renderLeaderDuel(drivers);
   });
 }
 
@@ -2625,6 +2788,152 @@ function confirmFlagEdit() {
     saveData(); render();
   }
   closeModal('flagEditModal');
+}
+
+function renderLeaderDuel(drivers) {
+  const section = document.getElementById('leaderDuelSection');
+  const container = document.getElementById('leaderDuelContainer');
+  if (!section || !container) return;
+  if (drivers.length < 2) { section.style.display = 'none'; return; }
+  section.style.display = '';
+
+  const p1 = drivers[0];
+  const p2 = drivers[1];
+  const c1 = p1.color || '#e10600';
+  const c2 = p2.color || '#3671C6';
+
+  const gpRaces = data.races.filter(r => r.type === 'GP');
+
+  function getStats(d) {
+    let wins = 0, podiums = 0, dnfs = 0, avgSum = 0, avgCount = 0;
+    gpRaces.forEach(r => {
+      const val = d.results[r.id];
+      if (val === undefined || val === '') return;
+      const up = String(val).toUpperCase();
+      if (['NC','DSQ','NP'].includes(up)) { dnfs++; return; }
+      const n = parseInt(val);
+      if (isNaN(n)) return;
+      if (n === 1) wins++;
+      if (n <= 3) podiums++;
+      avgSum += n; avgCount++;
+    });
+    return { wins, podiums, dnfs, avg: avgCount > 0 ? (avgSum/avgCount).toFixed(1) : '—' };
+  }
+
+  let h2h1 = 0, h2h2 = 0;
+  gpRaces.forEach(r => {
+    const v1 = p1.results[r.id], v2 = p2.results[r.id];
+    const n1 = (!v1||['NC','DSQ','NP'].includes(String(v1).toUpperCase())) ? null : parseInt(v1);
+    const n2 = (!v2||['NC','DSQ','NP'].includes(String(v2).toUpperCase())) ? null : parseInt(v2);
+    if (n1!==null && n2!==null && !isNaN(n1) && !isNaN(n2) && n1!==n2) n1<n2 ? h2h1++ : h2h2++;
+  });
+
+  const st1 = getStats(p1);
+  const st2 = getStats(p2);
+  const pts1 = p1.stats.total;
+  const pts2 = p2.stats.total;
+  const gap = pts1 - pts2;
+  const totalPts = pts1 + pts2 || 1;
+  const pctPts1 = Math.round(pts1 / totalPts * 100);
+  const pctPts2 = 100 - pctPts1;
+
+  function barHtml(v1, v2, c1, c2) {
+    const tot = v1 + v2 || 1;
+    const p1b = Math.round(v1/tot*100);
+    return `<div class="duel-stat-bar-wrap">
+      <div style="width:${p1b}%;background:${c1};border-radius:3px 0 0 3px;opacity:${v1>=v2?1:0.35};transition:width .4s;"></div>
+      <div style="width:${100-p1b}%;background:${c2};border-radius:0 3px 3px 0;opacity:${v2>=v1?1:0.35};transition:width .4s;"></div>
+    </div>`;
+  }
+
+  const isLight = document.body.classList.contains('theme-light');
+  const nameTxt = c => `color:${c};`;
+
+  const photo1 = getDriverPhoto(p1.id, p1.name);
+  const photo2 = getDriverPhoto(p2.id, p2.name);
+
+  const totalH2H = h2h1 + h2h2 || 1;
+  const pctH2H1 = Math.round(h2h1/totalH2H*100);
+
+  container.innerHTML = `
+  <div class="duel-wrapper">
+    <div class="duel-header-bar">
+      <span class="duel-title-label">Líder</span>
+      <span class="duel-vs-badge">VS</span>
+      <span class="duel-title-label">Vice-Líder</span>
+    </div>
+    <div class="duel-body">
+      <!-- PILOTO 1 (LÍDER) -->
+      <div class="duel-driver-card" style="--duel-c1:${c1};">
+        <div class="duel-pos-label leader">🏆 1º LUGAR</div>
+        <div class="duel-photo-ring" style="--ring-color:${c1};background:conic-gradient(${c1} 0%, ${c1}33 100%);">
+          <img class="duel-photo-img" src="${photo1}" onerror="this.src='${PHOTO_PLACEHOLDER}'" alt="${p1.name}">
+        </div>
+        <div class="duel-driver-name" style="${nameTxt(c1)}">${p1.name.trim().split(' ').length>1?p1.name.trim().split(' ').slice(0,-1).join(' ')+'<br><span style=\'font-size:1.3em;\'>' + p1.name.trim().split(' ').pop() + '</span>':p1.name}</div>
+        <div class="duel-driver-team">${p1.team}</div>
+        <div class="duel-driver-pts" style="${nameTxt(c1)}">${pts1}</div>
+        <div class="duel-driver-pts-label">PONTOS</div>
+      </div>
+
+      <!-- CENTRO -->
+      <div class="duel-center">
+        <div class="duel-gap-badge">
+          <span class="duel-gap-val">+${gap}</span>
+          <span class="duel-gap-label">GAP pts</span>
+        </div>
+
+        <div class="duel-stat-row">
+          <div class="duel-stat-key">Vitórias</div>
+          <div class="duel-stat-nums"><span style="${nameTxt(c1)}">${st1.wins}</span><span style="${nameTxt(c2)}">${st2.wins}</span></div>
+          ${barHtml(st1.wins, st2.wins, c1, c2)}
+        </div>
+
+        <div class="duel-stat-row">
+          <div class="duel-stat-key">Pódios</div>
+          <div class="duel-stat-nums"><span style="${nameTxt(c1)}">${st1.podiums}</span><span style="${nameTxt(c2)}">${st2.podiums}</span></div>
+          ${barHtml(st1.podiums, st2.podiums, c1, c2)}
+        </div>
+
+        <div class="duel-stat-row">
+          <div class="duel-stat-key">H2H Corridas</div>
+          <div class="duel-stat-nums"><span style="${nameTxt(c1)}">${h2h1}</span><span style="${nameTxt(c2)}">${h2h2}</span></div>
+          <div class="duel-stat-bar-wrap">
+            <div style="width:${pctH2H1}%;background:${c1};border-radius:3px 0 0 3px;opacity:${h2h1>=h2h2?1:0.35};transition:width .4s;"></div>
+            <div style="width:${100-pctH2H1}%;background:${c2};border-radius:0 3px 3px 0;opacity:${h2h2>=h2h1?1:0.35};transition:width .4s;"></div>
+          </div>
+        </div>
+
+        <div class="duel-stat-row">
+          <div class="duel-stat-key">Pos. Média</div>
+          <div class="duel-stat-nums"><span style="${nameTxt(c1)}">${st1.avg}</span><span style="${nameTxt(c2)}">${st2.avg}</span></div>
+        </div>
+      </div>
+
+      <!-- PILOTO 2 (VICE) -->
+      <div class="duel-driver-card" style="--duel-c2:${c2};">
+        <div class="duel-pos-label" style="color:#aaa;">2º LUGAR</div>
+        <div class="duel-photo-ring" style="--ring-color:${c2};background:conic-gradient(${c2} 0%, ${c2}33 100%);">
+          <img class="duel-photo-img" src="${photo2}" onerror="this.src='${PHOTO_PLACEHOLDER}'" alt="${p2.name}">
+        </div>
+        <div class="duel-driver-name" style="${nameTxt(c2)}">${p2.name.trim().split(' ').length>1?p2.name.trim().split(' ').slice(0,-1).join(' ')+'<br><span style=\'font-size:1.3em;\'>' + p2.name.trim().split(' ').pop() + '</span>':p2.name}</div>
+        <div class="duel-driver-team">${p2.team}</div>
+        <div class="duel-driver-pts" style="${nameTxt(c2)}">${pts2}</div>
+        <div class="duel-driver-pts-label">PONTOS</div>
+      </div>
+    </div>
+
+    <!-- BARRA DE PONTOS -->
+    <div class="duel-points-bar-section">
+      <div class="duel-bar-label-row" style="--c1-label:${c1};--c2-label:${c2};">
+        <span>${p1.name.trim().split(' ').pop().toUpperCase()} — ${pts1} pts (${pctPts1}%)</span>
+        <span>${pts2} pts (${pctPts2}%) — ${p2.name.trim().split(' ').pop().toUpperCase()}</span>
+      </div>
+      <div class="duel-total-bar">
+        <div style="width:${pctPts1}%;background:${c1};border-radius:5px 0 0 5px;transition:width .5s;"></div>
+        <div style="width:${pctPts2}%;background:${c2};border-radius:0 5px 5px 0;transition:width .5s;"></div>
+      </div>
+    </div>
+  </div>`;
 }
 
 init();
