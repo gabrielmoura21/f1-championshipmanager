@@ -251,12 +251,12 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-sp
   background: var(--glass-bg);
   backdrop-filter: blur(15px);
   border: 1px solid var(--glass-border);
-  padding: 16px;
+  padding: 10px;
   border-radius: 12px;
   margin-top: 10px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 8px;
 }
 .calc-item {
   display: flex;
@@ -264,11 +264,11 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-sp
   align-items: center;
   justify-content: center;
   background: rgba(0,0,0,0.3);
-  padding: 16px 12px;
+  padding: 10px 12px;
   border-radius: 8px;
   border: 1px solid var(--glass-border);
   border-top: 3px solid var(--f1-red);
-  gap: 4px;
+  gap: 2px;
   transition: background .2s;
 }
 .calc-item:hover { background: rgba(255,255,255,0.05); }
@@ -278,26 +278,26 @@ h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-sp
   color: #888;
   letter-spacing: 1.5px;
   font-family: 'Titillium Web', sans-serif;
-  margin-bottom: 2px;
+  margin-bottom: 1px;
   text-align: center;
 }
 .calc-val {
   font-family: 'Oswald', sans-serif;
-  font-size: 2rem;
+  font-size: 1.6rem;
   font-weight: 700;
   color: white;
   line-height: 1;
 }
 .calc-full-row {
   grid-column: span 2;
-  padding: 14px 16px;
+  padding: 9px 16px;
   background: linear-gradient(90deg, rgba(225,6,0,0.18), rgba(225,6,0,0.04) 60%, transparent);
   border: 1px solid rgba(225,6,0,0.25);
   border-left: 4px solid var(--f1-red);
   border-radius: 8px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 #titleStatus {
   font-family: 'Oswald', sans-serif;
@@ -1205,9 +1205,14 @@ function openColorPicker(driverId, anchorEl) {
   const popup = document.getElementById('colorPickerPopup');
   popup.classList.add('visible');
   const rect = anchorEl.getBoundingClientRect();
-  let left = rect.left + window.scrollX;
-  let top  = rect.bottom + 8 + window.scrollY;
-  if (left + 240 > window.innerWidth - 10) left = window.innerWidth - 250;
+  const popupW = 240;
+  const popupH = popup.offsetHeight || 180;
+  let left = rect.left;
+  let top  = rect.bottom + 8;
+  if (left + popupW > window.innerWidth - 10) left = window.innerWidth - popupW - 10;
+  if (left < 8) left = 8;
+  if (top + popupH > window.innerHeight - 10) top = rect.top - popupH - 8;
+  if (top < 8) top = 8;
   popup.style.left = left + 'px';
   popup.style.top  = top  + 'px';
 }
