@@ -829,6 +829,91 @@ body.theme-light .duel-bar-label-row span:last-child { color: #111; }
 .duel-total-bar {
   display: flex; height: 8px; border-radius: 5px; overflow: hidden; gap: 3px;
 }
+
+/* ── SELETOR DE PILOTO DO CONFRONTO ── */
+.duel-picker-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(6px); z-index: 12000;
+  display: none; align-items: center; justify-content: center;
+}
+.duel-picker-overlay.open { display: flex; }
+.duel-picker-box {
+  background: #13131e; border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px; width: 340px; max-width: calc(100vw - 32px);
+  max-height: 80vh; display: flex; flex-direction: column;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.75);
+  animation: slideIn .22s ease-out; overflow: hidden;
+}
+body.theme-light .duel-picker-box { background: #f2f4f8; border-color: rgba(0,0,0,0.1); }
+body.theme-amoled .duel-picker-box { background: #060610; }
+.duel-picker-header {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  display: flex; align-items: center; justify-content: space-between;
+}
+body.theme-light .duel-picker-header { border-bottom-color: rgba(0,0,0,0.08); }
+.duel-picker-title {
+  font-family: 'Oswald', sans-serif; font-size: 1rem;
+  text-transform: uppercase; letter-spacing: 2px; color: #fff;
+}
+body.theme-light .duel-picker-title { color: #111; }
+.duel-picker-close {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: rgba(255,255,255,0.08); border: none;
+  color: #fff; font-size: .95rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  min-width: unset; padding: 0; transition: background .15s;
+}
+.duel-picker-close:hover { background: rgba(255,255,255,0.18); transform: none; }
+body.theme-light .duel-picker-close { color: #222; background: rgba(0,0,0,0.07); }
+.duel-picker-list {
+  overflow-y: auto; padding: 10px 12px 14px;
+  display: flex; flex-direction: column; gap: 4px;
+  scrollbar-width: thin;
+}
+.duel-picker-list::-webkit-scrollbar { width: 4px; }
+.duel-picker-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+.duel-picker-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px; border-radius: 10px; cursor: pointer;
+  border: 1px solid transparent; transition: all .15s;
+  background: rgba(255,255,255,0.03);
+}
+body.theme-light .duel-picker-item { background: rgba(0,0,0,0.03); }
+.duel-picker-item:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.1); }
+body.theme-light .duel-picker-item:hover { background: rgba(0,0,0,0.07); border-color: rgba(0,0,0,0.1); }
+.duel-picker-item.selected { border-color: rgba(225,6,0,0.5); background: rgba(225,6,0,0.08); }
+.duel-picker-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  object-fit: cover; object-position: top; flex-shrink: 0;
+  border: 2px solid transparent;
+}
+.duel-picker-info { flex: 1; min-width: 0; }
+.duel-picker-name {
+  font-family: 'Oswald', sans-serif; font-size: .9rem;
+  text-transform: uppercase; color: #fff; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+body.theme-light .duel-picker-name { color: #111; }
+.duel-picker-team { font-size: .65rem; color: #666; text-transform: uppercase; letter-spacing: .8px; }
+.duel-picker-pts {
+  font-family: 'Oswald', sans-serif; font-size: .9rem; font-weight: 700; flex-shrink: 0;
+}
+
+/* Ring clicável */
+.duel-photo-ring {
+  cursor: pointer; transition: transform .2s, box-shadow .2s;
+}
+.duel-photo-ring:hover { transform: scale(1.06); box-shadow: 0 0 0 3px rgba(255,255,255,0.2); }
+.duel-ring-hint {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: rgba(0,0,0,0.55); display: flex; align-items: center;
+  justify-content: center; font-size: .6rem; color: #fff;
+  font-family: 'Titillium Web', sans-serif; letter-spacing: .5px;
+  opacity: 0; transition: opacity .18s; text-align: center; padding: 6px;
+  z-index: 5;
+}
+.duel-photo-ring:hover .duel-ring-hint { opacity: 1; }
 </style>
 </head>
 <body id="mainCaptureArea">
@@ -917,6 +1002,17 @@ body.theme-light .duel-bar-label-row span:last-child { color: #111; }
   <div style="flex:1;min-width:300px;">
     <h2>Duelo de Companheiros <span style="font-size:.5em;vertical-align:middle;color:#888;">CORRIDA</span></h2>
     <div id="h2hContainer" class="h2h-list"></div>
+  </div>
+</div>
+
+<!-- ── MODAL SELETOR CONFRONTO DIRETO ── -->
+<div id="duelPickerOverlay" class="duel-picker-overlay" onclick="if(event.target===this)closeDuelPicker()">
+  <div class="duel-picker-box">
+    <div class="duel-picker-header">
+      <span class="duel-picker-title" id="duelPickerTitle">Selecionar Piloto</span>
+      <button class="duel-picker-close" onclick="closeDuelPicker()">✕</button>
+    </div>
+    <div class="duel-picker-list" id="duelPickerList"></div>
   </div>
 </div>
 
@@ -1546,7 +1642,7 @@ function initDriverCardRadar(d, allDrivers) {
   new Chart(canvas.getContext('2d'), {
     type: 'radar',
     data: {
-      labels: ['Vitórias', 'Pódios', 'Consistência', 'Pos. Média', 'H2H', 'Pontos'],
+      labels: ['Vitórias', 'Pódios', 'Consistência', 'Pos. Média', 'D. Comp.', 'Pontos'],
       datasets: [{
         data: [
           parseFloat(winsScore.toFixed(1)),
@@ -2790,95 +2886,162 @@ function confirmFlagEdit() {
   closeModal('flagEditModal');
 }
 
+// ── CONFRONTO DIRETO – seleção manual ──
+let duelPickerSlot = 1; // qual lado está sendo escolhido
+
+function getDuelKey(slot) {
+  return 'f1_duel_d' + slot + '_' + (activeChampionshipId || 'default');
+}
+function getDuelDriverId(slot) {
+  return localStorage.getItem(getDuelKey(slot));
+}
+function saveDuelDriverId(slot, id) {
+  localStorage.setItem(getDuelKey(slot), String(id));
+}
+
+function openDuelPicker(slot) {
+  duelPickerSlot = slot;
+  const title = document.getElementById('duelPickerTitle');
+  title.innerText = slot === 1 ? 'Selecionar Piloto 1' : 'Selecionar Piloto 2';
+
+  const otherId = getDuelDriverId(slot === 1 ? 2 : 1);
+  const currentId = getDuelDriverId(slot);
+  const { drivers } = processData();
+
+  const list = document.getElementById('duelPickerList');
+  list.innerHTML = drivers.map((d, i) => {
+    const photo = getDriverPhoto(d.id, d.name);
+    const isSel = String(d.id) === String(currentId);
+    return `<div class="duel-picker-item${isSel ? ' selected' : ''}" onclick="selectDuelDriver(${d.id})">
+      <img class="duel-picker-avatar" src="${photo}" onerror="this.src='${PHOTO_PLACEHOLDER}'"
+           style="border-color:${d.color};">
+      <div class="duel-picker-info">
+        <div class="duel-picker-name">${d.name}</div>
+        <div class="duel-picker-team">${d.team}</div>
+      </div>
+      <span class="duel-picker-pts" style="color:${d.color};">${d.stats.total}</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('duelPickerOverlay').classList.add('open');
+}
+
+function closeDuelPicker() {
+  document.getElementById('duelPickerOverlay').classList.remove('open');
+}
+
+function selectDuelDriver(id) {
+  saveDuelDriverId(duelPickerSlot, id);
+  closeDuelPicker();
+  render();
+}
+
+// SVG silhueta para piloto não selecionado
+const DUEL_SILHOUETTE = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23181825'/%3E%3Ccircle cx='50' cy='34' r='18' fill='%23282836'/%3E%3Cellipse cx='50' cy='85' rx='28' ry='20' fill='%23282836'/%3E%3Ctext x='50' y='58' text-anchor='middle' font-size='11' fill='%23555' font-family='sans-serif'%3ESELECIONAR%3C/text%3E%3C/svg%3E`;
+
 function renderLeaderDuel(drivers) {
   const section = document.getElementById('leaderDuelSection');
   const container = document.getElementById('leaderDuelContainer');
   if (!section || !container) return;
-  if (drivers.length < 2) { section.style.display = 'none'; return; }
+  if (drivers.length < 1) { section.style.display = 'none'; return; }
   section.style.display = '';
 
-  const p1 = drivers[0];
-  const p2 = drivers[1];
-  const c1 = p1.color || '#e10600';
-  const c2 = p2.color || '#3671C6';
+  // Resolve pilotos salvos; fallback para 1º e 2º do campeonato
+  let id1 = getDuelDriverId(1);
+  let id2 = getDuelDriverId(2);
+  let p1 = drivers.find(d => String(d.id) === String(id1)) || drivers[0];
+  let p2 = drivers.find(d => String(d.id) === String(id2)) || (drivers[1] || null);
+
+  // Se o salvo não existe mais no grid, usa defaults
+  if (!id1) saveDuelDriverId(1, p1.id);
+  if (!id2 && p2) saveDuelDriverId(2, p2.id);
+
+  const c1 = p1 ? (p1.color || '#e10600') : '#444';
+  const c2 = p2 ? (p2.color || '#3671C6') : '#444';
 
   const gpRaces = data.races.filter(r => r.type === 'GP');
 
   function getStats(d) {
-    let wins = 0, podiums = 0, dnfs = 0, avgSum = 0, avgCount = 0;
+    if (!d) return { wins:0, podiums:0, avg:'—' };
+    let wins = 0, podiums = 0, avgSum = 0, avgCount = 0;
     gpRaces.forEach(r => {
       const val = d.results[r.id];
       if (val === undefined || val === '') return;
       const up = String(val).toUpperCase();
-      if (['NC','DSQ','NP'].includes(up)) { dnfs++; return; }
+      if (['NC','DSQ','NP'].includes(up)) return;
       const n = parseInt(val);
       if (isNaN(n)) return;
       if (n === 1) wins++;
       if (n <= 3) podiums++;
       avgSum += n; avgCount++;
     });
-    return { wins, podiums, dnfs, avg: avgCount > 0 ? (avgSum/avgCount).toFixed(1) : '—' };
+    return { wins, podiums, avg: avgCount > 0 ? (avgSum/avgCount).toFixed(1) : '—' };
   }
 
   let h2h1 = 0, h2h2 = 0;
-  gpRaces.forEach(r => {
-    const v1 = p1.results[r.id], v2 = p2.results[r.id];
-    const n1 = (!v1||['NC','DSQ','NP'].includes(String(v1).toUpperCase())) ? null : parseInt(v1);
-    const n2 = (!v2||['NC','DSQ','NP'].includes(String(v2).toUpperCase())) ? null : parseInt(v2);
-    if (n1!==null && n2!==null && !isNaN(n1) && !isNaN(n2) && n1!==n2) n1<n2 ? h2h1++ : h2h2++;
-  });
+  if (p1 && p2) {
+    gpRaces.forEach(r => {
+      const v1 = p1.results[r.id], v2 = p2.results[r.id];
+      const n1 = (!v1||['NC','DSQ','NP'].includes(String(v1).toUpperCase())) ? null : parseInt(v1);
+      const n2 = (!v2||['NC','DSQ','NP'].includes(String(v2).toUpperCase())) ? null : parseInt(v2);
+      if (n1!==null && n2!==null && !isNaN(n1) && !isNaN(n2) && n1!==n2) n1<n2 ? h2h1++ : h2h2++;
+    });
+  }
 
   const st1 = getStats(p1);
   const st2 = getStats(p2);
-  const pts1 = p1.stats.total;
-  const pts2 = p2.stats.total;
+  const pts1 = p1 ? p1.stats.total : 0;
+  const pts2 = p2 ? p2.stats.total : 0;
   const gap = pts1 - pts2;
   const totalPts = pts1 + pts2 || 1;
   const pctPts1 = Math.round(pts1 / totalPts * 100);
   const pctPts2 = 100 - pctPts1;
 
-  function barHtml(v1, v2, c1, c2) {
+  function barHtml(v1, v2, col1, col2) {
     const tot = v1 + v2 || 1;
     const p1b = Math.round(v1/tot*100);
     return `<div class="duel-stat-bar-wrap">
-      <div style="width:${p1b}%;background:${c1};border-radius:3px 0 0 3px;opacity:${v1>=v2?1:0.35};transition:width .4s;"></div>
-      <div style="width:${100-p1b}%;background:${c2};border-radius:0 3px 3px 0;opacity:${v2>=v1?1:0.35};transition:width .4s;"></div>
+      <div style="width:${p1b}%;background:${col1};border-radius:3px 0 0 3px;opacity:${v1>=v2?1:0.35};transition:width .4s;"></div>
+      <div style="width:${100-p1b}%;background:${col2};border-radius:0 3px 3px 0;opacity:${v2>=v1?1:0.35};transition:width .4s;"></div>
     </div>`;
   }
 
-  const isLight = document.body.classList.contains('theme-light');
   const nameTxt = c => `color:${c};`;
-
-  const photo1 = getDriverPhoto(p1.id, p1.name);
-  const photo2 = getDriverPhoto(p2.id, p2.name);
-
+  const photo1 = p1 ? getDriverPhoto(p1.id, p1.name) : DUEL_SILHOUETTE;
+  const photo2 = p2 ? getDriverPhoto(p2.id, p2.name) : DUEL_SILHOUETTE;
   const totalH2H = h2h1 + h2h2 || 1;
   const pctH2H1 = Math.round(h2h1/totalH2H*100);
 
+  function driverCardHtml(p, slot, photo, c, pts, st) {
+    const ringBg = p ? `conic-gradient(${c} 0%, ${c}33 100%)` : 'rgba(255,255,255,0.05)';
+    const nameHtml = p
+      ? (p.name.trim().split(' ').length > 1
+          ? p.name.trim().split(' ').slice(0,-1).join(' ') + `<br><span style='font-size:1.3em;'>${p.name.trim().split(' ').pop()}</span>`
+          : p.name)
+      : `<span style='color:#555;font-size:.8em;'>Clique para<br>selecionar</span>`;
+    const teamHtml = p ? p.team : '';
+    return `
+    <div class="duel-driver-card" style="${slot===1?'--duel-c1':'--duel-c2'}:${c};">
+      <div class="duel-photo-ring" style="--ring-color:${c};background:${ringBg};position:relative;"
+           onclick="openDuelPicker(${slot})" title="Clique para selecionar piloto">
+        <img class="duel-photo-img" src="${photo}" onerror="this.src='${DUEL_SILHOUETTE}'" alt="">
+        <div class="duel-ring-hint">✏️ Trocar<br>piloto</div>
+      </div>
+      <div class="duel-driver-name" style="${nameTxt(c)}">${nameHtml}</div>
+      ${teamHtml ? `<div class="duel-driver-team">${teamHtml}</div>` : ''}
+      ${p ? `<div class="duel-driver-pts" style="${nameTxt(c)}">${pts}</div><div class="duel-driver-pts-label">PONTOS</div>` : ''}
+    </div>`;
+  }
+
   container.innerHTML = `
   <div class="duel-wrapper">
-    <div class="duel-header-bar">
-      <span class="duel-title-label">Líder</span>
-      <span class="duel-vs-badge">VS</span>
-      <span class="duel-title-label">Vice-Líder</span>
-    </div>
     <div class="duel-body">
-      <!-- PILOTO 1 (LÍDER) -->
-      <div class="duel-driver-card" style="--duel-c1:${c1};">
-        <div class="duel-pos-label leader">🏆 1º LUGAR</div>
-        <div class="duel-photo-ring" style="--ring-color:${c1};background:conic-gradient(${c1} 0%, ${c1}33 100%);">
-          <img class="duel-photo-img" src="${photo1}" onerror="this.src='${PHOTO_PLACEHOLDER}'" alt="${p1.name}">
-        </div>
-        <div class="duel-driver-name" style="${nameTxt(c1)}">${p1.name.trim().split(' ').length>1?p1.name.trim().split(' ').slice(0,-1).join(' ')+'<br><span style=\'font-size:1.3em;\'>' + p1.name.trim().split(' ').pop() + '</span>':p1.name}</div>
-        <div class="duel-driver-team">${p1.team}</div>
-        <div class="duel-driver-pts" style="${nameTxt(c1)}">${pts1}</div>
-        <div class="duel-driver-pts-label">PONTOS</div>
-      </div>
+      ${driverCardHtml(p1, 1, photo1, c1, pts1, st1)}
 
       <!-- CENTRO -->
       <div class="duel-center">
         <div class="duel-gap-badge">
-          <span class="duel-gap-val">+${gap}</span>
+          <span class="duel-gap-val">${gap >= 0 ? '+' : ''}${gap}</span>
           <span class="duel-gap-label">GAP pts</span>
         </div>
 
@@ -2895,7 +3058,7 @@ function renderLeaderDuel(drivers) {
         </div>
 
         <div class="duel-stat-row">
-          <div class="duel-stat-key">H2H Corridas</div>
+          <div class="duel-stat-key">D. Comp.</div>
           <div class="duel-stat-nums"><span style="${nameTxt(c1)}">${h2h1}</span><span style="${nameTxt(c2)}">${h2h2}</span></div>
           <div class="duel-stat-bar-wrap">
             <div style="width:${pctH2H1}%;background:${c1};border-radius:3px 0 0 3px;opacity:${h2h1>=h2h2?1:0.35};transition:width .4s;"></div>
@@ -2909,20 +3072,11 @@ function renderLeaderDuel(drivers) {
         </div>
       </div>
 
-      <!-- PILOTO 2 (VICE) -->
-      <div class="duel-driver-card" style="--duel-c2:${c2};">
-        <div class="duel-pos-label" style="color:#aaa;">2º LUGAR</div>
-        <div class="duel-photo-ring" style="--ring-color:${c2};background:conic-gradient(${c2} 0%, ${c2}33 100%);">
-          <img class="duel-photo-img" src="${photo2}" onerror="this.src='${PHOTO_PLACEHOLDER}'" alt="${p2.name}">
-        </div>
-        <div class="duel-driver-name" style="${nameTxt(c2)}">${p2.name.trim().split(' ').length>1?p2.name.trim().split(' ').slice(0,-1).join(' ')+'<br><span style=\'font-size:1.3em;\'>' + p2.name.trim().split(' ').pop() + '</span>':p2.name}</div>
-        <div class="duel-driver-team">${p2.team}</div>
-        <div class="duel-driver-pts" style="${nameTxt(c2)}">${pts2}</div>
-        <div class="duel-driver-pts-label">PONTOS</div>
-      </div>
+      ${driverCardHtml(p2, 2, photo2, c2, pts2, st2)}
     </div>
 
     <!-- BARRA DE PONTOS -->
+    ${p1 && p2 ? `
     <div class="duel-points-bar-section">
       <div class="duel-bar-label-row" style="--c1-label:${c1};--c2-label:${c2};">
         <span>${p1.name.trim().split(' ').pop().toUpperCase()} — ${pts1} pts (${pctPts1}%)</span>
@@ -2932,7 +3086,7 @@ function renderLeaderDuel(drivers) {
         <div style="width:${pctPts1}%;background:${c1};border-radius:5px 0 0 5px;transition:width .5s;"></div>
         <div style="width:${pctPts2}%;background:${c2};border-radius:0 5px 5px 0;transition:width .5s;"></div>
       </div>
-    </div>
+    </div>` : ''}
   </div>`;
 }
 
