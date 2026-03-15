@@ -1726,6 +1726,7 @@ function closeSidePanel(driverId) {
   const p = document.getElementById('dcPanelExtra_' + driverId);
   if (p) p.remove();
   document.getElementById('dcSwitcherDropdown').classList.remove('open');
+  document.getElementById('dcSwitcherBtn').style.display = '';
   requestAnimationFrame(positionDriverSwitcher);
 }
 
@@ -1896,7 +1897,7 @@ function openDriverCardBeside(driverId) {
     });
 
     initDriverCardRadar(d, allDrivers, idSuffix);
-    positionDriverSwitcher();
+    document.getElementById('dcSwitcherBtn').style.display = 'none';
   });
 }
 
