@@ -614,6 +614,49 @@ body.theme-light .dc-streak-badge strong { color: #111; }
 }
 #dcRadarChart { display: block; }
 
+/* ── RATING DE PERFIL ── */
+.dc-rating-badge {
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px; margin: 10px 0 4px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  position: relative; overflow: hidden;
+}
+.dc-rating-badge::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: var(--rating-color, #e10600);
+  opacity: .08;
+}
+.dc-rating-badge-label {
+  font-family: 'Oswald', sans-serif;
+  font-size: .65rem; letter-spacing: 3px;
+  text-transform: uppercase; color: #666;
+  position: relative; z-index: 1;
+}
+body.theme-light .dc-rating-badge-label { color: #aaa; }
+.dc-rating-badge-sep {
+  width: 1px; height: 22px;
+  background: rgba(255,255,255,0.1);
+  flex-shrink: 0; position: relative; z-index: 1;
+}
+body.theme-light .dc-rating-badge-sep { background: rgba(0,0,0,0.1); }
+.dc-rating-badge-score {
+  font-family: 'Oswald', sans-serif;
+  font-size: 2.2rem; font-weight: 700; line-height: 1;
+  letter-spacing: -1px;
+  position: relative; z-index: 1;
+  text-shadow: 0 0 20px currentColor;
+  transition: color .3s;
+}
+.dc-rating-badge-max {
+  font-family: 'Oswald', sans-serif;
+  font-size: .7rem; color: #444; align-self: flex-end;
+  margin-bottom: 4px; position: relative; z-index: 1;
+  letter-spacing: 1px;
+}
+body.theme-light .dc-rating-badge-max { color: #bbb; }
+
 /* ── MODAL DE FOTO DO PILOTO ── */
 .photo-upload-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.75);
@@ -1575,7 +1618,8 @@ function buildDriverCardBody(d, allDrivers, pos) {
   <div class="dc-section-title">Radar de Perfil</div>
   <div class="dc-radar-wrap">
     <canvas id="dcRadarChart" width="220" height="220"></canvas>
-  </div>`;
+  </div>
+  <div id="dcRatingDisplay"></div>`;
 
   return statsHtml + bubblesHtml + streakHtml + radarHtml;
 }
@@ -1611,16 +1655,16 @@ function initDriverCardRadar(d, allDrivers) {
     return { wins, podiums, consistency, avgPos, pts, totalRaced };
   }
 
-  // H2H pct
+  // H2H pct — mesma lógica da página principal (NC/NP/DSQ = 999, não descartado)
   const teammate = allDrivers.find(x => x.id !== d.id && x.team.trim().toLowerCase() === d.team.trim().toLowerCase());
   let h2hPct = 50;
+  let myW = 0, tmW = 0;
   if (teammate) {
-    let myW = 0, tmW = 0;
     gpRaces.forEach(r => {
       const v1 = d.results[r.id], v2 = teammate.results[r.id];
-      const n1 = (!v1||['NC','DSQ','NP'].includes(String(v1).toUpperCase())) ? null : parseInt(v1);
-      const n2 = (!v2||['NC','DSQ','NP'].includes(String(v2).toUpperCase())) ? null : parseInt(v2);
-      if (n1!==null&&n2!==null&&!isNaN(n1)&&!isNaN(n2)&&n1!==n2) n1<n2 ? myW++ : tmW++;
+      const n1 = (v1 === undefined || v1 === '') ? null : (['NC','NP','DSQ'].includes(String(v1).toUpperCase()) ? 999 : parseInt(v1));
+      const n2 = (v2 === undefined || v2 === '') ? null : (['NC','NP','DSQ'].includes(String(v2).toUpperCase()) ? 999 : parseInt(v2));
+      if (n1 !== null && n2 !== null && !isNaN(n1) && !isNaN(n2) && n1 !== n2) n1 < n2 ? myW++ : tmW++;
     });
     const tot = myW + tmW;
     if (tot > 0) h2hPct = myW / tot * 100;
@@ -1645,12 +1689,41 @@ function initDriverCardRadar(d, allDrivers) {
     ? Math.max(0, ((maxAvgPos - myRaw.avgPos) / avgPosRange) * 100)
     : (myRaw.avgPos <= 10 ? 70 : 30);
   const ptsScore         = (myRaw.pts / maxPts) * 100;
-  const h2hScore         = h2hPct;
+
+  // h2hScore: null = sem companheiro ou sem corridas comparáveis (não entra na nota)
+  //           0-100 = percentual real de vitórias diretas
+  const h2hHasData = teammate && (myW + tmW) > 0;
+  const h2hScore   = h2hHasData ? h2hPct : null;
 
   const isLight  = document.body.classList.contains('theme-light');
   const gridClr  = isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.1)';
   const labelClr = isLight ? 'rgba(0,0,0,0.55)'  : 'rgba(255,255,255,0.6)';
   const color    = d.color || '#e10600';
+
+  // ── RATING SYSTEM ──
+  // Duelo entra com peso 5% apenas quando há dados reais; caso contrário os outros eixos absorvem o peso
+  const h2hWeight = 0.05;
+  const baseWeight = 1 - (h2hHasData ? 0 : h2hWeight);
+  const ratingRaw =
+    (ptsScore         * 0.25 +
+     winsScore        * 0.20 +
+     podiumsScore     * 0.15 +
+     consistencyScore * 0.20 +
+     avgPosScore      * 0.15 +
+     (h2hHasData ? h2hScore * h2hWeight : 0)) / baseWeight;
+  const ratingScore = Math.min(100, Math.max(0, ratingRaw));
+
+  const ratingEl = document.getElementById('dcRatingDisplay');
+  if (ratingEl) {
+    const scoreInt = Math.round(ratingScore);
+    ratingEl.innerHTML = `
+    <div class="dc-rating-badge" style="--rating-color:${color};border:1px solid ${color}22;">
+      <span class="dc-rating-badge-label">Rating</span>
+      <div class="dc-rating-badge-sep"></div>
+      <span class="dc-rating-badge-score" style="color:${color};">${scoreInt}</span>
+      <span class="dc-rating-badge-max">/ 100</span>
+    </div>`;
+  }
 
   new Chart(canvas.getContext('2d'), {
     type: 'radar',
