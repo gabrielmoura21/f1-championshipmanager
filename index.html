@@ -2669,7 +2669,7 @@ function renderConstructorsAndH2H(teamsMap) {
     const isClose = total > 0 && Math.abs(pct1 - pct2) <= 20;
     const trophy1 = (total > 0 && s1 > s2) ? ' 🏆' : '';
     const trophy2 = (total > 0 && s2 > s1) ? '🏆 ' : '';
-    const centerEmoji = isClose ? `<span style="font-size:.75rem;line-height:1;display:flex;justify-content:center;">🔥</span>` : `<span></span>`;
+    const centerEmoji = `<span></span>`;
     const barHtml = total === 0
       ? `<div style="height:5px;border-radius:3px;background:${emptyBarBg};margin-top:8px;"></div>`
       : `<div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;margin-top:7px;margin-bottom:3px;gap:4px;">
