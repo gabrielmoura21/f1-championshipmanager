@@ -1433,6 +1433,7 @@ function openDriverCard(driverId, event) {
   // Fecha painéis extras ao abrir o primário normalmente
   document.querySelectorAll('.dc-extra-panel').forEach(p => p.remove());
   document.getElementById('dcSwitcherDropdown').classList.remove('open');
+  document.getElementById('dcSwitcherBtn').style.display = '';
 
   const allDrivers = data.drivers.map(d => ({ ...d, stats: calculateDriverStats(d) })).sort(tieBreak);
   const d = allDrivers.find(x => x.id == driverId);
@@ -1468,7 +1469,7 @@ function openDriverCard(driverId, event) {
 
   // Body
   document.getElementById('dcBody').innerHTML = buildDriverCardBody(d, allDrivers, pos, '');
-  requestAnimationFrame(() => initDriverCardRadar(d, allDrivers, ''));
+  requestAnimationFrame(() => { try { initDriverCardRadar(d, allDrivers, ''); } catch(e) { console.error('radar error', e); } });
 
   // Posicionar popup perto do clique
   const overlay = document.getElementById('driverCardOverlay');
@@ -1719,6 +1720,7 @@ function closeDriverCard() {
   document.getElementById('driverCardOverlay').classList.remove('open');
   document.getElementById('dcSwitcherDropdown').classList.remove('open');
   document.querySelectorAll('.dc-extra-panel').forEach(p => p.remove());
+  document.getElementById('dcSwitcherBtn').style.display = '';
   document.body.style.overflow = '';
 }
 
@@ -1765,10 +1767,12 @@ function toggleDriverSwitcher(e) {
     dropdown.classList.remove('open');
     return;
   }
-  // Coleta IDs já abertos (principal + extras)
+  // Coleta IDs já abertos e realmente visíveis (principal + extras com opacity 1)
   const openIds = new Set();
   openIds.add(String(currentPhotoDriverId));
-  document.querySelectorAll('.dc-extra-panel').forEach(p => openIds.add(p.dataset.driverId));
+  document.querySelectorAll('.dc-extra-panel').forEach(p => {
+    if (p.style.opacity === '1') openIds.add(p.dataset.driverId);
+  });
 
   const allDrivers = data.drivers.map(d => ({ ...d, stats: calculateDriverStats(d) })).sort(tieBreak);
   dropdown.innerHTML = '<div id="dcSwitcherDropdownHeader">Abrir ao lado</div>';
@@ -1809,36 +1813,44 @@ function toggleDriverSwitcher(e) {
 
 function openDriverCardBeside(driverId) {
   if (isEditEnabled) return;
-  // Evita duplicata
-  if (document.getElementById('dcPanelExtra_' + driverId)) return;
   if (String(currentPhotoDriverId) === String(driverId)) return;
 
+  // Remove painel fantasma anterior
+  const stale = document.getElementById('dcPanelExtra_' + driverId);
+  if (stale) stale.remove();
+
   const allDrivers = data.drivers.map(d => ({ ...d, stats: calculateDriverStats(d) })).sort(tieBreak);
-  const d = allDrivers.find(x => x.id == driverId);
+  const d = allDrivers.find(x => String(x.id) === String(driverId));
   if (!d) return;
-  const pos = allDrivers.findIndex(x => x.id == driverId) + 1;
-  const color = d.color || '#e10600';
+
+  const pos    = allDrivers.findIndex(x => String(x.id) === String(driverId)) + 1;
+  const color  = d.color || '#e10600';
   const idSuffix = '_x' + driverId;
 
-  const logoSrc = (() => { const n = d.team.toLowerCase(); for (let k in logoMap) if (n.includes(k)) return logoMap[k]; return ''; })();
+  const logoSrc  = (() => { const n = (d.team||'').toLowerCase(); for (let k in logoMap) if (n.includes(k)) return logoMap[k]; return ''; })();
   const photoSrc = getDriverPhoto(driverId, d.name);
   const flagSrc  = d.country ? getFlagUrl(d.country) : '';
+
+  // Build body with error guard
+  let bodyHtml = '';
+  try {
+    bodyHtml = buildDriverCardBody(d, allDrivers, pos, idSuffix);
+  } catch(err) {
+    bodyHtml = `<div style="padding:20px;color:#888;font-family:'Titillium Web',sans-serif;font-size:.85rem;">Erro ao carregar estatísticas.</div>`;
+  }
 
   const panel = document.createElement('div');
   panel.className = 'driver-card-panel dc-extra-panel';
   panel.id = 'dcPanelExtra_' + driverId;
   panel.dataset.driverId = String(driverId);
-  // Start invisible for animation
-  panel.style.cssText = 'opacity:0;transform:scale(0.93) translateY(8px);pointer-events:none;';
-
   panel.innerHTML = `
     <div class="dc-header">
       <div class="dc-header-bg" style="background:linear-gradient(135deg,${color}55,transparent);"></div>
-      <button class="dc-header-close" onclick="closeSidePanel(${driverId})">✕</button>
+      <button class="dc-header-close" onclick="closeSidePanel('${driverId}')">✕</button>
       <div class="dc-position-badge">${pos}º</div>
       <div class="dc-portrait-wrap">
         <div class="dc-portrait-ring" style="--portrait-color:${color};background:conic-gradient(${color} 0%,${color}33 100%);">
-          <img class="dc-portrait-img" src="${photoSrc}" onerror="this.src='${PHOTO_PLACEHOLDER}'" alt="">
+          <img class="dc-portrait-img" src="${photoSrc}" onerror="this.src=PHOTO_PLACEHOLDER" alt="">
         </div>
         <div class="dc-name-block">
           <div class="dc-flag-name">
@@ -1848,19 +1860,25 @@ function openDriverCardBeside(driverId) {
           <div class="dc-team-row">
             <div class="dc-color-dot" style="background:${color};width:9px;height:9px;border-radius:50%;flex-shrink:0;"></div>
             ${logoSrc ? `<img class="dc-team-logo" src="${logoSrc}" alt="">` : ''}
-            <span class="dc-team-name">${d.team}</span>
+            <span class="dc-team-name">${d.team||''}</span>
           </div>
         </div>
       </div>
     </div>
-    <div class="dc-body">${buildDriverCardBody(d, allDrivers, pos, idSuffix)}</div>`;
+    <div class="dc-body">${bodyHtml}</div>`;
+
+  // Force hidden via inline style (CSS .driver-card-overlay.open .driver-card-panel sets opacity:1)
+  panel.style.opacity = '0';
+  panel.style.transform = 'scale(0.93) translateY(8px)';
+  panel.style.pointerEvents = 'none';
+  panel.style.transition = 'none';
 
   const overlay = document.getElementById('driverCardOverlay');
   overlay.appendChild(panel);
 
-  requestAnimationFrame(() => {
-    // Calcula posição: à direita de todos os painéis existentes
-    const allPanels = overlay.querySelectorAll('.driver-card-panel:not(#' + panel.id + ')');
+  // Position then animate in next frame
+  setTimeout(() => {
+    const allPanels = Array.from(overlay.querySelectorAll('.driver-card-panel')).filter(p => p.id !== panel.id);
     const margin = 12;
     const vw = window.innerWidth;
     const vh = window.innerHeight;
@@ -1876,7 +1894,6 @@ function openDriverCardBeside(driverId) {
     });
 
     let left = rightMost + margin;
-    // Se não couber à direita, tenta à esquerda do painel mais à esquerda
     if (left + pw > vw - margin) {
       let leftMost = Infinity;
       allPanels.forEach(p => { const l = parseFloat(p.style.left)||0; if (l < leftMost) { leftMost = l; refTop = parseFloat(p.style.top)||0; } });
@@ -1888,7 +1905,7 @@ function openDriverCardBeside(driverId) {
     panel.style.left = left + 'px';
     panel.style.top  = top  + 'px';
 
-    // Anima entrada
+    // Animate in
     requestAnimationFrame(() => {
       panel.style.transition = 'opacity .22s ease, transform .22s cubic-bezier(.34,1.3,.64,1)';
       panel.style.opacity = '1';
@@ -1896,9 +1913,9 @@ function openDriverCardBeside(driverId) {
       panel.style.pointerEvents = 'auto';
     });
 
-    initDriverCardRadar(d, allDrivers, idSuffix);
+    try { initDriverCardRadar(d, allDrivers, idSuffix); } catch(e) { console.error(e); }
     document.getElementById('dcSwitcherBtn').style.display = 'none';
-  });
+  }, 30);
 }
 
 // Fecha o switcher ao clicar fora
@@ -2016,7 +2033,7 @@ function initDriverCardRadar(d, allDrivers, idSuffix) {
           parseFloat(podiumsScore.toFixed(1)),
           parseFloat(consistencyScore.toFixed(1)),
           parseFloat(avgPosScore.toFixed(1)),
-          parseFloat(h2hScore.toFixed(1)),
+          parseFloat((h2hScore !== null ? h2hScore : 50).toFixed(1)),
           parseFloat(ptsScore.toFixed(1))
         ],
         backgroundColor: color + '2a',
