@@ -2631,7 +2631,7 @@ function renderDriversTable(drivers) {
       </td>
       <td class="sticky-col col-piloto" style="border-left:4px solid ${d.color} !important;${!isEditEnabled ? 'cursor:pointer;' : ''}">
         <div class="glow-layer" style="background:linear-gradient(90deg,${d.color}33,transparent);"></div>
-        <div class="pilot-cell-wrapper" ${!isEditEnabled ? `onclick="openDriverCard(${d.id}, event)"` : ''}>${flag}<span contenteditable="${isEditEnabled}" onblur="editDriverName(${d.id},this.innerText)">${formatDriverDisplayName(d.name)}</span></div>
+        <div class="pilot-cell-wrapper" ${!isEditEnabled ? `onclick="openDriverCard(${d.id}, event)"` : ''}>${flag}<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;" contenteditable="${isEditEnabled}" onblur="editDriverName(${d.id},this.innerText)">${formatDriverDisplayName(d.name)}</span>${d.reserve ? '<span style="font-size:.58rem;font-family:\'Titillium Web\',sans-serif;letter-spacing:.8px;text-transform:uppercase;color:#ff9500;background:rgba(255,150,0,0.12);border:1px solid rgba(255,150,0,0.3);border-radius:3px;padding:1px 5px;flex-shrink:0;">R</span>' : ''}</div>
       </td>
       <td class="sticky-col col-equipe"><div class="team-content">${getTeamLogoHtml(d.team)}<span contenteditable="${isEditEnabled}" onblur="editDriverTeam(${d.id},this.innerText)">${d.team}</span></div></td>
       <td class="sticky-col col-pontos"><div class="pts-container"><span>${d.stats.total}</span>${diffDisplay}</div></td>
@@ -3497,7 +3497,7 @@ function renderLeaderDuel(drivers) {
         </div>
 
         <div class="duel-stat-row">
-          <div class="duel-stat-key">Duelo</div>
+          <div class="duel-stat-key">Duelo Comp.</div>
           <div class="duel-stat-nums"><span style="${nameTxt(c1)}">${h2h1}</span><span style="${nameTxt(c2)}">${h2h2}</span></div>
           <div class="duel-stat-bar-wrap">
             <div style="width:${pctH2H1}%;background:${c1};border-radius:3px 0 0 3px;opacity:${h2h1>=h2h2?1:0.35};transition:width .4s;"></div>
