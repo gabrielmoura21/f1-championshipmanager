@@ -3256,13 +3256,13 @@ function editDriverTeam(id, v) {
 }
 const resetData = () => { if (confirm("Limpar tudo?")) { data = {drivers:[],races:[]}; hiddenDrivers.clear(); chartInitialized = false; saveData(); render(); } };
 function exportData() {
-  const photos = {}, removed = {};
-  data.drivers.forEach(d => {
-    const photo = localStorage.getItem('f1_photo_' + d.id);
-    if (photo) photos[d.id] = photo;
-    if (localStorage.getItem('f1_photo_removed_' + d.id) === '1') removed[d.id] = '1';
-  });
-  const exportObj = { ...data, _photos: photos, _photosRemoved: removed };
+  const exportObj = {
+    ...data,
+    drivers: data.drivers.map(d => {
+      const { photo, photoRemoved, ...rest } = d;
+      return rest;
+    })
+  };
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([JSON.stringify(exportObj)], {type:'application/json'}));
   a.download = 'f1_data.json'; a.click();
