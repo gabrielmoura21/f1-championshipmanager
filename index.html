@@ -3531,5 +3531,24 @@ function renderLeaderDuel(drivers) {
 
 init();
 </script>
+
+<footer style="
+  text-align: center;
+  padding: 18px 0 12px;
+  margin-top: 40px;
+  font-family: 'Titillium Web', sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.18);
+  border-top: 1px solid rgba(255,255,255,0.06);
+  user-select: none;
+">
+  © <span id="footer-year"></span> Gabriel Moura — Todos os direitos reservados
+</footer>
+<script>
+  document.getElementById('footer-year').textContent = new Date().getFullYear();
+</script>
+
 </body>
 </html>
