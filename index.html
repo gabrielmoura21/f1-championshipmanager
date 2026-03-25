@@ -1088,7 +1088,7 @@ body.theme-light .dc-switcher-pts { color: #888; }
   <span>Classificação de Pilotos</span>
   <span id="racesLeft" style="font-size:14px;color:#aaa;font-weight:normal;font-family:'Titillium Web',sans-serif;"></span>
 </h2>
-<div class="table-container">
+<div class="table-container" id="mainTableContainer">
   <table id="pilotosTable"><thead><tr id="headerRow"></tr></thead><tbody id="pilotosBody"></tbody></table>
 </div>
 </div>
@@ -2231,6 +2231,28 @@ const dom = {
 const GP_POINTS = {1:25,2:18,3:15,4:12,5:10,6:8,7:6,8:4,9:2,10:1};
 const SPRINT_POINTS = {1:8,2:7,3:6,4:5,5:4,6:3,7:2,8:1};
 
+// ── PERSISTÊNCIA DO SCROLL DA TABELA ──
+(function() {
+  const SCROLL_KEY = 'f1_table_scrollLeft';
+  let scrollSaveTimer = null;
+  function getContainer() { return document.getElementById('mainTableContainer'); }
+  function saveScroll() {
+    const c = getContainer();
+    if (c) localStorage.setItem(SCROLL_KEY, c.scrollLeft);
+  }
+  window.addEventListener('load', () => {
+    const c = getContainer();
+    if (!c) return;
+    c.addEventListener('scroll', () => {
+      clearTimeout(scrollSaveTimer);
+      scrollSaveTimer = setTimeout(saveScroll, 200);
+    }, { passive: true });
+    const saved = localStorage.getItem(SCROLL_KEY);
+    if (saved !== null) c.scrollLeft = parseInt(saved, 10) || 0;
+  });
+})();
+
+
 const countries = {
   "af":"Afeganistão","za":"África do Sul","al":"Albânia","de":"Alemanha","ad":"Andorra","ao":"Angola",
   "sa":"Arábia Saudita","dz":"Argélia","ar":"Argentina","am":"Armênia","au":"Austrália","at":"Áustria",
@@ -2534,6 +2556,10 @@ function processData() {
 }
 
 function render() {
+  const tableContainer = document.getElementById('mainTableContainer');
+  const savedScroll = tableContainer
+    ? (tableContainer.scrollLeft || (parseInt(localStorage.getItem('f1_table_scrollLeft'), 10) || 0))
+    : 0;
   requestAnimationFrame(() => {
     const { drivers, teams } = processData();
     cachedTeamData = teams;
@@ -2542,6 +2568,7 @@ function render() {
     renderChart(drivers);
     renderStatus(drivers);
     renderLeaderDuel(drivers);
+    if (tableContainer) tableContainer.scrollLeft = savedScroll;
   });
 }
 
@@ -2842,6 +2869,7 @@ function updateResult(driverId, raceId, val) {
   else if (!isNaN(v)) driver.results[raceId] = parseInt(v);
   else driver.results[raceId] = v;
   resultJustUpdated = true;
+  duelAutoReset = true;
   saveData(); render();
 }
 
