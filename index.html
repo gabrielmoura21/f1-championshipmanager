@@ -3056,6 +3056,20 @@ function renderStatus(drivers) {
   document.getElementById('racesLeft').innerText = `Faltam: ${data.races.filter(r => !drivers.some(d => d.results[r.id])).length} corridas`;
 }
 
+// ── Auto-preenche o calendário com a bandeira da corrida no dia de hoje ──
+function autoAddCalendarFlag(raceId) {
+  const race = data.races.find(r => r.id === raceId);
+  if (!race || !race.flag) return;
+  const today = new Date();
+  const mm  = String(today.getMonth() + 1).padStart(2, '0');
+  const dd  = String(today.getDate()).padStart(2, '0');
+  const key = `${today.getFullYear()}-${mm}-${dd}`;
+  const calData = loadCalendarData();
+  if (calData[key]) return; // já tem bandeira manual — não sobrescreve
+  calData[key] = race.flag;
+  saveCalendarData(calData);
+}
+
 function updateResult(driverId, raceId, val) {
   if (!isEditEnabled) return;
   const driver = data.drivers.find(d => d.id == driverId);
@@ -3067,6 +3081,7 @@ function updateResult(driverId, raceId, val) {
   else if (["NC","DSQ","NP"].includes(v)) driver.results[raceId] = v;
   else if (!isNaN(v)) driver.results[raceId] = parseInt(v);
   else driver.results[raceId] = v;
+  if (v !== "") autoAddCalendarFlag(raceId);
   resultJustUpdated = true;
   duelAutoReset = true;
   saveData(); render();
@@ -3509,6 +3524,17 @@ function importData(e) {
         delete parsed._photosRemoved;
       }
       data = parsed; hiddenDrivers.clear(); chartInitialized = false; saveData(); render();
+
+      // Detecta a última corrida com ao menos um resultado e registra no calendário de hoje
+      if (parsed.races && parsed.drivers) {
+        const racesWithResults = parsed.races.filter(race =>
+          parsed.drivers.some(d => d.results && d.results[race.id] !== undefined && d.results[race.id] !== '')
+        );
+        if (racesWithResults.length > 0) {
+          const lastRace = racesWithResults[racesWithResults.length - 1];
+          autoAddCalendarFlag(lastRace.id);
+        }
+      }
     } catch(e) { alert("Erro arquivo"); }
   };
   r.readAsText(e.target.files[0]);
