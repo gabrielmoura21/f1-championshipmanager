@@ -1042,15 +1042,180 @@ body.theme-light .dc-switcher-name { color: #111; }
   color: #666; flex-shrink: 0;
 }
 body.theme-light .dc-switcher-pts { color: #888; }
+
+/* ── CALENDÁRIO ── */
+.cal-modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(6px); display: none; align-items: center;
+  justify-content: center; z-index: 10000;
+}
+.cal-modal-overlay.open { display: flex; }
+.cal-modal-box {
+  background: #12121c; border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px; width: 100%; max-width: 520px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+  animation: slideIn .25s ease-out; overflow: hidden;
+}
+body.theme-light .cal-modal-box { background: #fff; border-color: #ddd; }
+body.theme-amoled .cal-modal-box { background: #0a0a0a; border-color: rgba(255,255,255,0.08); }
+
+.cal-modal-header {
+  background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
+  border-bottom: 3px solid var(--f1-red);
+  padding: 18px 22px 14px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.cal-modal-header h2 {
+  font-family: 'Oswald', sans-serif; font-size: 1.15rem; margin: 0;
+  color: #fff; letter-spacing: 2px; text-transform: uppercase;
+  border: none; padding: 0;
+}
+.cal-header-nav {
+  display: flex; align-items: center; gap: 10px;
+}
+.cal-nav-btn {
+  background: rgba(255,255,255,0.08) !important; border: 1px solid rgba(255,255,255,0.15) !important;
+  width: 30px !important; height: 30px !important; border-radius: 6px !important;
+  font-size: .95rem !important; padding: 0 !important; min-width: unset !important;
+  color: #fff !important; display: flex !important; align-items: center !important; justify-content: center !important;
+}
+.cal-nav-btn:hover { background: rgba(255,255,255,0.18) !important; transform: none !important; }
+body.theme-light .cal-nav-btn { color: #222 !important; background: rgba(0,0,0,0.07) !important; border-color: rgba(0,0,0,0.15) !important; }
+.cal-month-label {
+  font-family: 'Oswald', sans-serif; font-size: .95rem;
+  text-transform: uppercase; letter-spacing: 2px; color: #fff;
+  min-width: 130px; text-align: center;
+}
+body.theme-light .cal-month-label { color: #111; }
+.cal-close-btn {
+  background: rgba(255,255,255,0.08) !important; border: 1px solid rgba(255,255,255,0.15) !important;
+  width: 30px !important; height: 30px !important; border-radius: 50% !important;
+  font-size: .9rem !important; padding: 0 !important; min-width: unset !important;
+  color: #fff !important;
+}
+.cal-close-btn:hover { background: rgba(255,255,255,0.2) !important; transform: none !important; }
+body.theme-light .cal-close-btn { color: #222 !important; background: rgba(0,0,0,0.07) !important; }
+
+.cal-modal-body { padding: 16px 18px 20px; }
+
+.cal-weekdays {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  gap: 4px; margin-bottom: 6px;
+}
+.cal-weekday-label {
+  text-align: center; font-family: 'Oswald', sans-serif;
+  font-size: .65rem; letter-spacing: 1.5px; text-transform: uppercase;
+  color: #555; padding: 4px 0;
+}
+body.theme-light .cal-weekday-label { color: #999; }
+.cal-weekday-label.weekend { color: var(--f1-red); }
+
+.cal-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
+}
+.cal-day {
+  aspect-ratio: 1; border-radius: 8px; cursor: pointer;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; transition: all .15s; position: relative; overflow: hidden;
+  min-height: 52px;
+}
+body.theme-light .cal-day { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.08); }
+body.theme-amoled .cal-day { background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.05); }
+.cal-day:hover { background: rgba(255,255,255,0.08); border-color: rgba(225,6,0,0.4); }
+body.theme-light .cal-day:hover { background: rgba(0,0,0,0.07); }
+.cal-day.cal-day-empty { cursor: default; background: transparent !important; border-color: transparent !important; }
+.cal-day.cal-day-today { border-color: var(--f1-red) !important; background: rgba(225,6,0,0.08) !important; }
+.cal-day.cal-day-has-flag { border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); }
+body.theme-light .cal-day.cal-day-has-flag { background: rgba(0,0,0,0.06); }
+.cal-day.weekend-day { background: rgba(255,255,255,0.015); }
+body.theme-light .cal-day.weekend-day { background: rgba(0,0,0,0.015); }
+
+.cal-day-num {
+  font-family: 'Oswald', sans-serif; font-size: .75rem;
+  color: #888; line-height: 1;
+}
+body.theme-light .cal-day-num { color: #aaa; }
+.cal-day.cal-day-today .cal-day-num { color: var(--f1-red); font-weight: 700; }
+.cal-day.cal-day-has-flag .cal-day-num { color: #ccc; }
+body.theme-light .cal-day.cal-day-has-flag .cal-day-num { color: #333; }
+.cal-day.weekend-day .cal-day-num { color: rgba(225,6,0,0.5); }
+.cal-day-flag {
+  width: 28px; height: 19px; object-fit: cover; border-radius: 3px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}
+.cal-day-remove {
+  position: absolute; top: 3px; right: 3px;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: rgba(225,6,0,0.7); color: #fff;
+  font-size: .55rem; display: none; align-items: center; justify-content: center;
+  cursor: pointer; border: none; padding: 0; min-width: unset; line-height: 1;
+  z-index: 2;
+}
+.cal-day:hover .cal-day-remove { display: flex; }
+.cal-day-remove:hover { background: var(--f1-red) !important; transform: scale(1.15) !important; }
+
+/* Flag picker popup */
+.cal-flag-picker {
+  position: fixed; z-index: 11000;
+  background: #1a1a28; border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 12px; padding: 14px 16px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.75);
+  display: none; flex-direction: column; gap: 10px;
+  width: 260px; animation: slideIn .18s ease-out;
+}
+body.theme-light .cal-flag-picker { background: #fff; border-color: #ddd; box-shadow: 0 12px 40px rgba(0,0,0,0.2); }
+body.theme-amoled .cal-flag-picker { background: #0d0d0d; border-color: rgba(255,255,255,0.1); }
+.cal-flag-picker.open { display: flex; }
+.cal-fp-title {
+  font-family: 'Oswald', sans-serif; font-size: .75rem;
+  text-transform: uppercase; letter-spacing: 1.5px; color: #888;
+}
+body.theme-light .cal-fp-title { color: #999; }
+.cal-fp-search {
+  width: 100%; padding: 7px 10px;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px; color: #fff; font-family: 'Titillium Web', sans-serif; font-size: .85em;
+  outline: none;
+}
+body.theme-light .cal-fp-search { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.12); color: #111; }
+.cal-fp-search:focus { border-color: var(--f1-red); }
+.cal-fp-search::placeholder { color: #555; }
+body.theme-light .cal-fp-search::placeholder { color: #aaa; }
+.cal-fp-list {
+  max-height: 220px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 2px;
+  scrollbar-width: thin;
+}
+.cal-fp-list::-webkit-scrollbar { width: 4px; }
+.cal-fp-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+.cal-fp-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 8px; border-radius: 6px; cursor: pointer;
+  transition: background .12s;
+}
+.cal-fp-item:hover { background: rgba(255,255,255,0.08); }
+body.theme-light .cal-fp-item:hover { background: rgba(0,0,0,0.06); }
+.cal-fp-item img { width: 24px; height: 16px; object-fit: cover; border-radius: 2px; flex-shrink: 0; }
+.cal-fp-item span {
+  font-family: 'Titillium Web', sans-serif; font-size: .82em; color: #ddd;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+body.theme-light .cal-fp-item span { color: #222; }
+
+/* Button */
+#calendarBtn { background: #7b1fa2; border: 1px solid #9c27b0; min-width: unset; }
+#calendarBtn:hover { background: #8e24aa; }
 </style>
 </head>
 <body id="mainCaptureArea">
 
 <h1 id="mainTitle"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/F1.svg/1280px-F1.svg.png" alt="F1 Logo" style="height:25px;margin-right:15px;vertical-align:middle;"> F1 Championship Manager</h1>
 
-<div id="topControls" style="display:flex;gap:10px;margin-bottom:15px;">
+<div id="topControls" style="display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap;">
   <button id="editToggle" onclick="toggleEdit()">🔒 Modo Edição: Desativado</button>
   <button id="championshipBtn" onclick="openChampionshipModal()">🏆 Campeonato ▾</button>
+  <button id="calendarBtn" onclick="openCalendarModal()">📅 Calendário</button>
   <div class="theme-dropdown-wrapper">
     <button id="themeToggle" onclick="toggleThemeDropdown(event)">🎨 Alterar Tema ▾</button>
     <div class="theme-dropdown-menu" id="themeDropdown">
@@ -1142,6 +1307,40 @@ body.theme-light .dc-switcher-pts { color: #888; }
     </div>
     <div class="duel-picker-list" id="duelPickerList"></div>
   </div>
+</div>
+
+<!-- ── CALENDÁRIO ── -->
+<div id="calendarModalOverlay" class="cal-modal-overlay" onclick="if(event.target===this)closeCalendarModal()">
+  <div class="cal-modal-box">
+    <div class="cal-modal-header">
+      <h2>📅 Calendário de Corridas</h2>
+      <div class="cal-header-nav">
+        <button class="cal-nav-btn" onclick="calNavigate(-1)">◀</button>
+        <span class="cal-month-label" id="calMonthLabel"></span>
+        <button class="cal-nav-btn" onclick="calNavigate(1)">▶</button>
+        <button class="cal-close-btn" onclick="closeCalendarModal()">✕</button>
+      </div>
+    </div>
+    <div class="cal-modal-body">
+      <div class="cal-weekdays">
+        <div class="cal-weekday-label weekend">Dom</div>
+        <div class="cal-weekday-label">Seg</div>
+        <div class="cal-weekday-label">Ter</div>
+        <div class="cal-weekday-label">Qua</div>
+        <div class="cal-weekday-label">Qui</div>
+        <div class="cal-weekday-label">Sex</div>
+        <div class="cal-weekday-label weekend">Sáb</div>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── FLAG PICKER DO CALENDÁRIO ── -->
+<div id="calFlagPicker" class="cal-flag-picker" onclick="event.stopPropagation()">
+  <div class="cal-fp-title">Selecionar Bandeira da Corrida</div>
+  <input type="text" id="calFpSearch" class="cal-fp-search" placeholder="Buscar país..." oninput="calFpFilter(this.value)">
+  <div class="cal-fp-list" id="calFpList"></div>
 </div>
 
 <!-- ── CARTÃO EXPANDIDO DO PILOTO ── -->
@@ -3556,6 +3755,150 @@ function renderLeaderDuel(drivers) {
     </div>` : ''}
   </div>`;
 }
+
+// ── SISTEMA DE CALENDÁRIO ──
+const CAL_STORAGE_KEY = 'f1_calendar_flags';
+let calCurrentYear  = new Date().getFullYear();
+let calCurrentMonth = new Date().getMonth(); // 0-based
+let calPickerDate   = null; // "YYYY-MM-DD" da célula clicada
+
+const CAL_MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+function loadCalendarData() {
+  try { return JSON.parse(localStorage.getItem(CAL_STORAGE_KEY) || '{}'); } catch(e) { return {}; }
+}
+function saveCalendarData(obj) {
+  localStorage.setItem(CAL_STORAGE_KEY, JSON.stringify(obj));
+}
+
+function openCalendarModal() {
+  calCurrentYear  = new Date().getFullYear();
+  calCurrentMonth = new Date().getMonth();
+  renderCalendarGrid();
+  document.getElementById('calendarModalOverlay').classList.add('open');
+}
+function closeCalendarModal() {
+  document.getElementById('calendarModalOverlay').classList.remove('open');
+  closeCalFlagPicker();
+}
+
+function calNavigate(dir) {
+  calCurrentMonth += dir;
+  if (calCurrentMonth > 11) { calCurrentMonth = 0; calCurrentYear++; }
+  if (calCurrentMonth < 0)  { calCurrentMonth = 11; calCurrentYear--; }
+  renderCalendarGrid();
+  closeCalFlagPicker();
+}
+
+function renderCalendarGrid() {
+  document.getElementById('calMonthLabel').textContent = CAL_MONTHS_PT[calCurrentMonth] + ' ' + calCurrentYear;
+  const calData = loadCalendarData();
+  const today = new Date();
+  const firstDay = new Date(calCurrentYear, calCurrentMonth, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(calCurrentYear, calCurrentMonth + 1, 0).getDate();
+
+  let html = '';
+  // Empty cells before first day
+  for (let i = 0; i < firstDay; i++) {
+    html += '<div class="cal-day cal-day-empty"></div>';
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const mm   = String(calCurrentMonth + 1).padStart(2, '0');
+    const dd   = String(d).padStart(2, '0');
+    const key  = `${calCurrentYear}-${mm}-${dd}`;
+    const flag = calData[key];
+    const isToday = today.getFullYear() === calCurrentYear &&
+                    today.getMonth()    === calCurrentMonth &&
+                    today.getDate()     === d;
+    const dayOfWeek = new Date(calCurrentYear, calCurrentMonth, d).getDay();
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    const classes = [
+      'cal-day',
+      isToday    ? 'cal-day-today'    : '',
+      flag       ? 'cal-day-has-flag' : '',
+      isWeekend  ? 'weekend-day'      : ''
+    ].filter(Boolean).join(' ');
+
+    html += `<div class="${classes}" onclick="calDayClick('${key}', event)">
+      <span class="cal-day-num">${d}</span>
+      ${flag ? `<img class="cal-day-flag" src="${getFlagUrl(flag)}" alt="">` : ''}
+      ${flag ? `<button class="cal-day-remove" onclick="calRemoveFlag('${key}',event)" title="Remover">✕</button>` : ''}
+    </div>`;
+  }
+  document.getElementById('calGrid').innerHTML = html;
+}
+
+function calDayClick(dateKey, event) {
+  event.stopPropagation();
+  calPickerDate = dateKey;
+  // Posiciona e abre o picker
+  const picker = document.getElementById('calFlagPicker');
+  renderCalFpList('');
+  document.getElementById('calFpSearch').value = '';
+
+  const rect = event.currentTarget.getBoundingClientRect();
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const pw = 260, ph = 320;
+
+  let left = rect.left + rect.width / 2 - pw / 2;
+  let top  = rect.bottom + 6;
+  if (left + pw > vw - 10) left = vw - pw - 10;
+  if (left < 8) left = 8;
+  if (top + ph > vh - 10) top = rect.top - ph - 6;
+  if (top < 8) top = 8;
+
+  picker.style.left = left + 'px';
+  picker.style.top  = top  + 'px';
+  picker.classList.add('open');
+  document.getElementById('calFpSearch').focus();
+}
+
+function calRemoveFlag(dateKey, event) {
+  event.stopPropagation();
+  const calData = loadCalendarData();
+  delete calData[dateKey];
+  saveCalendarData(calData);
+  renderCalendarGrid();
+}
+
+function renderCalFpList(filter) {
+  const f = filter.trim().toLowerCase();
+  const items = Object.entries(countries)
+    .filter(([code, name]) => !f || name.toLowerCase().includes(f) || code.toLowerCase().includes(f))
+    .sort(([, a], [, b]) => a.localeCompare(b));
+  document.getElementById('calFpList').innerHTML = items.map(([code, name]) =>
+    `<div class="cal-fp-item" onclick="calSelectFlag('${code}')">
+      <img src="${getFlagUrl(code)}" alt="">
+      <span>${name}</span>
+    </div>`
+  ).join('');
+}
+
+function calFpFilter(val) {
+  renderCalFpList(val);
+}
+
+function calSelectFlag(code) {
+  if (!calPickerDate) return;
+  const calData = loadCalendarData();
+  calData[calPickerDate] = code;
+  saveCalendarData(calData);
+  closeCalFlagPicker();
+  renderCalendarGrid();
+}
+
+function closeCalFlagPicker() {
+  document.getElementById('calFlagPicker').classList.remove('open');
+  calPickerDate = null;
+}
+
+// Fecha picker ao clicar fora
+document.addEventListener('click', function(e) {
+  const picker = document.getElementById('calFlagPicker');
+  if (picker && picker.classList.contains('open') && !picker.contains(e.target)) {
+    closeCalFlagPicker();
+  }
+});
 
 init();
 </script>
