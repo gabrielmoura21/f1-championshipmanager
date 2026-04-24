@@ -3057,16 +3057,34 @@ function renderStatus(drivers) {
 }
 
 // ── Auto-preenche o calendário com a bandeira da corrida no dia de hoje ──
+function getTodayKey() {
+  const today = new Date();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  return `${today.getFullYear()}-${mm}-${dd}`;
+}
+
 function autoAddCalendarFlag(raceId) {
   const race = data.races.find(r => r.id === raceId);
   if (!race || !race.flag) return;
-  const today = new Date();
-  const mm  = String(today.getMonth() + 1).padStart(2, '0');
-  const dd  = String(today.getDate()).padStart(2, '0');
-  const key = `${today.getFullYear()}-${mm}-${dd}`;
+  const key = getTodayKey();
   const calData = loadCalendarData();
   if (calData[key]) return; // já tem bandeira manual — não sobrescreve
   calData[key] = race.flag;
+  saveCalendarData(calData);
+}
+
+function autoRemoveCalendarFlag(raceId) {
+  const race = data.races.find(r => r.id === raceId);
+  if (!race || !race.flag) return;
+  const key = getTodayKey();
+  const calData = loadCalendarData();
+  // Só remove se a bandeira do dia for exatamente a dessa corrida
+  if (calData[key] !== race.flag) return;
+  // Só remove se a corrida não tiver mais nenhum resultado de nenhum piloto
+  const raceStillHasResults = data.drivers.some(d => d.results && d.results[raceId] !== undefined && d.results[raceId] !== '');
+  if (raceStillHasResults) return;
+  delete calData[key];
   saveCalendarData(calData);
 }
 
@@ -3082,6 +3100,7 @@ function updateResult(driverId, raceId, val) {
   else if (!isNaN(v)) driver.results[raceId] = parseInt(v);
   else driver.results[raceId] = v;
   if (v !== "") autoAddCalendarFlag(raceId);
+  else autoRemoveCalendarFlag(raceId);
   resultJustUpdated = true;
   duelAutoReset = true;
   saveData(); render();
