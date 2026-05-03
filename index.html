@@ -1206,6 +1206,23 @@ body.theme-light .cal-fp-item span { color: #222; }
 /* Button */
 #calendarBtn { background: #7b1fa2; border: 1px solid #9c27b0; min-width: unset; }
 #calendarBtn:hover { background: #8e24aa; }
+
+/* ── MODAL POSTER EQUIPE ── */
+.team-poster-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.82);
+  backdrop-filter: blur(6px); z-index: 12000;
+  display: none; align-items: center; justify-content: center;
+}
+.team-poster-overlay.open { display: flex; }
+.team-poster-box {
+  background: #13131e; border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px; width: 360px; max-width: calc(100vw - 32px);
+  max-height: 80vh; display: flex; flex-direction: column;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.75);
+  animation: slideIn .22s ease-out; overflow: hidden;
+}
+body.theme-light .team-poster-box { background: #f2f4f8; border-color: rgba(0,0,0,0.1); }
+body.theme-amoled .team-poster-box { background: #060610; }
 </style>
 </head>
 <body id="mainCaptureArea">
@@ -1245,6 +1262,7 @@ body.theme-light .cal-fp-item span { color: #222; }
   <button class="btn-capture" onclick="captureTableHQ()" style="background:#4a148c;">🏁 TABELA COMPLETA (HQ)</button>
   <button id="btnCaptureOther" class="btn-capture" onclick="captureOtherTablesHQ()" style="background:#00695c;">📊 GRÁFICOS (HQ)</button>
   <button id="btnCaptureDriversPoster" class="btn-capture" onclick="captureDriversPosterHQ()" style="background:#0277bd;">🖼️ TABELA PILOTOS (HQ)</button>
+  <button class="btn-capture" onclick="openTeamPosterModal()" style="background:#bf360c;">🏎️ POSTER EQUIPE (HQ)</button>
   <button style="background:#555" onclick="resetData()">🗑️ Limpar Tudo</button>
 </div>
 
@@ -1497,6 +1515,17 @@ body.theme-light .cal-fp-item span { color: #222; }
     <div class="champ-modal-footer">
       <button class="champ-btn-close" onclick="closeChampionshipModal()">Fechar</button>
     </div>
+  </div>
+</div>
+
+<!-- ── MODAL POSTER EQUIPE ── -->
+<div id="teamPosterOverlay" class="team-poster-overlay" onclick="if(event.target===this)closeTeamPosterModal()">
+  <div class="team-poster-box">
+    <div class="duel-picker-header">
+      <span class="duel-picker-title">🏎️ Selecionar Equipe</span>
+      <button class="duel-picker-close" onclick="closeTeamPosterModal()">✕</button>
+    </div>
+    <div class="duel-picker-list" id="teamPosterList"></div>
   </div>
 </div>
 
@@ -3944,6 +3973,136 @@ document.addEventListener('click', function(e) {
     closeCalFlagPicker();
   }
 });
+
+// ── POSTER DE EQUIPE (HQ) ──
+
+function openTeamPosterModal() {
+  const { teams } = processData();
+  const sorted = Object.entries(teams)
+    .filter(([, t]) => t.drivers.filter(d => !d.reserve).length >= 2)
+    .sort(([, a], [, b]) => b.points - a.points);
+
+  const isLight = document.body.classList.contains('theme-light');
+  const list = document.getElementById('teamPosterList');
+  list.innerHTML = sorted.length === 0
+    ? `<div style="padding:20px;text-align:center;color:#666;font-family:'Titillium Web',sans-serif;font-size:.9em;">Nenhuma equipe com 2 pilotos titulares encontrada.</div>`
+    : sorted.map(([key, team], idx) => {
+        const logoSrc = (() => { const n = key; for (let k in logoMap) if (n.includes(k)) return logoMap[k]; return ''; })();
+        const color = team.drivers[0]?.color || '#e10600';
+        const names = team.drivers.filter(d => !d.reserve).slice(0,2).map(d => d.name.trim().split(' ').pop().toUpperCase()).join(' & ');
+        return `<div class="duel-picker-item" onclick="captureTeamPosterHQ('${key}')">
+          <div style="width:5px;min-width:5px;height:36px;border-radius:2px;background:${color};flex-shrink:0;"></div>
+          ${logoSrc ? `<img src="${logoSrc}" style="width:28px;height:28px;object-fit:contain;flex-shrink:0;" alt="">` : ''}
+          <div class="duel-picker-info">
+            <div class="duel-picker-name" style="${isLight ? 'color:#111;' : ''}">${team.name}</div>
+            <div class="duel-picker-team">${names}</div>
+          </div>
+          <div class="duel-picker-pts" style="color:${color};">${team.points} pts</div>
+        </div>`;
+      }).join('');
+
+  document.getElementById('teamPosterOverlay').classList.add('open');
+}
+
+function closeTeamPosterModal() {
+  document.getElementById('teamPosterOverlay').classList.remove('open');
+}
+
+async function captureTeamPosterHQ(teamKey) {
+  closeTeamPosterModal();
+
+  const allDrivers = data.drivers.map(d => ({ ...d, stats: calculateDriverStats(d) })).sort(tieBreak);
+  const { teams } = processData();
+  const team = teams[teamKey];
+  if (!team) return;
+
+  const mainDrivers = team.drivers.filter(d => !d.reserve).slice(0, 2);
+  if (mainDrivers.length < 2) { alert('A equipe precisa ter 2 pilotos titulares.'); return; }
+
+  const isLight  = document.body.classList.contains('theme-light');
+  const isAmoled = document.body.classList.contains('theme-amoled');
+  const bgColor  = isLight ? '#b8bec9' : isAmoled ? '#000000' : '#0b0b10';
+  const panelBg  = isLight ? '#f2f4f8' : isAmoled ? '#040408' : '#14141f';
+  const panelBorder = isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.12)';
+
+  const wrapper = document.createElement('div');
+  wrapper.id = 'teamPosterCapture';
+  wrapper.style.cssText = `position:fixed;left:-9999px;top:0;display:flex;gap:14px;padding:24px;background:${bgColor};z-index:-1;border-radius:0;`;
+
+  const radarJobs = [];
+
+  mainDrivers.forEach(d => {
+    const pos = allDrivers.findIndex(x => x.id === d.id) + 1;
+    const color = d.color || '#e10600';
+    const idSuffix = `_poster_${d.id}`;
+    const photoSrc = getDriverPhoto(d.id, d.name);
+    const flagSrc  = d.country ? getFlagUrl(d.country) : '';
+    const logoSrc  = (() => { const n = (d.team||'').toLowerCase(); for (let k in logoMap) if (n.includes(k)) return logoMap[k]; return ''; })();
+    const bodyHtml = buildDriverCardBody(d, allDrivers, pos, idSuffix);
+
+    radarJobs.push({ d, allDrivers, idSuffix });
+
+    const panel = document.createElement('div');
+    panel.style.cssText = `width:360px;min-width:360px;background:${panelBg};border:1px solid ${panelBorder};border-radius:18px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.75),0 0 0 1px rgba(255,255,255,0.05);display:flex;flex-direction:column;`;
+    panel.innerHTML = `
+      <div class="dc-header" style="position:relative;padding:20px 18px 16px;overflow:hidden;flex-shrink:0;border-bottom:1px solid ${isLight?'rgba(0,0,0,0.07)':'rgba(255,255,255,0.07)'};">
+        <div style="position:absolute;inset:0;opacity:.2;background:linear-gradient(135deg,${color}55,transparent);"></div>
+        <div class="dc-position-badge" style="font-family:'Oswald',sans-serif;font-size:5rem;font-weight:700;line-height:1;color:${isLight?'rgba(0,0,0,0.06)':'rgba(255,255,255,0.07)'};position:absolute;right:12px;bottom:4px;z-index:1;letter-spacing:-2px;">${pos}º</div>
+        <div style="position:relative;z-index:3;display:flex;align-items:flex-end;gap:14px;">
+          <div style="width:80px;height:80px;border-radius:50%;flex-shrink:0;padding:3px;background:conic-gradient(${color} 0%,${color}33 100%);">
+            <img src="${photoSrc}" onerror="this.src='${PHOTO_PLACEHOLDER}'" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:top center;display:block;background:#1e1e2e;">
+          </div>
+          <div style="flex:1;min-width:0;position:relative;z-index:3;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              ${flagSrc ? `<img src="${flagSrc}" alt="" style="width:28px;height:20px;border-radius:2px;object-fit:cover;box-shadow:0 1px 6px rgba(0,0,0,0.4);flex-shrink:0;">` : ''}
+              <div style="font-family:'Oswald',sans-serif;font-size:1.25rem;font-weight:700;color:${isLight?'#111':'#fff'};line-height:1.1;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${formatDriverDisplayName(d.name)}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:7px;margin-top:6px;">
+              <div style="width:9px;height:9px;border-radius:50%;background:${color};flex-shrink:0;"></div>
+              ${logoSrc ? `<img src="${logoSrc}" alt="" style="width:18px;height:18px;object-fit:contain;">` : ''}
+              <span style="font-size:.75rem;text-transform:uppercase;letter-spacing:1.5px;color:${isLight?'rgba(0,0,0,0.42)':'rgba(255,255,255,0.5)'};font-family:'Titillium Web',sans-serif;">${d.team}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="dc-body" style="flex:1;overflow:hidden;padding:14px 16px 20px;">${bodyHtml}</div>`;
+
+    wrapper.appendChild(panel);
+  });
+
+  document.body.appendChild(wrapper);
+
+  // Aguarda render das imagens
+  await new Promise(r => setTimeout(r, 250));
+
+  // Inicializa radars
+  radarJobs.forEach(({ d, allDrivers, idSuffix }) => {
+    try { initDriverCardRadar(d, allDrivers, idSuffix); } catch(e) { console.error('radar poster error', e); }
+  });
+
+  // Aguarda render dos charts
+  await new Promise(r => setTimeout(r, 500));
+
+  try {
+    const canvas = await html2canvas(wrapper, {
+      backgroundColor: bgColor,
+      scale: 4,
+      useCORS: true,
+      logging: false,
+      scrollX: 0,
+      scrollY: 0,
+    });
+    const a = document.createElement('a');
+    a.download = `F1_Poster_${team.name.replace(/\s+/g,'_')}_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.png`;
+    a.href = canvas.toDataURL('image/png', 1.0);
+    a.click();
+  } catch(e) {
+    console.error(e);
+    alert('Erro ao gerar poster da equipe.');
+  } finally {
+    document.body.removeChild(wrapper);
+  }
+}
 
 init();
 </script>
