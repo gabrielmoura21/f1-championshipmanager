@@ -4002,7 +4002,7 @@ async function captureStandingsPosterHQ() {
   const allDrivers = data.drivers
     .map(d => ({ ...d, stats: calculateDriverStats(d) }))
     .sort(tieBreak);
-  const top10 = allDrivers.slice(0, 10);
+  const top10 = allDrivers;
 
   /* ── última corrida com resultado ───────────────────── */
   const completedRaces = data.races.filter(r =>
@@ -4060,6 +4060,17 @@ async function captureStandingsPosterHQ() {
   /* ── linha vermelha topo ─────────────────────────────── */
   const topBar = `<div style="height:7px;background:#e10600;width:100%;"></div>`;
 
+  /* ── próxima corrida ────────────────────────────────── */
+  const nextRace = data.races.find(r =>
+    !completedRaces.some(c => c.id === r.id)
+  );
+  const nextRaceFlag = nextRace?.flag
+    ? `<img src="${getFlagUrl(nextRace.flag)}" alt="" style="width:20px;height:14px;border-radius:2px;object-fit:cover;vertical-align:middle;display:inline-block;margin:0 4px;">`
+    : '';
+  const nextRaceHtml = nextRace
+    ? `<span style="color:#4a6a8a;font-size:11px;letter-spacing:2px;margin-left:14px;padding-left:14px;border-left:1px solid #1e3a5f;white-space:nowrap;">NEXT: ${nextRaceFlag}<span style="color:#7ab4d8;">${nextRace.name.toUpperCase()}</span></span>`
+    : '';
+
   /* ── cabeçalho ──────────────────────────────────────── */
   const header = `
     <div style="padding:30px 32px 22px;text-align:center;background:linear-gradient(180deg,#0e2040 0%,#0c1828 100%);">
@@ -4073,20 +4084,29 @@ async function captureStandingsPosterHQ() {
                   text-shadow:0 0 30px rgba(0,207,255,0.4);">STANDINGS</div>
       <div style="margin-top:18px;font-size:13px;letter-spacing:3.5px;text-transform:uppercase;
                   color:#7ab4d8;display:flex;align-items:center;justify-content:center;gap:2px;flex-wrap:wrap;">
-        <span>AFTER ${raceLabel}</span>${raceFlag}<span>${raceName}</span>
+        <span>AFTER ${raceLabel}</span>${raceFlag}<span>${raceName}</span>${nextRaceHtml}
       </div>
       <div style="margin-top:14px;display:flex;gap:5px;justify-content:center;flex-wrap:wrap;padding:0 20px;">
         ${(() => {
-          const totalRaces = data.races.length;
           const completedCount = completedRaces.length;
           return data.races.map((r, idx) => {
-            const done = idx < completedCount;
+            const done   = idx < completedCount;
             const isLast = r.id === lastRace?.id;
-            const dotColor = done ? '#00cfff' : '#1e3a5f';
-            const border   = isLast ? '2px solid #00cfff' : (done ? 'none' : '2px solid #1e3a5f');
-            const bg       = done ? dotColor : 'transparent';
-            const size     = isLast ? '10px' : '7px';
-            return `<span title="${r.name}" style="width:${size};height:${size};border-radius:50%;background:${bg};border:${border};display:inline-block;flex-shrink:0;transition:all .2s;${isLast?'box-shadow:0 0 6px #00cfff;':''}"></span>`;
+            const isNext = r.id === nextRace?.id;
+            if (isLast) {
+              return `<span style="position:relative;display:inline-block;width:7px;height:7px;flex-shrink:0;">
+                <span style="position:absolute;width:15px;height:15px;border-radius:50%;background:rgba(0,207,255,0.09);top:-4px;left:-4px;"></span>
+                <span style="position:absolute;width:11px;height:11px;border-radius:50%;background:rgba(0,207,255,0.16);top:-2px;left:-2px;"></span>
+                <span style="position:absolute;width:7px;height:7px;border-radius:50%;background:#00cfff;top:0;left:0;"></span>
+              </span>`;
+            }
+            if (isNext) {
+              return `<span title="${r.name}" style="width:7px;height:7px;border-radius:50%;background:transparent;border:2px solid #1e3a5f;display:inline-block;flex-shrink:0;"></span>`;
+            }
+            if (done) {
+              return `<span title="${r.name}" style="width:7px;height:7px;border-radius:50%;background:#00cfff;display:inline-block;flex-shrink:0;opacity:0.7;"></span>`;
+            }
+            return `<span title="${r.name}" style="width:7px;height:7px;border-radius:50%;background:transparent;border:2px solid #1e3a5f;display:inline-block;flex-shrink:0;"></span>`;
           }).join('');
         })()}
       </div>
@@ -4160,13 +4180,7 @@ async function captureStandingsPosterHQ() {
   }).join('');
 
   /* ── rodapé ─────────────────────────────────────────── */
-  const footer = `
-    <div style="padding:16px 24px 22px;text-align:center;margin-top:4px;">
-      <div style="height:1px;background:rgba(255,255,255,0.07);margin-bottom:12px;"></div>
-      <span style="font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:#2a4a6a;">
-        F1 CHAMPIONSHIP MANAGER
-      </span>
-    </div>`;
+  const footer = `<div style="height:18px;"></div>`;
 
   wrapper.innerHTML = topBar + header + `<div style="padding-bottom:4px;">${rowsHtml}</div>` + footer;
   document.body.appendChild(wrapper);
