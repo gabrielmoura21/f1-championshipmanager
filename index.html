@@ -4132,7 +4132,7 @@ async function captureStandingsPosterHQ() {
         lastRacePts = (lastRace.type === 'GP' ? GP_POINTS : SPRINT_POINTS)[parseInt(rv)] || 0;
       }
     }
-    const lastRacePtsHtml = lastRacePts !== null
+    const lastRacePtsHtml = (lastRacePts !== null && lastRacePts > 0)
       ? `<div style="font-family:'Titillium Web',sans-serif;font-size:12px;font-weight:600;
                      color:#22dd66;text-align:right;line-height:1;margin-top:2px;">+${lastRacePts}</div>`
       : `<div style="font-size:12px;color:#2a4a6a;text-align:right;line-height:1;margin-top:2px;">—</div>`;
