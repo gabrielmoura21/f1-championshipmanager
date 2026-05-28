@@ -1654,13 +1654,11 @@ body.theme-amoled .team-poster-box { background: #060610; }
           <div class="season-card f1-25" onclick="finishAddChampionship('2025')">
             <div class="season-card-year">F1 25</div>
             <div class="season-card-subtitle">Temporada 2025</div>
-            <div class="season-card-drivers">Verstappen · Hamilton<br>Norris · Russell</div>
           </div>
           <div class="season-card f1-26" onclick="finishAddChampionship('2026')">
             <span class="season-card-new-badge">NOVO</span>
             <div class="season-card-year">F1 26</div>
             <div class="season-card-subtitle">Temporada 2026</div>
-            <div class="season-card-drivers">Audi · Cadillac<br>22 pilotos · 11 equipes</div>
           </div>
         </div>
         <button class="season-picker-back" onclick="cancelSeasonPicker()">← Voltar</button>
@@ -3701,7 +3699,7 @@ function loadF1Grid() {
   if (season === '2026') {
     loadF1Grid2026();
   } else {
-    if (!confirm("Carregar Grid F1 2025?")) return;
+    if (!confirm("Carregar Grid F1 25?")) return;
     const g = [
       {n:"Max Verstappen",t:"Red Bull Racing",c:"#3671C6",f:"nl"},{n:"Yuki Tsunoda",t:"Red Bull Racing",c:"#3671C6",f:"jp"},
       {n:"Lewis Hamilton",t:"Ferrari",c:"#E8002D",f:"gb"},{n:"Charles Leclerc",t:"Ferrari",c:"#E8002D",f:"mc"},
@@ -3720,7 +3718,7 @@ function loadF1Grid() {
 }
 
 function loadF1Grid2026() {
-  if (!confirm("Carregar Grid F1 2026?\n\n11 equipes • 22 pilotos\nAudi, Cadillac e mais novidades!")) return;
+  if (!confirm("Carregar Grid F1 26?")) return;
   const g = [
     {n:"Max Verstappen",   t:"Red Bull Racing", c:"#3671C6", f:"nl"},
     {n:"Isack Hadjar",     t:"Red Bull Racing", c:"#3671C6", f:"fr"},
