@@ -191,6 +191,139 @@ body.theme-light .champ-add-row input { background: rgba(0,0,0,0.05); border-col
 }
 .champ-btn-add:hover { background: #38965f !important; }
 
+/* ── SELETOR DE TEMPORADA ── */
+#champSeasonPicker {
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  animation: slideIn .2s ease-out;
+}
+body.theme-light #champSeasonPicker { border-top-color: rgba(0,0,0,0.08); }
+#champSeasonPicker.visible { display: flex; }
+
+.season-picker-label {
+  font-family: 'Titillium Web', sans-serif;
+  font-size: .8em;
+  color: rgba(255,255,255,0.45);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+body.theme-light .season-picker-label { color: rgba(0,0,0,0.4); }
+
+.season-picker-pending-name {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1rem;
+  color: #7dffb3;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+body.theme-light .season-picker-pending-name { color: #1a6640; }
+
+.season-picker-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.season-card {
+  border-radius: 12px;
+  padding: 16px 12px;
+  border: 2px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  cursor: pointer;
+  transition: all .18s;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+body.theme-light .season-card { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.10); }
+body.theme-amoled .season-card { background: rgba(255,255,255,0.02); }
+.season-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.4); }
+
+.season-card.f1-25 { border-color: #e10600; }
+.season-card.f1-25:hover { background: rgba(225,6,0,0.10); box-shadow: 0 6px 20px rgba(225,6,0,0.25); }
+.season-card.f1-26 { border-color: #0093CC; }
+.season-card.f1-26:hover { background: rgba(0,147,204,0.10); box-shadow: 0 6px 20px rgba(0,147,204,0.25); }
+
+.season-card-year {
+  font-family: 'Oswald', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.season-card.f1-25 .season-card-year { color: #e10600; }
+.season-card.f1-26 .season-card-year { color: #0093CC; }
+
+.season-card-subtitle {
+  font-family: 'Titillium Web', sans-serif;
+  font-size: .7em;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 8px;
+}
+body.theme-light .season-card-subtitle { color: rgba(0,0,0,0.35); }
+
+.season-card-drivers {
+  font-family: 'Titillium Web', sans-serif;
+  font-size: .65em;
+  color: rgba(255,255,255,0.35);
+  line-height: 1.5;
+}
+body.theme-light .season-card-drivers { color: rgba(0,0,0,0.3); }
+
+.season-card-new-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #0093CC;
+  color: #fff;
+  font-family: 'Titillium Web', sans-serif;
+  font-size: .55em;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: 600;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+
+.season-picker-back {
+  align-self: flex-start;
+  background: none !important;
+  border: none !important;
+  color: rgba(255,255,255,0.35) !important;
+  font-size: .75em !important;
+  padding: 0 !important;
+  height: auto !important;
+  min-width: unset !important;
+  cursor: pointer;
+  font-family: 'Titillium Web', sans-serif;
+  letter-spacing: .5px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+body.theme-light .season-picker-back { color: rgba(0,0,0,0.35) !important; }
+.season-picker-back:hover { color: rgba(255,255,255,0.65) !important; transform: none !important; }
+body.theme-light .season-picker-back:hover { color: rgba(0,0,0,0.6) !important; }
+
+/* Badge de temporada na lista de campeonatos */
+.champ-season-badge {
+  font-size: .58em;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-family: 'Titillium Web', sans-serif;
+  font-weight: 600;
+  letter-spacing: .5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.champ-season-badge.s25 { background: rgba(225,6,0,0.2); color: #ff6b6b; border: 1px solid rgba(225,6,0,0.3); }
+.champ-season-badge.s26 { background: rgba(0,147,204,0.2); color: #5dd0f5; border: 1px solid rgba(0,147,204,0.3); }
+
 .champ-modal-footer {
   padding: 14px 24px; border-top: 1px solid rgba(255,255,255,0.07);
   display: flex; justify-content: flex-end;
@@ -372,7 +505,7 @@ input[type="text"]:focus { border-bottom: 2px solid var(--f1-red); outline: none
 .chart-container { background: var(--glass-bg); backdrop-filter: blur(10px); padding: 20px; border-radius: 12px; border: 1px solid var(--glass-border); margin-bottom: 40px; height: 450px; }
 
 .h2h-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px,1fr)); gap: 10px; }
-.h2h-card { background: rgba(255,255,255,0.06); padding: 8px 15px; border-radius: 4px; display: flex; flex-direction: column; border: 1px solid var(--glass-border); border-left: 4px solid var(--f1-red); position: relative; overflow: hidden; }
+.h2h-card { background: rgba(255,255,255,0.06); padding: 8px 15px; border-radius: 4px; display: flex; flex-direction: column; border: 1px solid var(--glass-border); border-left: 4px solid var(--f1-red); position: relative; overflow: hidden; align-self: stretch; }
 .h2h-card-glow {
   position: absolute; inset: 0; pointer-events: none;
   background: linear-gradient(135deg, var(--h2h-team-color, transparent) 0%, transparent 55%);
@@ -1281,7 +1414,7 @@ body.theme-amoled .team-poster-box { background: #060610; }
 <div id="chartLegend" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;"></div>
 <div class="chart-container"><canvas id="performanceChart"></canvas></div>
 
-<div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;">
+<div style="display:flex;gap:20px;flex-wrap:wrap;align-items:stretch;">
   <div class="constructors-wrapper">
     <h2>Construtores</h2>
     <div class="table-container" style="width:100%;margin-bottom:10px;">
@@ -1311,9 +1444,9 @@ body.theme-amoled .team-poster-box { background: #060610; }
       <div id="leaderDuelContainer"></div>
     </div>
   </div>
-  <div style="flex:1;min-width:300px;">
+  <div style="flex:1;min-width:300px;display:flex;flex-direction:column;">
     <h2>Duelo de Companheiros <span style="font-size:.5em;vertical-align:middle;color:#888;">CORRIDA</span></h2>
-    <div id="h2hContainer" class="h2h-list"></div>
+    <div id="h2hContainer" class="h2h-list" style="flex:1;align-content:stretch;"></div>
   </div>
 </div>
 
@@ -1508,9 +1641,29 @@ body.theme-amoled .team-poster-box { background: #060610; }
     </div>
     <div class="champ-modal-body">
       <div id="champList" class="champ-list"></div>
-      <div class="champ-add-row">
+      <div class="champ-add-row" id="champAddRow">
         <input type="text" id="newChampName" placeholder="Nome do novo campeonato..." onkeydown="if(event.key==='Enter')addChampionship()">
         <button class="champ-btn-add" onclick="addChampionship()">＋ Criar</button>
+      </div>
+
+      <!-- Passo 2: seletor de temporada -->
+      <div id="champSeasonPicker">
+        <div class="season-picker-label">Qual temporada?</div>
+        <div class="season-picker-pending-name" id="champPendingName"></div>
+        <div class="season-picker-cards">
+          <div class="season-card f1-25" onclick="finishAddChampionship('2025')">
+            <div class="season-card-year">F1 25</div>
+            <div class="season-card-subtitle">Temporada 2025</div>
+            <div class="season-card-drivers">Verstappen · Hamilton<br>Norris · Russell</div>
+          </div>
+          <div class="season-card f1-26" onclick="finishAddChampionship('2026')">
+            <span class="season-card-new-badge">NOVO</span>
+            <div class="season-card-year">F1 26</div>
+            <div class="season-card-subtitle">Temporada 2026</div>
+            <div class="season-card-drivers">Audi · Cadillac<br>22 pilotos · 11 equipes</div>
+          </div>
+        </div>
+        <button class="season-picker-back" onclick="cancelSeasonPicker()">← Voltar</button>
       </div>
     </div>
     <div class="champ-modal-footer">
@@ -1543,7 +1696,7 @@ let activeChampionshipId = null;
 const F1_PRESET_COLORS = [
   "#E8002D","#FF8000","#3671C6","#27F4D2","#229971",
   "#0093CC","#6692FF","#52E252","#64C4FF","#B6BABD",
-  "#ffffff","#f1c40f","#e67e22","#9b59b6","#1abc9c"
+  "#6B6B6B","#3A3A3A","#ffffff","#f1c40f","#e67e22"
 ];
 
 function hexToRGB(hex) {
@@ -2506,7 +2659,8 @@ const countries = {
 const teamColorMap = {
   "red bull":"#3671C6","ferrari":"#E8002D","mclaren":"#FF8000","mercedes":"#27F4D2",
   "aston martin":"#229971","alpine":"#0093CC","racing bulls":"#6692FF","rb":"#6692FF",
-  "vcarb":"#6692FF","sauber":"#52E252","kick":"#52E252","williams":"#64C4FF","haas":"#B6BABD"
+  "vcarb":"#6692FF","sauber":"#52E252","kick":"#52E252","williams":"#64C4FF","haas":"#B6BABD",
+  "audi":"#6B6B6B","cadillac":"#3A3A3A"
 };
 
 const logoMap = {
@@ -2515,7 +2669,9 @@ const logoMap = {
   "alpine":"https://i.imgur.com/DveLvT7.png","aston martin":"https://i.imgur.com/VMHSp48.png",
   "williams":"https://i.imgur.com/U7oMWX4.png","haas":"https://i.imgur.com/dx7z7Kg.png",
   "sauber":"https://i.imgur.com/MYyEAOA.png","kick":"https://i.imgur.com/MYyEAOA.png",
-  "racing bulls":"https://i.imgur.com/dcJutpD.png","rb":"https://i.imgur.com/dcJutpD.png","vcarb":"https://i.imgur.com/dcJutpD.png"
+  "racing bulls":"https://i.imgur.com/dcJutpD.png","rb":"https://i.imgur.com/dcJutpD.png","vcarb":"https://i.imgur.com/dcJutpD.png",
+  "audi":"https://i.imgur.com/u7caf4e.png",
+  "cadillac":"https://i.imgur.com/szfOHz4.png"
 };
 
 function populateCountrySelects() {
@@ -2951,8 +3107,8 @@ function renderConstructorsAndH2H(teamsMap) {
     const trophy2 = (total > 0 && s2 > s1) ? '🏆 ' : '';
     const centerEmoji = `<span></span>`;
     const barHtml = total === 0
-      ? `<div style="height:5px;border-radius:3px;background:${emptyBarBg};margin-top:8px;"></div>`
-      : `<div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;margin-top:7px;margin-bottom:3px;gap:4px;">
+      ? `<div style="height:5px;border-radius:3px;background:${emptyBarBg};margin-top:auto;"></div>`
+      : `<div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;margin-top:auto;margin-bottom:3px;gap:4px;">
           <span style="font-family:'Oswald',sans-serif;font-size:.62rem;font-weight:600;color:${c1};opacity:${op1};letter-spacing:.5px;">${pct1r}%${trophy1}</span>
           ${centerEmoji}
           <span style="font-family:'Oswald',sans-serif;font-size:.62rem;font-weight:600;color:${c2};opacity:${op2};letter-spacing:.5px;text-align:right;">${trophy2}${pct2r}%</span>
@@ -3285,6 +3441,8 @@ function renderChampionshipList() {
   }
   container.innerHTML = championships.map(c => {
     const isActive = c.id === activeChampionshipId;
+    const season = c.season || '2025';
+    const seasonBadge = `<span class="champ-season-badge ${season === '2026' ? 's26' : 's25'}">${season === '2026' ? 'F1 26' : 'F1 25'}</span>`;
     return `<div class="champ-item${isActive ? ' active-champ' : ''}" id="champ-item-${c.id}">
       <span style="font-size:1.1em;flex-shrink:0;">🏆</span>
       <input
@@ -3296,6 +3454,7 @@ function renderChampionshipList() {
         style="color:${isActive ? '#7dffb3' : ''};"
         title="Clique duas vezes para renomear"
       >
+      ${seasonBadge}
       ${isActive ? '<span class="champ-badge-active">Ativo</span>' : `<button class="champ-btn-select" onclick="selectChampionship('${c.id}')">Selecionar</button>`}
       <button class="champ-btn-rename" onclick="document.getElementById('champ-name-input-${c.id}').focus();document.getElementById('champ-name-input-${c.id}').select();" title="Renomear">✏️</button>
       <button class="champ-btn-del" onclick="deleteChampionship('${c.id}')" title="Excluir campeonato">🗑️</button>
@@ -3307,16 +3466,50 @@ function escapeHtml(str) {
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+let _pendingChampName = '';
+
 function addChampionship() {
   const input = document.getElementById('newChampName');
   const name = input.value.trim();
   if (!name) { input.focus(); return; }
+  _pendingChampName = name;
+  // Mostra seletor de temporada
+  document.getElementById('champAddRow').style.display = 'none';
+  document.getElementById('champPendingName').textContent = name;
+  document.getElementById('champSeasonPicker').classList.add('visible');
+}
+
+function cancelSeasonPicker() {
+  _pendingChampName = '';
+  document.getElementById('champSeasonPicker').classList.remove('visible');
+  document.getElementById('champAddRow').style.display = '';
+  document.getElementById('newChampName').focus();
+}
+
+function finishAddChampionship(season) {
+  if (!_pendingChampName) return;
   const championships = getChampionships();
   const newId = 'champ_' + Date.now();
-  championships.push({ id: newId, name });
+  championships.push({ id: newId, name: _pendingChampName, season });
   saveChampionships(championships);
-  input.value = '';
+  document.getElementById('newChampName').value = '';
+  _pendingChampName = '';
+  document.getElementById('champSeasonPicker').classList.remove('visible');
+  document.getElementById('champAddRow').style.display = '';
   renderChampionshipList();
+}
+
+function getActiveChampionshipSeason() {
+  const championships = getChampionships();
+  const active = championships.find(c => c.id === activeChampionshipId);
+  return active?.season || '2025';
+}
+
+function getDefaultTeams(season) {
+  if (season === '2026') {
+    return ["Red Bull Racing","Ferrari","McLaren","Mercedes","Aston Martin","Alpine","Williams","Racing Bulls","Audi","Haas","Cadillac"];
+  }
+  return ["Red Bull Racing","Ferrari","McLaren","Mercedes","Aston Martin","Alpine","Williams","Racing Bulls","Kick Sauber","Haas"];
 }
 
 function renameChampionship(id, newName) {
@@ -3428,7 +3621,7 @@ function openAddDriverModal() {
   document.getElementById('newDriverName').value = '';
   document.getElementById('newDriverTeam').value = '';
   document.getElementById('newDriverFlag').value = 'br';
-  const defaults = ["Red Bull Racing","Ferrari","McLaren","Mercedes","Aston Martin","Alpine","Williams","Racing Bulls","Kick Sauber","Haas"];
+  const defaults = getDefaultTeams(getActiveChampionshipSeason());
   const dl = document.getElementById('teamOptions');
   dl.innerHTML = '';
   [...new Set([...defaults, ...data.drivers.map(d => d.team)])].sort().forEach(t => {
@@ -3474,7 +3667,7 @@ function confirmAddDriver() {
   let t = document.getElementById('newDriverTeam').value;
   const f = document.getElementById('newDriverFlag').value;
   if (n && t) {
-    const defaults = ["Red Bull Racing","Ferrari","McLaren","Mercedes","Aston Martin","Alpine","Williams","Racing Bulls","Kick Sauber","Haas"];
+    const defaults = getDefaultTeams(getActiveChampionshipSeason());
     const all = [...new Set([...defaults, ...data.drivers.map(d => d.team)])];
     const match = all.find(x => x.toLowerCase() === t.trim().toLowerCase());
     if (match) t = match;
@@ -3504,18 +3697,53 @@ function confirmAddRace() {
 const closeModal = id => document.getElementById(id).style.display = 'none';
 
 function loadF1Grid() {
-  if (!confirm("Carregar Grid 2025?")) return;
+  const season = getActiveChampionshipSeason();
+  if (season === '2026') {
+    loadF1Grid2026();
+  } else {
+    if (!confirm("Carregar Grid F1 2025?")) return;
+    const g = [
+      {n:"Max Verstappen",t:"Red Bull Racing",c:"#3671C6",f:"nl"},{n:"Yuki Tsunoda",t:"Red Bull Racing",c:"#3671C6",f:"jp"},
+      {n:"Lewis Hamilton",t:"Ferrari",c:"#E8002D",f:"gb"},{n:"Charles Leclerc",t:"Ferrari",c:"#E8002D",f:"mc"},
+      {n:"Lando Norris",t:"McLaren",c:"#FF8000",f:"gb"},{n:"Oscar Piastri",t:"McLaren",c:"#FF8000",f:"au"},
+      {n:"George Russell",t:"Mercedes",c:"#27F4D2",f:"gb"},{n:"Kimi Antonelli",t:"Mercedes",c:"#27F4D2",f:"it"},
+      {n:"Fernando Alonso",t:"Aston Martin",c:"#229971",f:"es"},{n:"Lance Stroll",t:"Aston Martin",c:"#229971",f:"ca"},
+      {n:"Pierre Gasly",t:"Alpine",c:"#0093CC",f:"fr"},{n:"Franco Colapinto",t:"Alpine",c:"#0093CC",f:"ar"},
+      {n:"Liam Lawson",t:"Racing Bulls",c:"#6692FF",f:"nz"},{n:"Isack Hadjar",t:"Racing Bulls",c:"#6692FF",f:"fr"},
+      {n:"Nico Hulkenberg",t:"Kick Sauber",c:"#52E252",f:"de"},{n:"Gabriel Bortoleto",t:"Kick Sauber",c:"#52E252",f:"br"},
+      {n:"Alex Albon",t:"Williams",c:"#64C4FF",f:"th"},{n:"Carlos Sainz",t:"Williams",c:"#64C4FF",f:"es"},
+      {n:"Esteban Ocon",t:"Haas",c:"#B6BABD",f:"fr"},{n:"Oliver Bearman",t:"Haas",c:"#B6BABD",f:"gb"}
+    ];
+    g.forEach(p => data.drivers.push({id:Date.now()+Math.random(), name:p.n, team:p.t, color:p.c, country:p.f, results:{}}));
+    saveData(); render();
+  }
+}
+
+function loadF1Grid2026() {
+  if (!confirm("Carregar Grid F1 2026?\n\n11 equipes • 22 pilotos\nAudi, Cadillac e mais novidades!")) return;
   const g = [
-    {n:"Max Verstappen",t:"Red Bull Racing",c:"#3671C6",f:"nl"},{n:"Yuki Tsunoda",t:"Red Bull Racing",c:"#3671C6",f:"jp"},
-    {n:"Lewis Hamilton",t:"Ferrari",c:"#E8002D",f:"gb"},{n:"Charles Leclerc",t:"Ferrari",c:"#E8002D",f:"mc"},
-    {n:"Lando Norris",t:"McLaren",c:"#FF8000",f:"gb"},{n:"Oscar Piastri",t:"McLaren",c:"#FF8000",f:"au"},
-    {n:"George Russell",t:"Mercedes",c:"#27F4D2",f:"gb"},{n:"Kimi Antonelli",t:"Mercedes",c:"#27F4D2",f:"it"},
-    {n:"Fernando Alonso",t:"Aston Martin",c:"#229971",f:"es"},{n:"Lance Stroll",t:"Aston Martin",c:"#229971",f:"ca"},
-    {n:"Pierre Gasly",t:"Alpine",c:"#0093CC",f:"fr"},{n:"Franco Colapinto",t:"Alpine",c:"#0093CC",f:"ar"},
-    {n:"Liam Lawson",t:"Racing Bulls",c:"#6692FF",f:"nz"},{n:"Isack Hadjar",t:"Racing Bulls",c:"#6692FF",f:"fr"},
-    {n:"Nico Hulkenberg",t:"Kick Sauber",c:"#52E252",f:"de"},{n:"Gabriel Bortoleto",t:"Kick Sauber",c:"#52E252",f:"br"},
-    {n:"Alex Albon",t:"Williams",c:"#64C4FF",f:"th"},{n:"Carlos Sainz",t:"Williams",c:"#64C4FF",f:"es"},
-    {n:"Esteban Ocon",t:"Haas",c:"#B6BABD",f:"fr"},{n:"Oliver Bearman",t:"Haas",c:"#B6BABD",f:"gb"}
+    {n:"Max Verstappen",   t:"Red Bull Racing", c:"#3671C6", f:"nl"},
+    {n:"Isack Hadjar",     t:"Red Bull Racing", c:"#3671C6", f:"fr"},
+    {n:"Lewis Hamilton",   t:"Ferrari",         c:"#E8002D", f:"gb"},
+    {n:"Charles Leclerc",  t:"Ferrari",         c:"#E8002D", f:"mc"},
+    {n:"Lando Norris",     t:"McLaren",         c:"#FF8000", f:"gb"},
+    {n:"Oscar Piastri",    t:"McLaren",         c:"#FF8000", f:"au"},
+    {n:"George Russell",   t:"Mercedes",        c:"#27F4D2", f:"gb"},
+    {n:"Kimi Antonelli",   t:"Mercedes",        c:"#27F4D2", f:"it"},
+    {n:"Fernando Alonso",  t:"Aston Martin",    c:"#229971", f:"es"},
+    {n:"Lance Stroll",     t:"Aston Martin",    c:"#229971", f:"ca"},
+    {n:"Pierre Gasly",     t:"Alpine",          c:"#0093CC", f:"fr"},
+    {n:"Franco Colapinto", t:"Alpine",          c:"#0093CC", f:"ar"},
+    {n:"Alex Albon",       t:"Williams",        c:"#64C4FF", f:"th"},
+    {n:"Carlos Sainz",     t:"Williams",        c:"#64C4FF", f:"es"},
+    {n:"Liam Lawson",      t:"Racing Bulls",    c:"#6692FF", f:"nz"},
+    {n:"Arvid Lindblad",   t:"Racing Bulls",    c:"#6692FF", f:"gb"},
+    {n:"Nico Hulkenberg",  t:"Audi",            c:"#6B6B6B", f:"de"},
+    {n:"Gabriel Bortoleto",t:"Audi",            c:"#6B6B6B", f:"br"},
+    {n:"Esteban Ocon",     t:"Haas",            c:"#B6BABD", f:"fr"},
+    {n:"Oliver Bearman",   t:"Haas",            c:"#B6BABD", f:"gb"},
+    {n:"Sergio Perez",     t:"Cadillac",        c:"#3A3A3A", f:"mx"},
+    {n:"Valtteri Bottas",  t:"Cadillac",        c:"#3A3A3A", f:"fi"}
   ];
   g.forEach(p => data.drivers.push({id:Date.now()+Math.random(), name:p.n, team:p.t, color:p.c, country:p.f, results:{}}));
   saveData(); render();
