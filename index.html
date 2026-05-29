@@ -1013,6 +1013,123 @@ body.theme-light .duel-bar-label-row span:last-child { color: #111; }
   display: flex; height: 8px; border-radius: 5px; overflow: hidden; gap: 3px;
 }
 
+/* ── MODAL REORDENAR CORRIDAS ── */
+.rr-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.78);
+  backdrop-filter: blur(6px); z-index: 15000;
+  display: none; align-items: center; justify-content: center; padding: 16px;
+}
+.rr-overlay.open { display: flex; }
+.rr-box {
+  background: var(--glass-bg); border: 1px solid var(--glass-border);
+  border-radius: 16px; width: 100%; max-width: 480px;
+  max-height: 88vh; display: flex; flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+body.theme-light .rr-box { background: #fff; }
+body.theme-amoled .rr-box { background: #0d0d0d; }
+.rr-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 18px 10px;
+}
+.rr-title {
+  font-family: 'Oswald', sans-serif; font-size: 1.1rem;
+  font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
+}
+.rr-close {
+  background: none; border: none; color: inherit;
+  font-size: 1.1rem; cursor: pointer; opacity: .5; padding: 4px;
+}
+.rr-close:hover { opacity: 1; }
+.rr-hint {
+  font-family: 'Titillium Web', sans-serif; font-size: .75rem;
+  color: rgba(255,255,255,.38); margin: 0 18px 12px;
+  padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,.07);
+}
+body.theme-light .rr-hint { color: rgba(0,0,0,.4); border-bottom-color: rgba(0,0,0,.08); }
+
+.rr-list {
+  overflow-y: auto; flex: 1;
+  padding: 6px 12px; display: flex; flex-direction: column; gap: 5px;
+}
+.rr-item {
+  display: flex; align-items: center; gap: 9px;
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08);
+  border-radius: 10px; padding: 9px 10px;
+  cursor: grab; user-select: none;
+  transition: background .15s, transform .15s, box-shadow .15s;
+  position: relative;
+}
+body.theme-light .rr-item { background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.10); }
+.rr-item:active { cursor: grabbing; }
+.rr-item.rr-dragging {
+  opacity: .4; background: rgba(255,255,255,.02);
+}
+.rr-item.rr-drag-over {
+  background: rgba(90,62,143,.35);
+  border-color: #7c5cbf;
+  box-shadow: 0 0 0 2px rgba(124,92,191,.4);
+  transform: scale(1.01);
+}
+
+.rr-handle {
+  font-size: 1.1rem; opacity: .35; flex-shrink: 0; line-height: 1;
+  cursor: grab;
+}
+.rr-flag { width: 26px; height: 18px; border-radius: 3px; object-fit: cover; flex-shrink: 0; }
+.rr-flag-placeholder { width: 26px; height: 18px; border-radius: 3px; background: rgba(255,255,255,.1); flex-shrink: 0; }
+
+.rr-info { flex: 1; min-width: 0; }
+.rr-name {
+  font-family: 'Oswald', sans-serif; font-size: .95rem;
+  font-weight: 600; letter-spacing: .5px; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.rr-type {
+  font-family: 'Titillium Web', sans-serif; font-size: .65rem;
+  letter-spacing: 1px; text-transform: uppercase; margin-top: 1px;
+}
+.rr-type.gp { color: #e10600; }
+.rr-type.sprint { color: #f5a623; }
+
+.rr-pos {
+  font-family: 'Titillium Web', sans-serif; font-size: .7rem;
+  color: rgba(255,255,255,.25); min-width: 20px; text-align: right;
+  flex-shrink: 0;
+}
+body.theme-light .rr-pos { color: rgba(0,0,0,.25); }
+
+.rr-arrows { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
+.rr-arrow {
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
+  border-radius: 5px; color: inherit; font-size: .65rem; padding: 3px 6px;
+  cursor: pointer; line-height: 1; transition: background .12s;
+}
+body.theme-light .rr-arrow { background: rgba(0,0,0,.07); border-color: rgba(0,0,0,.15); }
+.rr-arrow:hover { background: rgba(90,62,143,.5); border-color: #7c5cbf; }
+.rr-arrow:disabled { opacity: .2; cursor: default; }
+.rr-arrow:disabled:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.12); }
+
+.rr-footer {
+  display: flex; justify-content: flex-end; gap: 10px;
+  padding: 12px 16px; border-top: 1px solid rgba(255,255,255,.07);
+}
+body.theme-light .rr-footer { border-top-color: rgba(0,0,0,.08); }
+.rr-btn-cancel {
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
+  border-radius: 8px; color: inherit; font-family: 'Titillium Web',sans-serif;
+  font-size: .85rem; padding: 8px 18px; cursor: pointer; letter-spacing: .5px;
+}
+body.theme-light .rr-btn-cancel { background: rgba(0,0,0,.07); border-color: rgba(0,0,0,.15); }
+.rr-btn-cancel:hover { background: rgba(255,255,255,.14); }
+.rr-btn-save {
+  background: #5a3e8f; border: none; border-radius: 8px; color: #fff;
+  font-family: 'Titillium Web',sans-serif; font-size: .85rem; font-weight: 700;
+  padding: 8px 22px; cursor: pointer; letter-spacing: .5px;
+  transition: background .15s;
+}
+.rr-btn-save:hover { background: #7c5cbf; }
+
 /* ── SELETOR DE PILOTO DO CONFRONTO ── */
 .duel-picker-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.75);
@@ -1388,6 +1505,7 @@ body.theme-amoled .team-poster-box { background: #060610; }
   <button onclick="loadGameCalendar()" style="background:#333;">📅 Carregar Calendário F1 25</button>
   <button onclick="openAddRaceModal('GP')">🏆 Adicionar GP</button>
   <button onclick="openAddRaceModal('Sprint')">🥇 Adicionar Sprint</button>
+  <button onclick="openRaceReorderModal()" style="background:#5a3e8f;">↕️ Reordenar Corridas</button>
   <button class="btn-export" onclick="exportData()">💾 Exportar Dados</button>
   <button onclick="document.getElementById('importFile').click()">📂 Importar Dados</button>
   <input type="file" id="importFile" style="display:none" onchange="importData(event)">
@@ -1488,7 +1606,23 @@ body.theme-amoled .team-poster-box { background: #060610; }
   </div>
 </div>
 
-<!-- ── FLAG PICKER DO CALENDÁRIO ── -->
+<!-- ── MODAL REORDENAR CORRIDAS ── -->
+<div id="raceReorderOverlay" class="rr-overlay" onclick="if(event.target===this)closeRaceReorderModal()">
+  <div class="rr-box">
+    <div class="rr-header">
+      <span class="rr-title">↕️ Reordenar Corridas</span>
+      <button class="rr-close" onclick="closeRaceReorderModal()">✕</button>
+    </div>
+    <p class="rr-hint">Arraste ou use ▲▼ para mover. Clique em <strong>Salvar</strong> para aplicar.</p>
+    <div class="rr-list" id="rrList"></div>
+    <div class="rr-footer">
+      <button class="rr-btn-cancel" onclick="closeRaceReorderModal()">Cancelar</button>
+      <button class="rr-btn-save" onclick="saveRaceOrder()">✔ Salvar Ordem</button>
+    </div>
+  </div>
+</div>
+
+
 <div id="calFlagPicker" class="cal-flag-picker" onclick="event.stopPropagation()">
   <div class="cal-fp-title">Selecionar Bandeira da Corrida</div>
   <input type="text" id="calFpSearch" class="cal-fp-search" placeholder="Buscar país..." oninput="calFpFilter(this.value)">
@@ -3761,6 +3895,96 @@ function loadGameCalendar() {
 }
 
 const deleteDriver = id => { if (confirm("Excluir?")) { data.drivers = data.drivers.filter(d => d.id !== id); hiddenDrivers.delete(id); saveData(); render(); } };
+// ── REORDENAR CORRIDAS ──────────────────────────────
+let _rrOrder = [];   // cópia de trabalho dos ids
+let _rrDragSrc = null;
+
+function openRaceReorderModal() {
+  _rrOrder = data.races.map(r => r.id);
+  renderRaceReorderList();
+  document.getElementById('raceReorderOverlay').classList.add('open');
+}
+
+function closeRaceReorderModal() {
+  document.getElementById('raceReorderOverlay').classList.remove('open');
+}
+
+function renderRaceReorderList() {
+  const list = document.getElementById('rrList');
+  list.innerHTML = '';
+  _rrOrder.forEach((id, idx) => {
+    const race = data.races.find(r => r.id === id);
+    if (!race) return;
+    const flagHtml = race.flag
+      ? `<img class="rr-flag" src="${getFlagUrl(race.flag)}" alt="">`
+      : `<div class="rr-flag-placeholder"></div>`;
+    const item = document.createElement('div');
+    item.className = 'rr-item';
+    item.dataset.id = id;
+    item.draggable = true;
+    item.innerHTML = `
+      <span class="rr-handle">⠿</span>
+      ${flagHtml}
+      <div class="rr-info">
+        <div class="rr-name">${race.name}</div>
+        <div class="rr-type ${race.type === 'Sprint' ? 'sprint' : 'gp'}">${race.type}</div>
+      </div>
+      <span class="rr-pos">${idx + 1}</span>
+      <div class="rr-arrows">
+        <button class="rr-arrow" onclick="rrMove('${id}',-1)" ${idx === 0 ? 'disabled' : ''}>▲</button>
+        <button class="rr-arrow" onclick="rrMove('${id}',1)"  ${idx === _rrOrder.length - 1 ? 'disabled' : ''}>▼</button>
+      </div>`;
+
+    // drag events
+    item.addEventListener('dragstart', e => {
+      _rrDragSrc = id;
+      item.classList.add('rr-dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    item.addEventListener('dragend', () => {
+      item.classList.remove('rr-dragging');
+      document.querySelectorAll('.rr-item').forEach(el => el.classList.remove('rr-drag-over'));
+    });
+    item.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      document.querySelectorAll('.rr-item').forEach(el => el.classList.remove('rr-drag-over'));
+      item.classList.add('rr-drag-over');
+    });
+    item.addEventListener('drop', e => {
+      e.preventDefault();
+      if (_rrDragSrc && _rrDragSrc !== id) {
+        const from = _rrOrder.indexOf(_rrDragSrc);
+        const to   = _rrOrder.indexOf(id);
+        _rrOrder.splice(from, 1);
+        _rrOrder.splice(to, 0, _rrDragSrc);
+        renderRaceReorderList();
+      }
+    });
+    list.appendChild(item);
+  });
+}
+
+function rrMove(id, dir) {
+  const idx = _rrOrder.indexOf(id);
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= _rrOrder.length) return;
+  _rrOrder.splice(idx, 1);
+  _rrOrder.splice(newIdx, 0, id);
+  renderRaceReorderList();
+  // mantém scroll visível no item movido
+  setTimeout(() => {
+    const el = document.querySelector(`.rr-item[data-id="${id}"]`);
+    if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, 30);
+}
+
+function saveRaceOrder() {
+  data.races = _rrOrder.map(id => data.races.find(r => r.id === id)).filter(Boolean);
+  saveData(); render();
+  closeRaceReorderModal();
+}
+
 const deleteRace = id => { if (confirm("Excluir?")) { data.races = data.races.filter(r => r.id !== id); saveData(); render(); } };
 const editDriverName = (id, v) => { const d = data.drivers.find(x => x.id === id); if(d) { d.name = v; saveData(); render(); } };
 function editDriverTeam(id, v) {
