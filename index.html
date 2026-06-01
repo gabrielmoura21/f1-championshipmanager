@@ -1893,8 +1893,9 @@ function closeColorPicker() {
 
 // Fotos automáticas dos pilotos da F1 2025 (oficial F1 media)
 // ── FOTOS 2025 (liveries da temporada 2025, via CDN Cloudinary da F1) ─────────
+// c_fill,g_face: crop centrado no rosto; ar_1:1: quadrado; w_320: 320px
 const _f25 = (path) =>
-  `https://media.formula1.com/image/upload/c_lfill,w_320/q_auto/d_common:f1:2025:fallback:driver:2025fallbackdriverright.webp/v1740000001/common/f1/2025/${path}`;
+  `https://media.formula1.com/image/upload/c_fill,g_face,ar_1:1,w_320/q_auto/d_common:f1:2025:fallback:driver:2025fallbackdriverright.webp/v1740000001/common/f1/2025/${path}`;
 
 const driverPhotoMap2025 = {
   'max verstappen':       _f25('redbullracing/maxver01/2025redbullracingmaxver01right.webp'),
@@ -1925,7 +1926,7 @@ const driverPhotoMap2025 = {
 // URLs obtidas diretamente de formula1.com/en/drivers em Mai/2026.
 // Padrão: /common/f1/2026/{equipe}/{codigo}/2026{equipe}{codigo}right.webp
 const _f26 = (path) =>
-  `https://media.formula1.com/image/upload/c_lfill,w_320/q_auto/d_common:f1:2026:fallback:driver:2026fallbackdriverright.webp/v1740000001/common/f1/2026/${path}`;
+  `https://media.formula1.com/image/upload/c_fill,g_face,ar_1:1,w_320/q_auto/d_common:f1:2026:fallback:driver:2026fallbackdriverright.webp/v1740000001/common/f1/2026/${path}`;
 
 const driverPhotoMap2026 = {
   // Red Bull Racing
