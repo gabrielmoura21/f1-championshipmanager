@@ -3671,7 +3671,9 @@ function renderStatus(drivers) {
     dom.titleStatus.innerText = "EM ABERTO";
     dom.titleStatus.style.color = document.body.classList.contains('theme-light') ? "#333" : "white";
   }
-  document.getElementById('racesLeft').innerText = `Faltam: ${data.races.filter(r => r.type !== 'Sprint' && !drivers.some(d => d.results[r.id])).length} corridas`;
+  const racesLeftCount = data.races.filter(r => r.type !== 'Sprint' && !drivers.some(d => d.results[r.id])).length;
+  const sprintsLeftCount = data.races.filter(r => r.type === 'Sprint' && !drivers.some(d => d.results[r.id])).length;
+  document.getElementById('racesLeft').innerText = `Faltam: ${racesLeftCount} corridas / ${sprintsLeftCount} sprints`;
 }
 
 // ── Auto-preenche o calendário com a bandeira da corrida no dia de hoje ──
