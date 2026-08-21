@@ -3059,12 +3059,14 @@ function confirmPhotoUpload() {
     driver.photoRemoved = false;
     if (pendingPhotoOriginalDataUrl) driver.photoOriginal = pendingPhotoOriginalDataUrl;
   }
-  // Mantém localStorage como fallback legado
-  localStorage.setItem('f1_photo_' + currentPhotoDriverId, pendingPhotoDataUrl);
+  // Limpa flag legada de remoção (a foto agora vive só no objeto do piloto)
   localStorage.removeItem('f1_photo_removed_' + currentPhotoDriverId);
   // Atualiza portrait no cartão aberto
   document.getElementById('dcPortraitImg').src = pendingPhotoDataUrl;
-  saveData();
+  if (!saveData()) {
+    alert('⚠️ Não foi possível salvar a foto: o armazenamento local do navegador está cheio.\n\nTente remover fotos personalizadas de pilotos que você não usa mais (inclusive em outros campeonatos salvos neste navegador), ou use uma foto menor.');
+    return;
+  }
   closePhotoUpload();
   render();
 }
@@ -4083,7 +4085,13 @@ function init() {
 
 const saveData = () => {
   const key = activeChampionshipId ? 'f1_manager_data_' + activeChampionshipId : 'f1_manager_data';
-  localStorage.setItem(key, JSON.stringify(data));
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+    return true;
+  } catch (e) {
+    console.error('Erro ao salvar (armazenamento local possivelmente cheio):', e);
+    return false;
+  }
 };
 
 function toggleEdit() {
