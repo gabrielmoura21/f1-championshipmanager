@@ -2058,6 +2058,135 @@ let currentPhotoDriverId = null;
 let pendingPhotoDataUrl  = null;
 let pendingPhotoOriginalDataUrl = null; // imagem original (não cortada) para uso em pôsteres
 
+// ── IndexedDB para fotos customizadas de pilotos ──
+// O localStorage tem cota pequena (~5-10MB, compartilhada entre TODOS os campeonatos).
+// Fotos em base64 estouram essa cota rápido. O IndexedDB tem cota muito maior
+// (geralmente centenas de MB), então guardamos as fotos lá e mantemos o localStorage
+// só com os dados leves (resultados, pontos, etc).
+const PHOTO_DB_NAME  = 'f1_photos_db';
+const PHOTO_DB_STORE = 'photos';
+let _photoDbPromise = null;
+function openPhotoDb() {
+  if (_photoDbPromise) return _photoDbPromise;
+  _photoDbPromise = new Promise((resolve, reject) => {
+    if (!window.indexedDB) { reject(new Error('IndexedDB indisponível neste navegador')); return; }
+    const req = indexedDB.open(PHOTO_DB_NAME, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(PHOTO_DB_STORE)) db.createObjectStore(PHOTO_DB_STORE);
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+  return _photoDbPromise;
+}
+function photoDbKey(champId, driverId) { return champId + '::' + driverId; }
+async function idbSetPhoto(champId, driverId, value) {
+  const db = await openPhotoDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(PHOTO_DB_STORE, 'readwrite');
+    tx.objectStore(PHOTO_DB_STORE).put(value, photoDbKey(champId, driverId));
+    tx.oncomplete = () => resolve(true);
+    tx.onerror = () => reject(tx.error);
+  });
+}
+async function idbDeletePhoto(champId, driverId) {
+  const db = await openPhotoDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(PHOTO_DB_STORE, 'readwrite');
+    tx.objectStore(PHOTO_DB_STORE).delete(photoDbKey(champId, driverId));
+    tx.oncomplete = () => resolve(true);
+    tx.onerror = () => reject(tx.error);
+  });
+}
+async function idbGetAllPhotosForChampionship(champId) {
+  const db = await openPhotoDb();
+  const prefix = champId + '::';
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(PHOTO_DB_STORE, 'readonly');
+    const store = tx.objectStore(PHOTO_DB_STORE);
+    const result = {};
+    const req = store.openCursor();
+    req.onsuccess = e => {
+      const cursor = e.target.result;
+      if (cursor) {
+        if (String(cursor.key).startsWith(prefix)) {
+          result[String(cursor.key).slice(prefix.length)] = cursor.value;
+        }
+        cursor.continue();
+      } else {
+        resolve(result);
+      }
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+async function idbDeleteAllPhotosForChampionship(champId) {
+  const db = await openPhotoDb();
+  const prefix = champId + '::';
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(PHOTO_DB_STORE, 'readwrite');
+    const store = tx.objectStore(PHOTO_DB_STORE);
+    const req = store.openCursor();
+    req.onsuccess = e => {
+      const cursor = e.target.result;
+      if (cursor) {
+        if (String(cursor.key).startsWith(prefix)) cursor.delete();
+        cursor.continue();
+      }
+    };
+    tx.oncomplete = () => resolve(true);
+    tx.onerror = () => reject(tx.error);
+  });
+}
+// Carrega as fotos do campeonato (guardadas no IndexedDB) para dentro de `data.drivers`
+// em memória, e re-renderiza quando terminar.
+async function loadPhotosIntoData(champId) {
+  if (!data || !data.drivers || !data.drivers.length) return;
+  let photos;
+  try { photos = await idbGetAllPhotosForChampionship(champId); }
+  catch (e) { console.error('Erro ao carregar fotos do IndexedDB:', e); return; }
+  let changed = false;
+  data.drivers.forEach(d => {
+    const p = photos[d.id];
+    if (p) {
+      if (p.photo) { d.photo = p.photo; changed = true; }
+      if (p.photoOriginal) { d.photoOriginal = p.photoOriginal; changed = true; }
+    }
+  });
+  if (changed) render();
+}
+// Migração única: campeonatos salvos ANTES desta atualização guardavam as fotos
+// direto no JSON do localStorage. Aqui movemos essas fotos para o IndexedDB e
+// regravamos o JSON enxuto, liberando a cota do localStorage.
+async function migrateAllChampionshipPhotosToIDB() {
+  const championships = getChampionships();
+  for (const c of championships) {
+    const key = 'f1_manager_data_' + c.id;
+    const raw = localStorage.getItem(key);
+    if (!raw) continue;
+    let champData;
+    try { champData = JSON.parse(raw); } catch (e) { continue; }
+    if (!champData.drivers || !champData.drivers.length) continue;
+    let hasEmbedded = false;
+    for (const d of champData.drivers) {
+      if (d.photo || d.photoOriginal) {
+        hasEmbedded = true;
+        try { await idbSetPhoto(c.id, d.id, { photo: d.photo || null, photoOriginal: d.photoOriginal || null }); }
+        catch (e) { console.error('Falha ao migrar foto do piloto', d.id, 'no campeonato', c.id, e); }
+      }
+    }
+    if (hasEmbedded) {
+      champData.drivers = champData.drivers.map(d => {
+        const { photo, photoOriginal, ...rest } = d;
+        return rest;
+      });
+      try { localStorage.setItem(key, JSON.stringify(champData)); }
+      catch (e) { console.error('Falha ao regravar campeonato', c.id, 'após migração de fotos:', e); }
+    }
+  }
+}
+
 // ── Estado do Crop ──
 let cropImg      = null;
 let cropX        = 0, cropY = 0;
@@ -2802,7 +2931,7 @@ function openPhotoUpload() {
   document.getElementById('photoUploadOverlay').classList.add('open');
 }
 
-function restoreOfficialPhoto() {
+async function restoreOfficialPhoto() {
   if (!currentPhotoDriverId) return;
   const d = data.drivers.find(x => x.id == currentPhotoDriverId);
   if (!d) return;
@@ -2812,6 +2941,7 @@ function restoreOfficialPhoto() {
   d.photoOriginal = null;
   localStorage.removeItem('f1_photo_' + currentPhotoDriverId);
   localStorage.removeItem('f1_photo_removed_' + currentPhotoDriverId);
+  try { await idbDeletePhoto(activeChampionshipId, currentPhotoDriverId); } catch (e) { console.error(e); }
   // Obtém a URL oficial do mapa
   const key = d.name.trim().toLowerCase();
   const last = key.split(' ').pop();
@@ -3036,12 +3166,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-function removeDriverPhoto() {
+async function removeDriverPhoto() {
   if (!currentPhotoDriverId) return;
   const driver = data.drivers.find(d => d.id == currentPhotoDriverId);
   if (driver) { driver.photo = null; driver.photoRemoved = true; driver.photoOriginal = null; }
   localStorage.removeItem('f1_photo_' + currentPhotoDriverId);
   localStorage.setItem('f1_photo_removed_' + currentPhotoDriverId, '1');
+  try { await idbDeletePhoto(activeChampionshipId, currentPhotoDriverId); } catch (e) { console.error(e); }
   document.getElementById('dcPortraitImg').src = PHOTO_PLACEHOLDER;
   document.getElementById('photoUploadPreview').src = PHOTO_PLACEHOLDER;
   pendingPhotoDataUrl = null;
@@ -3050,23 +3181,31 @@ function removeDriverPhoto() {
   render();
 }
 
-function confirmPhotoUpload() {
+async function confirmPhotoUpload() {
   if (!currentPhotoDriverId || !pendingPhotoDataUrl) { closePhotoUpload(); return; }
-  // Salva foto no objeto do piloto (garante export no JSON)
+  // Guarda foto no objeto do piloto em memória (uso imediato na UI)
   const driver = data.drivers.find(d => d.id == currentPhotoDriverId);
   if (driver) {
     driver.photo = pendingPhotoDataUrl;
     driver.photoRemoved = false;
     if (pendingPhotoOriginalDataUrl) driver.photoOriginal = pendingPhotoOriginalDataUrl;
   }
-  // Limpa flag legada de remoção (a foto agora vive só no objeto do piloto)
+  // Limpa flag legada de remoção
   localStorage.removeItem('f1_photo_removed_' + currentPhotoDriverId);
   // Atualiza portrait no cartão aberto
   document.getElementById('dcPortraitImg').src = pendingPhotoDataUrl;
-  if (!saveData()) {
-    alert('⚠️ Não foi possível salvar a foto: o armazenamento local do navegador está cheio.\n\nTente remover fotos personalizadas de pilotos que você não usa mais (inclusive em outros campeonatos salvos neste navegador), ou use uma foto menor.');
+  // Persiste a foto no IndexedDB (cota bem maior que o localStorage)
+  try {
+    await idbSetPhoto(activeChampionshipId, currentPhotoDriverId, {
+      photo: driver ? driver.photo : pendingPhotoDataUrl,
+      photoOriginal: driver ? (driver.photoOriginal || null) : (pendingPhotoOriginalDataUrl || null)
+    });
+  } catch (e) {
+    console.error('Erro ao salvar foto no IndexedDB:', e);
+    alert('⚠️ Não foi possível salvar a foto.\n\nSeu navegador pode estar sem espaço em disco, ou em modo de navegação privada/anônima (que bloqueia o armazenamento persistente). Tente em uma aba normal.');
     return;
   }
+  saveData();
   closePhotoUpload();
   render();
 }
@@ -4007,7 +4146,7 @@ function renameChampionship(id, newName) {
   }
 }
 
-function selectChampionship(id) {
+async function selectChampionship(id) {
   if (id === activeChampionshipId) { closeChampionshipModal(); return; }
   // Salva estado atual antes de trocar
   saveData();
@@ -4022,9 +4161,11 @@ function selectChampionship(id) {
   renderChampionshipList();
   render();
   closeChampionshipModal();
+  // Carrega as fotos deste campeonato (guardadas no IndexedDB) e re-renderiza
+  try { await loadPhotosIntoData(id); } catch (e) { console.error(e); }
 }
 
-function deleteChampionship(id) {
+async function deleteChampionship(id) {
   const championships = getChampionships();
   if (championships.length <= 1) {
     alert('Você precisa ter ao menos um campeonato.');
@@ -4035,6 +4176,7 @@ function deleteChampionship(id) {
   const updated = championships.filter(x => x.id !== id);
   saveChampionships(updated);
   localStorage.removeItem('f1_manager_data_' + id);
+  try { await idbDeleteAllPhotosForChampionship(id); } catch (e) { console.error(e); }
   // Se excluiu o ativo, troca para o primeiro disponível
   if (id === activeChampionshipId) {
     activeChampionshipId = updated[0].id;
@@ -4046,11 +4188,12 @@ function deleteChampionship(id) {
     if (myChart) { myChart.destroy(); myChart = null; }
     updateChampionshipButtonLabel();
     render();
+    try { await loadPhotosIntoData(activeChampionshipId); } catch (e) { console.error(e); }
   }
   renderChampionshipList();
 }
 
-function init() {
+async function init() {
   populateCountrySelects();
 
   // ── Bootstrap sistema de campeonatos ──
@@ -4071,6 +4214,10 @@ function init() {
     localStorage.setItem('f1_active_championship', activeChampionshipId);
   }
 
+  // Migra fotos salvas antes desta atualização (embutidas no JSON do localStorage)
+  // para o IndexedDB, liberando espaço para novas fotos.
+  try { await migrateAllChampionshipPhotosToIDB(); } catch (e) { console.error('Erro na migração de fotos:', e); }
+
   // Carrega dados do campeonato ativo
   const saved = localStorage.getItem('f1_manager_data_' + activeChampionshipId);
   data = saved ? JSON.parse(saved) : { drivers: [], races: [] };
@@ -4081,12 +4228,24 @@ function init() {
   setTheme(savedTheme);
   render();
   setupScrollLock();
+
+  // Carrega as fotos do campeonato ativo (guardadas no IndexedDB) e re-renderiza
+  try { await loadPhotosIntoData(activeChampionshipId); } catch (e) { console.error(e); }
 }
 
 const saveData = () => {
   const key = activeChampionshipId ? 'f1_manager_data_' + activeChampionshipId : 'f1_manager_data';
   try {
-    localStorage.setItem(key, JSON.stringify(data));
+    // As fotos (photo/photoOriginal) vivem no IndexedDB, não no localStorage —
+    // aqui gravamos só os dados leves (resultados, pontos, calendário etc).
+    const lightData = {
+      ...data,
+      drivers: (data.drivers || []).map(d => {
+        const { photo, photoOriginal, ...rest } = d;
+        return rest;
+      })
+    };
+    localStorage.setItem(key, JSON.stringify(lightData));
     return true;
   } catch (e) {
     console.error('Erro ao salvar (armazenamento local possivelmente cheio):', e);
