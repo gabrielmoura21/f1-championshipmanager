@@ -1406,6 +1406,15 @@ body.theme-light .cal-month-label { color: #111; }
 .cal-close-btn:hover { background: rgba(255,255,255,0.2) !important; transform: none !important; }
 body.theme-light .cal-close-btn { color: #222 !important; background: rgba(0,0,0,0.07) !important; }
 
+.cal-clear-btn {
+  background: rgba(255,68,68,0.12) !important; border: 1px solid rgba(255,68,68,0.35) !important;
+  width: 30px !important; height: 30px !important; border-radius: 6px !important;
+  font-size: .9rem !important; padding: 0 !important; min-width: unset !important;
+  color: #ff6b6b !important; display: flex !important; align-items: center !important; justify-content: center !important;
+}
+.cal-clear-btn:hover { background: rgba(255,68,68,0.25) !important; transform: none !important; }
+body.theme-light .cal-clear-btn { color: #c0392b !important; background: rgba(192,57,43,0.1) !important; border-color: rgba(192,57,43,0.3) !important; }
+
 .cal-modal-body { padding: 16px 18px 20px; }
 
 .cal-weekdays {
@@ -1649,6 +1658,7 @@ body.theme-amoled .team-poster-box { background: #060610; }
         <button class="cal-nav-btn" onclick="calNavigate(-1)">◀</button>
         <span class="cal-month-label" id="calMonthLabel"></span>
         <button class="cal-nav-btn" onclick="calNavigate(1)">▶</button>
+        <button class="cal-clear-btn" onclick="calClearAll()" title="Limpar todos os registros deste campeonato">🗑️</button>
         <button class="cal-close-btn" onclick="closeCalendarModal()">✕</button>
       </div>
     </div>
@@ -4796,19 +4806,39 @@ function renderLeaderDuel(drivers) {
   </div>`;
 }
 
-// ── SISTEMA DE CALENDÁRIO ──
-const CAL_STORAGE_KEY = 'f1_calendar_flags';
+// ── SISTEMA DE CALENDÁRIO (individual por campeonato) ──
+const CAL_STORAGE_KEY_LEGACY = 'f1_calendar_flags'; // chave antiga (compartilhada), mantida só para migração
+const CAL_STORAGE_PREFIX = 'f1_calendar_flags_';
 let calCurrentYear  = new Date().getFullYear();
 let calCurrentMonth = new Date().getMonth(); // 0-based
 let calPickerDate   = null; // "YYYY-MM-DD" da célula clicada
 
 const CAL_MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
+function calStorageKey() {
+  return CAL_STORAGE_PREFIX + (activeChampionshipId || 'default');
+}
+
 function loadCalendarData() {
-  try { return JSON.parse(localStorage.getItem(CAL_STORAGE_KEY) || '{}'); } catch(e) { return {}; }
+  const raw = localStorage.getItem(calStorageKey());
+  if (raw === null) {
+    // Migração única: se existir um calendário antigo (compartilhado entre campeonatos),
+    // usa ele como ponto de partida na primeira vez que este campeonato abrir o calendário.
+    const legacy = localStorage.getItem(CAL_STORAGE_KEY_LEGACY);
+    if (legacy) {
+      try { return JSON.parse(legacy); } catch(e) { return {}; }
+    }
+    return {};
+  }
+  try { return JSON.parse(raw || '{}'); } catch(e) { return {}; }
 }
 function saveCalendarData(obj) {
-  localStorage.setItem(CAL_STORAGE_KEY, JSON.stringify(obj));
+  localStorage.setItem(calStorageKey(), JSON.stringify(obj));
+}
+function calClearAll() {
+  if (!confirm('Tem certeza que deseja limpar TODOS os registros do calendário deste campeonato?\nEsta ação não pode ser desfeita.')) return;
+  localStorage.removeItem(calStorageKey());
+  renderCalendarGrid();
 }
 
 function openCalendarModal() {
