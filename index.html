@@ -1578,6 +1578,9 @@ body.theme-amoled .team-poster-box { background: #060610; }
   <button class="btn-export" onclick="exportData()">💾 Exportar Dados</button>
   <button onclick="document.getElementById('importFile').click()">📂 Importar Dados</button>
   <input type="file" id="importFile" style="display:none" onchange="importData(event)">
+  <button style="background:#1565c0;" onclick="exportPhotos()">🖼️ Exportar Fotos</button>
+  <button style="background:#1565c0;" onclick="document.getElementById('importPhotosFile').click()">🖼️ Importar Fotos</button>
+  <input type="file" id="importPhotosFile" style="display:none" accept="application/json" onchange="importPhotos(event)">
   <button class="btn-capture" onclick="captureHQ()">📸 PÁGINA COMPLETA (HQ)</button>
   <button class="btn-capture" onclick="captureTableHQ()" style="background:#4a148c;">🏁 TABELA COMPLETA (HQ)</button>
   <button id="btnCaptureOther" class="btn-capture" onclick="captureOtherTablesHQ()" style="background:#00695c;">📊 GRÁFICOS (HQ)</button>
@@ -4562,6 +4565,32 @@ function importData(e) {
     } catch(e) { alert("Erro arquivo"); }
   };
   r.readAsText(e.target.files[0]);
+}
+async function exportPhotos() {
+  if (!activeChampionshipId) { alert('Nenhum campeonato ativo.'); return; }
+  const photos = await idbGetAllPhotosForChampionship(activeChampionshipId);
+  if (!Object.keys(photos).length) { alert('Nenhuma foto customizada encontrada neste campeonato.'); return; }
+  const payload = { champId: activeChampionshipId, photos };
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+  a.download = 'f1_photos.json'; a.click();
+}
+async function importPhotos(e) {
+  const file = e.target.files[0]; e.target.value = '';
+  if (!file) return;
+  const text = await file.text();
+  let payload;
+  try { payload = JSON.parse(text); } catch { alert('Arquivo inválido.'); return; }
+  if (!payload.photos || typeof payload.photos !== 'object') { alert('Arquivo de fotos inválido.'); return; }
+  if (!activeChampionshipId) { alert('Nenhum campeonato ativo.'); return; }
+  let count = 0;
+  for (const [driverId, value] of Object.entries(payload.photos)) {
+    await idbSetPhoto(activeChampionshipId, driverId, value);
+    count++;
+  }
+  await loadPhotosIntoData(activeChampionshipId);
+  render();
+  alert(count + ' foto(s) importada(s) com sucesso.');
 }
 
 function openFlagEditModal(driverId) {
