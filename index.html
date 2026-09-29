@@ -4550,7 +4550,7 @@ function importData(e) {
         Object.entries(parsed._photosRemoved).forEach(([id]) => localStorage.setItem('f1_photo_removed_' + id, '1'));
         delete parsed._photosRemoved;
       }
-      data = parsed; hiddenDrivers.clear(); chartInitialized = false; saveData(); render();
+      data = parsed; hiddenDrivers.clear(); chartInitialized = false; duelAutoReset = true; saveData(); render();
 
       // Detecta a última corrida com ao menos um resultado e registra no calendário de hoje
       if (parsed.races && parsed.drivers) {
