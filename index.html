@@ -3324,11 +3324,27 @@ function getTeamLogoHtml(teamName) {
   return "";
 }
 
+// Garante que todas as fotos customizadas (base64) estejam decodificadas
+// pelo browser antes do html2canvas capturar o DOM.
+async function preloadCustomPhotos() {
+  if (!data || !data.drivers) return;
+  await Promise.all(
+    data.drivers
+      .filter(d => d.photo)
+      .map(d => new Promise(res => {
+        const img = new Image();
+        img.onload = res; img.onerror = res;
+        img.src = d.photo;
+      }))
+  );
+}
+
 async function captureHQ() {
   const btn = document.querySelector('.btn-capture');
   const orig = btn.innerText;
   btn.innerText = "⚡ PROCESSANDO...";
   await new Promise(r => setTimeout(r, 500));
+  await preloadCustomPhotos();
   try {
     const canvas = await html2canvas(document.getElementById('mainCaptureArea'), {
       backgroundColor: "#0b0b10", scale: 4, useCORS: true, logging: false,
@@ -3367,6 +3383,7 @@ async function captureTableHQ() {
   container.style.overflowX = 'visible';
   container.style.width = tableEl.scrollWidth + 'px';
   await new Promise(r => requestAnimationFrame(r));
+  await preloadCustomPhotos();
 
   try {
     const canvas = await html2canvas(tableEl, {
@@ -3415,6 +3432,7 @@ async function captureOtherTablesHQ() {
   });
 
   await new Promise(r => requestAnimationFrame(r));
+  await preloadCustomPhotos();
 
   try {
     const canvas = await html2canvas(document.getElementById('mainCaptureArea'), {
@@ -3479,6 +3497,7 @@ async function captureDriversPosterHQ() {
   });
 
   await new Promise(r => requestAnimationFrame(r));
+  await preloadCustomPhotos();
 
   try {
     const canvas = await html2canvas(document.getElementById('mainCaptureArea'), {
