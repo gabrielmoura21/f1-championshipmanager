@@ -3327,16 +3327,27 @@ function getTeamLogoHtml(teamName) {
 // Garante que todas as fotos customizadas (base64) estejam decodificadas
 // pelo browser antes do html2canvas capturar o DOM.
 async function preloadCustomPhotos() {
-  if (!data || !data.drivers) return;
-  await Promise.all(
-    data.drivers
-      .filter(d => d.photo)
-      .map(d => new Promise(res => {
-        const img = new Image();
-        img.onload = res; img.onerror = res;
-        img.src = d.photo;
-      }))
-  );
+  // 1) Pré-carrega as fotos customizadas nos objetos Image do browser
+  if (data && data.drivers) {
+    await Promise.all(
+      data.drivers
+        .filter(d => d.photo)
+        .map(d => new Promise(res => {
+          const img = new Image();
+          img.onload = res; img.onerror = res;
+          img.src = d.photo;
+        }))
+    );
+  }
+  // 2) Força o decode de todos os <img> visíveis na área de captura,
+  //    garantindo que estejam pintados mesmo após saírem de display:none
+  const area = document.getElementById('mainCaptureArea');
+  if (area) {
+    await Promise.all(
+      [...area.querySelectorAll('img')]
+        .map(img => img.decode ? img.decode().catch(() => {}) : Promise.resolve())
+    );
+  }
 }
 
 async function captureHQ() {
