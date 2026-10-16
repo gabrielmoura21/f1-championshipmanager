@@ -1846,6 +1846,18 @@ body.theme-amoled .team-poster-box { background: #060610; }
   </div>
 </div>
 
+<div id="raceEditMenuModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal-content" style="max-width:320px;text-align:center;">
+    <div class="modal-title" style="margin-bottom:4px;">Editar Etapa</div>
+    <div id="raceEditMenuLabel" style="font-size:1.1em;font-weight:700;margin-bottom:20px;color:#fff;"></div>
+    <div class="modal-actions" style="flex-direction:column;gap:10px;">
+      <button onclick="raceEditMenuAction('clear')" style="background:#e65100;width:100%;">🧹 Limpar Resultados</button>
+      <button onclick="raceEditMenuAction('delete')" style="background:#b71c1c;width:100%;">🗑️ Excluir Etapa</button>
+      <button class="btn-cancel" onclick="document.getElementById('raceEditMenuModal').style.display='none'" style="width:100%;">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <div id="flagEditModal" class="modal-overlay">
   <div class="modal-content">
     <div class="modal-title">Trocar Bandeira</div>
@@ -3660,7 +3672,7 @@ function renderDriversTable(drivers) {
     const name = parts.length > 1
       ? `<div style="line-height:1.1;">${flag}<span style="font-size:1.3em;display:block;">${parts[0]}</span><span style="font-size:.9em;font-weight:700;">${parts.slice(1).join(' ')}</span>${sprint}</div>`
       : `<div style="line-height:1.1;">${flag}<span style="display:block;">${race.name}</span>${sprint}</div>`;
-    headerHtml += `<th class="header-gp${race.type==='Sprint'?' sprint-col':''}"${isEditEnabled?` onclick="deleteRace('${race.id}')"`:''} >${name}</th>`;
+    headerHtml += `<th class="header-gp${race.type==='Sprint'?' sprint-col':''}"${isEditEnabled?` onclick="raceEditMenu('${race.id}')"`:''} >${name}</th>`;
   });
   dom.headerRow.innerHTML = headerHtml;
 
@@ -4544,6 +4556,29 @@ function saveRaceOrder() {
 }
 
 const deleteRace = id => { if (confirm("Excluir?")) { data.races = data.races.filter(r => r.id !== id); saveData(); render(); } };
+function raceEditMenu(id) {
+  const race = data.races.find(r => r.id === id);
+  if (!race) return;
+  document.getElementById('raceEditMenuLabel').textContent = race.name;
+  document.getElementById('raceEditMenuModal').dataset.raceId = id;
+  document.getElementById('raceEditMenuModal').style.display = 'flex';
+}
+function raceEditMenuAction(action) {
+  const modal = document.getElementById('raceEditMenuModal');
+  const id = modal.dataset.raceId;
+  modal.style.display = 'none';
+  if (action === 'delete') {
+    if (confirm("Excluir etapa? Esta ação não pode ser desfeita.")) {
+      data.races = data.races.filter(r => r.id !== id);
+      saveData(); render();
+    }
+  } else if (action === 'clear') {
+    if (confirm("Limpar todos os resultados desta etapa?")) {
+      data.drivers.forEach(d => { if (d.results && d.results[id] !== undefined) delete d.results[id]; });
+      saveData(); render();
+    }
+  }
+}
 const editDriverName = (id, v) => { const d = data.drivers.find(x => x.id === id); if(d) { d.name = v; saveData(); render(); } };
 function editDriverTeam(id, v) {
   const d = data.drivers.find(x => x.id === id);
