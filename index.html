@@ -3770,7 +3770,7 @@ function buildShareMessage() {
   }
 
   // Monta lista final: garantidos + opcionais até total de 5
-  const MAX_TOTAL = 5;
+  const MAX_TOTAL = 4;
   const allInsights = [...pinned, ...optional.slice(0, MAX_TOTAL - pinned.length)];
 
   const today = new Date();
