@@ -1585,6 +1585,7 @@ body.theme-amoled .team-poster-box { background: #060610; }
   <button class="btn-capture" onclick="captureTableHQ()" style="background:#4a148c;">🏁 TABELA COMPLETA (HQ)</button>
   <button id="btnCaptureOther" class="btn-capture" onclick="captureOtherTablesHQ()" style="background:#00695c;">📊 GRÁFICOS (HQ)</button>
   <button id="btnCaptureDriversPoster" class="btn-capture" onclick="captureDriversPosterHQ()" style="background:#0277bd;">🖼️ TABELA PILOTOS (HQ)</button>
+  <button id="btnShareWhatsApp" class="btn-capture" onclick="shareWhatsApp()" style="background:#25D366;color:#fff;font-weight:700;">📲 COMPARTILHAR NO WHATSAPP</button>
   <button id="btnStandingsPoster" class="btn-capture" onclick="captureStandingsPosterHQ()" style="background:#1565c0;">📊 STANDINGS POSTER</button>
   <button id="btnPodiumPoster" class="btn-capture" onclick="capturePodiumPosterHQ()" style="background:linear-gradient(90deg,#7a5b00,#ffd54a);color:#231a00;font-weight:700;">🏆 PÓDIO TOP 3</button>
   <button class="btn-capture" onclick="openTeamPosterModal()" style="background:#bf360c;">🏎️ POSTER EQUIPE (HQ)</button>
@@ -3523,7 +3524,19 @@ async function captureDriversPosterHQ() {
   await preloadCustomPhotos();
 
   try {
-    const canvas = await html2canvas(document.getElementById('mainCaptureArea'), {
+    const captureEl = document.getElementById('mainCaptureArea');
+    const cropHeight = (el => {
+      const top = el.getBoundingClientRect().top;
+      let max = 0;
+      Array.from(el.children).forEach(c => {
+        if (getComputedStyle(c).display !== 'none') {
+          const b = c.getBoundingClientRect().bottom - top;
+          if (b > max) max = b;
+        }
+      });
+      return max + 24;
+    })(captureEl);
+    const raw = await html2canvas(captureEl, {
       backgroundColor: bgColor,
       scale: 4,
       useCORS: true,
@@ -3535,6 +3548,10 @@ async function captureDriversPosterHQ() {
         el.classList.contains('no-capture') ||
         (el.tagName === "INPUT" && el.type !== "text")
     });
+    const canvas = document.createElement('canvas');
+    canvas.width = raw.width;
+    canvas.height = Math.min(Math.ceil(cropHeight * 4), raw.height);
+    canvas.getContext('2d').drawImage(raw, 0, 0);
     const a = document.createElement('a');
     a.download = `F1_Pilotos_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.png`;
     a.href = canvas.toDataURL("image/png", 1.0);
@@ -3546,6 +3563,376 @@ async function captureDriversPosterHQ() {
     replacements.forEach(({ span, inp }) => span.parentNode.replaceChild(inp, span));
     toHide.forEach(({ el, prev }) => el.style.display = prev);
     btn.innerText = orig;
+  }
+}
+
+// ── MENSAGEM WHATSAPP ──────────────────────────────────────────────────────
+function buildShareMessage() {
+  const GP_FLAGS = {
+    'AUS':'🇦🇺','CHN':'🇨🇳','JPN':'🇯🇵','BAH':'🇧🇭','SAU':'🇸🇦',
+    'MIA':'🇺🇸','MON':'🇲🇨','ESP':'🇪🇸','CAN':'🇨🇦','AUT':'🇦🇹',
+    'GBR':'🇬🇧','SIL':'🇬🇧','BEL':'🇧🇪','HUN':'🇭🇺','HOL':'🇳🇱',
+    'ZAN':'🇳🇱','ITA':'🇮🇹','MAD':'🇪🇸','AZE':'🇦🇿','SIN':'🇸🇬',
+    'USA':'🇺🇸','MEX':'🇲🇽','BRA':'🇧🇷','LAS':'🇺🇸','QAT':'🇶🇦',
+    'ABU':'🇦🇪','EMI':'🇮🇹'
+  };
+  const GP_ARTICLE = {
+    'AUS':'DA AUSTRÁLIA','CHN':'DA CHINA','JPN':'DO JAPÃO','BAH':'DO BAHREIN',
+    'SAU':'DE JEDDAH','MIA':'DE MIAMI','MON':'DO MÔNACO','ESP':'DA ESPANHA',
+    'CAN':'DO CANADÁ','AUT':'DA ÁUSTRIA','GBR':'DA INGLATERRA','SIL':'DE SILVERSTONE',
+    'BEL':'DA BÉLGICA','HUN':'DA HUNGRIA','HOL':'DA HOLANDA','ZAN':'DE ZANDVOORT',
+    'ITA':'DE MONZA','MAD':'DE MADRID','AZE':'DE BAKU','SIN':'DE SINGAPURA',
+    'USA':'DO TEXAS','MEX':'DO MÉXICO','BRA':'DO BRASIL','LAS':'DE LAS VEGAS',
+    'QAT':'DO QATAR','ABU':'DE ABU DHABI','EMI':'DE IMOLA'
+  };
+  const GP_NAMES = {
+    'AUS':'AUSTRÁLIA','CHN':'CHINA','JPN':'JAPÃO','BAH':'BAHREIN','SAU':'JEDDAH',
+    'MIA':'MIAMI','MON':'MÔNACO','ESP':'ESPANHA','CAN':'CANADÁ','AUT':'ÁUSTRIA',
+    'GBR':'INGLATERRA','SIL':'SILVERSTONE','BEL':'BÉLGICA','HUN':'HUNGRIA',
+    'HOL':'HOLANDA','ZAN':'ZANDVOORT','ITA':'MONZA','MAD':'MADRID','AZE':'BAKU',
+    'SIN':'SINGAPURA','USA':'TEXAS','MEX':'MÉXICO','BRA':'BRASIL',
+    'LAS':'LAS VEGAS','QAT':'QATAR','ABU':'ABU DHABI','EMI':'IMOLA'
+  };
+
+  if (!data || !data.races || !data.drivers) return '🏎️ TABELA DO CAMPEONATO ATUALIZADA';
+
+  const raceCode = r => r.name.replace(/\(.*\)/, '').trim();
+
+  // Último GP com resultados
+  let lastRaceIdx = -1;
+  for (let i = data.races.length - 1; i >= 0; i--) {
+    if (data.drivers.some(d => d.results && d.results[data.races[i].id] !== undefined)) {
+      lastRaceIdx = i; break;
+    }
+  }
+  if (lastRaceIdx < 0) return '🏎️ TABELA DO CAMPEONATO ATUALIZADA';
+
+  const lastRace = data.races[lastRaceIdx];
+  const lastCode = raceCode(lastRace);
+  const isSprint = lastRace.type === 'Sprint';
+  const lastArticle = GP_ARTICLE[lastCode] || `DE ${GP_NAMES[lastCode] || lastCode}`;
+  const lastFlag   = GP_FLAGS[lastCode] || '';
+
+  // Próximo GP sem resultados
+  let nextCode = '';
+  for (let i = lastRaceIdx + 1; i < data.races.length; i++) {
+    if (!data.drivers.some(d => d.results && d.results[data.races[i].id] !== undefined)) {
+      nextCode = raceCode(data.races[i]); break;
+    }
+  }
+
+  // Calcula standings até uma corrida específica
+  function standings(upToId) {
+    const allowed = new Set();
+    for (const r of data.races) { allowed.add(r.id); if (r.id === upToId) break; }
+    return data.drivers
+      .filter(d => !d.reserve)
+      .map(d => {
+        let pts = 0;
+        data.races.forEach(r => {
+          if (!allowed.has(r.id)) return;
+          const v = d.results && d.results[r.id];
+          if (v === undefined || v === '') return;
+          const n = parseInt(v);
+          if (!isNaN(n)) pts += ((r.type === 'Sprint' ? SPRINT_POINTS : GP_POINTS)[n] || 0);
+        });
+        return { id: d.id, name: d.name, last: d.name.split(' ').pop().toUpperCase(), team: d.team, pts };
+      })
+      .sort((a, b) => b.pts - a.pts);
+  }
+
+  const curr = standings(lastRace.id);
+  const prev = lastRaceIdx > 0 ? standings(data.races[lastRaceIdx - 1].id) : [];
+
+  // Helper: evita citar o mesmo sobrenome duas vezes
+  const cited = new Set();
+  const wasCited = (...names) => names.some(n => cited.has(n));
+  const markCited = (...names) => names.forEach(n => cited.add(n));
+
+  // ── SLOT GARANTIDO: vencedor da corrida ─────────────────────────────────
+  const pinned = [];
+  const winner = data.drivers.find(d => parseInt(d.results && d.results[lastRace.id]) === 1);
+  if (winner) {
+    const wLast = winner.name.split(' ').pop().toUpperCase();
+    const label = isSprint ? 'O SPRINT' : 'O GP';
+    pinned.push(`🥇 ${winner.name.toUpperCase()} VENCEU ${label} ${lastArticle}`);
+    markCited(wLast);
+  }
+
+  // ── OPCIONAIS em ordem de prioridade (preenchem até 4 slots no total) ───
+  const optional = [];
+
+  if (curr.length) {
+    // 1. Mudança de liderança
+    if (prev.length && prev[0].id !== curr[0].id) {
+      optional.push(`🏆 ${curr[0].name.toUpperCase()} ASSUME A LIDERANÇA DO CAMPEONATO`);
+      markCited(curr[0].last);
+    }
+
+    // 2. Dobradinha (1º e 2º da mesma equipe na corrida)
+    const p2driver = data.drivers.find(d => parseInt(d.results && d.results[lastRace.id]) === 2);
+    if (winner && p2driver && winner.team === p2driver.team) {
+      const p2Last = p2driver.name.split(' ').pop().toUpperCase();
+      if (!wasCited(p2Last)) {
+        optional.push(`🤝 DOBRADINHA DA ${winner.team.toUpperCase()}: ${winner.name.split(' ').pop().toUpperCase()} E ${p2Last}`);
+        markCited(p2Last);
+      }
+    }
+
+    // 3. Vitórias consecutivas (mesmo piloto venceu o GP anterior também)
+    if (!isSprint) {
+      const gpRaces = data.races.filter(r => r.type !== 'Sprint');
+      const lastGpIdx = gpRaces.findIndex(r => r.id === lastRace.id);
+      if (lastGpIdx > 0 && winner) {
+        const prevGpId = gpRaces[lastGpIdx - 1].id;
+        const prevWinner = data.drivers.find(d => parseInt(d.results && d.results[prevGpId]) === 1);
+        if (prevWinner && prevWinner.id === winner.id) {
+          optional.push(`🔄 ${winner.name.toUpperCase()} VENCE PELO 2º GP CONSECUTIVO`);
+        }
+      }
+    }
+
+    // 4. Disputa acirrada pelo título (top 2 ≤ 10 pts)
+    if (curr.length >= 2) {
+      const gap = curr[0].pts - curr[1].pts;
+      if (gap <= 10) {
+        optional.push(`⚔️ DISPUTA ACIRRADA PELO CAMPEONATO: ${curr[0].last} E ${curr[1].last} COM APENAS ${gap} PTS DE DIFERENÇA`);
+        markCited(curr[0].last, curr[1].last);
+      }
+    }
+
+    // 5. Líder amplia vantagem (≥ 15 pts a mais que antes)
+    if (prev.length >= 2 && curr.length >= 2 && prev[0].id === curr[0].id) {
+      const prevGap = prev[0].pts - (prev.find(d => d.id === curr[1].id) || {pts: prev[1].pts}).pts;
+      const currGap = curr[0].pts - curr[1].pts;
+      if (currGap - prevGap >= 15 && currGap > 10) {
+        optional.push(`📊 ${curr[0].last} AMPLIA A VANTAGEM PARA ${currGap} PTS`);
+        markCited(curr[0].last);
+      }
+    }
+
+    // 6. 2º lugar fecha a diferença (≥ 10 pts a menos que antes, mas ainda > 10 pts)
+    if (prev.length >= 2 && curr.length >= 2 && prev[0].id === curr[0].id && prev[1].id === curr[1].id) {
+      const prevGap = prev[0].pts - prev[1].pts;
+      const currGap = curr[0].pts - curr[1].pts;
+      if (prevGap - currGap >= 10 && currGap > 10 && !wasCited(curr[1].last)) {
+        optional.push(`📉 ${curr[1].last} REDUZ A DIFERENÇA PARA O LÍDER (${currGap} PTS)`);
+        markCited(curr[1].last);
+      }
+    }
+
+    // 7. Disputa interna entre companheiros (top 10, ≤ 15 pts)
+    const byTeam = {};
+    curr.forEach((d, i) => { if (!byTeam[d.team]) byTeam[d.team] = []; byTeam[d.team].push({ ...d, pos: i + 1 }); });
+    for (const [team, members] of Object.entries(byTeam)) {
+      if (members.length < 2) continue;
+      const [a, b] = members;
+      const gap = a.pts - b.pts;
+      if (a.pos <= 10 && b.pos <= 10 && gap <= 15 && !wasCited(a.last, b.last)) {
+        optional.push(`🔥 DISPUTA INTERNA ACIRRADA NA ${team.toUpperCase()}: ${a.last} VS ${b.last} (${gap} PTS)`);
+        markCited(a.last, b.last);
+      }
+    }
+
+    // 8. Maior subida no campeonato (≥ 3 posições)
+    if (prev.length) {
+      let topDriver = null, topGain = 2;
+      curr.forEach((d, ci) => {
+        const pi = prev.findIndex(p => p.id === d.id);
+        if (pi >= 0 && (pi - ci) > topGain && !wasCited(d.last)) { topGain = pi - ci; topDriver = d; }
+      });
+      if (topDriver) {
+        optional.push(`📈 ${topDriver.name.toUpperCase()} SUBIU ${topGain} ${topGain === 1 ? 'POSIÇÃO' : 'POSIÇÕES'} NO CAMPEONATO`);
+        markCited(topDriver.last);
+      }
+    }
+
+    // 9. Piloto entra no top 3 do campeonato
+    if (prev.length) {
+      curr.slice(0, 3).forEach(d => {
+        const pi = prev.findIndex(p => p.id === d.id);
+        if (pi >= 3 && !wasCited(d.last)) {
+          optional.push(`🎯 ${d.name.toUpperCase()} ENTRA NO TOP 3 DO CAMPEONATO`);
+          markCited(d.last);
+        }
+      });
+    }
+
+    // 10. Primeiro(s) pontuador(es)
+    if (prev.length) {
+      curr.filter(d => d.pts > 0 && (prev.find(p => p.id === d.id) || {pts:0}).pts === 0 && !wasCited(d.last))
+          .forEach(d => { optional.push(`⭐ ${d.name.toUpperCase()} PONTUA PELA PRIMEIRA VEZ NO CAMPEONATO`); markCited(d.last); });
+    }
+
+    // 11. Corrida caótica (≥ 3 abandonos/DSQ)
+    const ncs = data.drivers.filter(d => { const v = d.results && d.results[lastRace.id]; return v === 'NC' || v === 'DSQ'; }).length;
+    if (ncs >= 3) optional.push(`💥 CORRIDA CAÓTICA: ${ncs} ABANDONOS`);
+  }
+
+  // Monta lista final: garantidos + opcionais até total de 5
+  const MAX_TOTAL = 5;
+  const allInsights = [...pinned, ...optional.slice(0, MAX_TOTAL - pinned.length)];
+
+  const today = new Date();
+  const dateStr = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}`;
+  const header = isSprint
+    ? `🏎️ TABELA ATUALIZADA APÓS O SPRINT ${lastArticle} ${lastFlag} - ${dateStr}`
+    : `🏎️ TABELA DO CAMPEONATO ATUALIZADA ATÉ O GP ${lastArticle} ${lastFlag} - ${dateStr}`;
+
+  let msg = header;
+  if (allInsights.length) msg += '\n\n' + allInsights.join('\n');
+  if (nextCode) msg += `\n\nPRÓXIMO GP: ${GP_FLAGS[nextCode] || ''} ${GP_NAMES[nextCode] || nextCode}`;
+  return msg;
+}
+
+// Armazena as imagens geradas entre os dois cliques do botão de compartilhamento
+let _wpShareFiles = null;
+let _wpShareMsg = null;
+
+async function shareWhatsApp() {
+  const btn = document.getElementById('btnShareWhatsApp');
+  const ORIG_LABEL = "📲 COMPARTILHAR NO WHATSAPP";
+  const READY_LABEL = "📲 TOQUE PARA ENVIAR";
+
+  // --- FASE 2: imagens já geradas, disparar share diretamente no gesto do usuário ---
+  if (_wpShareFiles) {
+    const files = _wpShareFiles;
+    const msg   = _wpShareMsg;
+    _wpShareFiles = null;
+    _wpShareMsg   = null;
+    btn.innerText = ORIG_LABEL;
+    try {
+      if (navigator.canShare && navigator.canShare({ files }) && navigator.share) {
+        await navigator.share({ files, text: msg });
+      } else {
+        // fallback: download + wa.me
+        const dl = f => { const a=document.createElement('a'); a.href=URL.createObjectURL(f); a.download=f.name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); };
+        dl(files[0]);
+        await new Promise(r => setTimeout(r, 600));
+        dl(files[1]);
+        await new Promise(r => setTimeout(r, 800));
+        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+      }
+    } catch(e) {
+      if (e && e.name !== 'AbortError') {
+        console.error('shareWhatsApp share error:', e);
+        alert('Erro ao compartilhar: ' + (e && e.message ? e.message : e));
+      }
+    }
+    return;
+  }
+
+  // --- FASE 1: gerar as imagens (async longo — sem chamar share aqui) ---
+  btn.innerText = "⚡ GERANDO...";
+  btn.disabled = true;
+  let replacements = [], hiddenEls = [], toHide = [], prevDisplay = {};
+
+  try {
+    const msgText = buildShareMessage();
+    const today = new Date();
+    const dateStr = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}`;
+
+    const isLight  = document.body.classList.contains('theme-light');
+    const isAmoled = document.body.classList.contains('theme-amoled');
+    const bgColor  = isLight ? '#b8bec9' : isAmoled ? '#000000' : '#0b0b10';
+    const ignoreEl = el => el.tagName==="BUTTON"||el.classList.contains('modal-overlay')||el.id==="colorPickerPopup"||el.classList.contains('no-capture')||(el.tagName==="INPUT"&&el.type!=="text");
+
+    // 1) TABELA PILOTOS
+    const tableEl = document.getElementById('pilotosTable');
+    const inputs = Array.from(tableEl.querySelectorAll('input[type="text"]'));
+    replacements = inputs.map(inp => {
+      const span = document.createElement('span');
+      span.textContent = inp.value;
+      const isSpc = ["NC","DSQ","NP"].includes(inp.value.trim().toUpperCase());
+      span.style.cssText = `display:block;width:100%;text-align:center;font-family:inherit;font-size:inherit;color:${isSpc?'#e10600':'inherit'};font-weight:${isSpc?'bold':'inherit'};`;
+      inp.parentNode.replaceChild(span, inp);
+      return { span, inp };
+    });
+    const keepIds = new Set(['mainTitle','pilotosSection']);
+    Array.from(document.body.children).forEach(el => {
+      if (keepIds.has(el.id)||el.classList.contains('modal-overlay')||el.id==='colorPickerPopup') return;
+      hiddenEls.push({ el, prev: el.style.display });
+      el.style.display = 'none';
+    });
+    await new Promise(r => requestAnimationFrame(r));
+    await preloadCustomPhotos();
+    const captureEl = document.getElementById('mainCaptureArea');
+    // mede altura real do conteúdo visível antes de capturar
+    const cropHeight = (el => {
+      const top = el.getBoundingClientRect().top;
+      let max = 0;
+      Array.from(el.children).forEach(c => {
+        if (getComputedStyle(c).display !== 'none') {
+          const b = c.getBoundingClientRect().bottom - top;
+          if (b > max) max = b;
+        }
+      });
+      return max + 24; // padding inferior
+    })(captureEl);
+    const canvas1raw = await html2canvas(captureEl, {
+      backgroundColor: bgColor, scale: 4, useCORS: true, logging: false, ignoreElements: ignoreEl
+    });
+    // corta o canvas na altura do conteúdo
+    const canvas1 = document.createElement('canvas');
+    canvas1.width = canvas1raw.width;
+    canvas1.height = Math.min(Math.ceil(cropHeight * 4), canvas1raw.height);
+    canvas1.getContext('2d').drawImage(canvas1raw, 0, 0);
+
+    replacements.forEach(({ span, inp }) => span.parentNode.replaceChild(inp, span));
+    hiddenEls.forEach(({ el, prev }) => el.style.display = prev);
+    replacements = []; hiddenEls = [];
+
+    // 2) GRÁFICOS
+    toHide = ['mainTitle','topControls','adminControls','pilotosSection'];
+    toHide.forEach(id => { const el=document.getElementById(id); if(el){prevDisplay[id]=el.style.display;el.style.display='none';} });
+    await new Promise(r => requestAnimationFrame(r));
+    await preloadCustomPhotos();
+    const cropHeight2 = (el => {
+      const top = el.getBoundingClientRect().top;
+      let max = 0;
+      Array.from(el.children).forEach(c => {
+        if (getComputedStyle(c).display !== 'none') {
+          const b = c.getBoundingClientRect().bottom - top;
+          if (b > max) max = b;
+        }
+      });
+      return max + 24;
+    })(captureEl);
+    const canvas2raw = await html2canvas(captureEl, {
+      backgroundColor: bgColor, scale: 4, useCORS: true, logging: false, ignoreElements: ignoreEl
+    });
+    const canvas2 = document.createElement('canvas');
+    canvas2.width = canvas2raw.width;
+    canvas2.height = Math.min(Math.ceil(cropHeight2 * 4), canvas2raw.height);
+    canvas2.getContext('2d').drawImage(canvas2raw, 0, 0);
+
+    toHide.forEach(id => { const el=document.getElementById(id); if(el) el.style.display=prevDisplay[id]; });
+    toHide = [];
+
+    // Converte canvas em Files e guarda para o próximo clique
+    const toFile = (canvas, name) => new Promise(res =>
+      canvas.toBlob(blob => res(new File([blob], name, { type: 'image/png' })), 'image/png')
+    );
+    const [file1, file2] = await Promise.all([
+      toFile(canvas1, `F1_Pilotos_${dateStr.replace('/','-')}.png`),
+      toFile(canvas2, `F1_Tabelas_${dateStr.replace('/','-')}.png`)
+    ]);
+    _wpShareFiles = [file1, file2];
+    _wpShareMsg   = msgText;
+
+    // Pronto — pede ao usuário para tocar novamente
+    btn.innerText = READY_LABEL;
+    btn.disabled = false;
+
+  } catch(e) {
+    console.error('shareWhatsApp generate error:', e);
+    alert('Erro ao gerar as imagens: ' + (e && e.message ? e.message : e));
+    replacements.forEach(({ span, inp }) => { try { span.parentNode.replaceChild(inp, span); } catch(_){} });
+    hiddenEls.forEach(({ el, prev }) => el.style.display = prev);
+    toHide.forEach(id => { const el=document.getElementById(id); if(el && prevDisplay[id]!==undefined) el.style.display=prevDisplay[id]; });
+    _wpShareFiles = null; _wpShareMsg = null;
+    btn.innerText = ORIG_LABEL;
+    btn.disabled = false;
   }
 }
 
