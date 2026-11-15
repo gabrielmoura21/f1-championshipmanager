@@ -3920,7 +3920,8 @@ async function shareWhatsApp() {
       const top = el.getBoundingClientRect().top;
       let max = 0;
       Array.from(el.children).forEach(c => {
-        if (getComputedStyle(c).display !== 'none') {
+        const cs = getComputedStyle(c);
+        if (cs.display !== 'none' && cs.position !== 'fixed') {
           const b = c.getBoundingClientRect().bottom - top;
           if (b > max) max = b;
         }
@@ -3950,7 +3951,8 @@ async function shareWhatsApp() {
       const top = el.getBoundingClientRect().top;
       let max = 0;
       Array.from(el.children).forEach(c => {
-        if (getComputedStyle(c).display !== 'none') {
+        const cs = getComputedStyle(c);
+        if (cs.display !== 'none' && cs.position !== 'fixed') {
           const b = c.getBoundingClientRect().bottom - top;
           if (b > max) max = b;
         }
