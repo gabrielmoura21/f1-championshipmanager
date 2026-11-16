@@ -5037,6 +5037,14 @@ function raceEditMenuAction(action) {
   } else if (action === 'clear') {
     if (confirm("Limpar todos os resultados desta etapa?")) {
       data.drivers.forEach(d => { if (d.results && d.results[id] !== undefined) delete d.results[id]; });
+      // Remove calendar flag for this race from ALL dates (not just today)
+      const race = data.races.find(r => r.id === id);
+      if (race && race.flag) {
+        const calData = loadCalendarData();
+        let changed = false;
+        Object.keys(calData).forEach(k => { if (calData[k] === race.flag) { delete calData[k]; changed = true; } });
+        if (changed) saveCalendarData(calData);
+      }
       saveData(); render();
     }
   }
